@@ -157,7 +157,12 @@ main, .hd, .ft { position: relative; z-index: 1; }
 .uses li { display: flex; gap: 18px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid var(--line); font-size: 1.15rem; color: var(--t3); transition: color .4s var(--ease), padding .4s var(--ease); }
 .closer[data-step="0"] .uses li[data-i="0"], .closer[data-step="1"] .uses li[data-i="1"],
 .closer[data-step="2"] .uses li[data-i="2"], .closer[data-step="3"] .uses li[data-i="3"] { color: var(--white); padding-left: 12px; box-shadow: inset 2px 0 0 var(--blue); }
-.film-box { position: relative; aspect-ratio: 16 / 9; border-radius: var(--radius); overflow: hidden; background: #000; border: 1px solid var(--line); box-shadow: 0 50px 120px -50px rgba(20, 107, 140, .7); }
+/* the film fills the whole screen; the text sits on top of it */
+.closer-in { position: static; }
+.closer-text { position: relative; z-index: 1; }
+.film-box { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: #000; }
+.film-box::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(15, 26, 27, .94) 0%, rgba(15, 26, 27, .7) 36%, rgba(15, 26, 27, 0) 62%), linear-gradient(180deg, var(--ink) 0%, rgba(15, 26, 27, 0) 18%, rgba(15, 26, 27, 0) 82%, var(--ink) 100%); }
+.closer .film-bar { left: var(--gut); right: var(--gut); bottom: 36px; z-index: 1; }
 .film { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .film-frames { opacity: 0; transition: opacity .5s var(--ease); }
 .film-frames.ready { opacity: 1; }
@@ -292,6 +297,9 @@ main, .hd, .ft { position: relative; z-index: 1; }
   .statement { height: 200vh; }
   .closer { height: 260vh; }
   .closer-text p:not(.eyebrow), .uses { display: none; }
+  .closer-in { align-content: start; padding-top: 110px; }
+  .film-box::after { background: linear-gradient(180deg, rgba(15, 26, 27, .95) 0%, rgba(15, 26, 27, .5) 38%, rgba(15, 26, 27, 0) 60%, var(--ink) 100%); }
+  .film { object-position: 70% 50%; }
   .journey-head { top: 80px; left: 16px; right: 16px; }
   .stations { left: 16px; right: 16px; width: auto; top: auto; bottom: 40px; transform: none; height: 280px; }
   .rail { display: none; }
