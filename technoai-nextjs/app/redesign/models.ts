@@ -6,7 +6,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 // Until that file exists, a placeholder built from simple shapes is shown in the brand colours.
 
 export const BLUE = 0x146b8c; // brand blue (PDF)
-export const INK = 0x0f1a1b; // brand ink (PDF)
+export const INK = 0x0b1415; // brand ink #0f1a1b, a little darker
 
 export type Model = { group: THREE.Group; update: (t: number) => void };
 

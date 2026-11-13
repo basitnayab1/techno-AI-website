@@ -1,7 +1,7 @@
 /* TechnoAi home — "Mission Control".
    Brand (TechnoAi Brand Identity PDF): Noto Sans; ink #0f1a1b + blue #146b8c; text in white tones. */
 :root {
-  --ink: #0f1a1b;
+  --ink: #0b1415; /* brand ink #0f1a1b, a little darker (owner, 2026-11-13) */
   --blue: #146b8c;
   --white: #ffffff;
   --t2: rgba(255, 255, 255, .66);
@@ -70,7 +70,7 @@ h3 { font-size: 1.3rem; line-height: 1.25; font-weight: 500; letter-spacing: -0.
 
 /* ---------- page glow ---------- */
 .glow { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-.glow i { position: absolute; border-radius: 50%; filter: blur(120px); opacity: .45; }
+.glow i { position: absolute; border-radius: 50%; filter: blur(120px); opacity: .34; }
 .glow i:nth-child(1) { width: 44vw; height: 44vw; left: -16vw; top: 20vh; background: radial-gradient(circle, var(--blue), transparent 65%); animation: drift 30s ease-in-out infinite alternate; }
 .glow i:nth-child(2) { width: 36vw; height: 36vw; right: -12vw; top: 60vh; background: radial-gradient(circle, var(--blue), transparent 65%); animation: drift 38s ease-in-out infinite alternate-reverse; }
 @keyframes drift { to { transform: translate(8vw, -12vh) scale(1.12); } }
@@ -92,7 +92,7 @@ main, .hd, .ft { position: relative; z-index: 1; }
 
 /* ---------- header ---------- */
 .hd { position: fixed; top: 0; left: 0; right: 0; z-index: 50; border-bottom: 1px solid transparent; transition: background-color .4s var(--ease), border-color .4s var(--ease); }
-.hd.scrolled { background: rgba(15, 26, 27, .72); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom-color: var(--line); }
+.hd.scrolled { background: rgba(11, 20, 21, .72); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom-color: var(--line); }
 .hd-in { display: flex; align-items: center; gap: 34px; height: 76px; }
 .logo {
   display: block; flex: none; width: 82px; height: 38px; background: var(--white);
@@ -161,7 +161,7 @@ main, .hd, .ft { position: relative; z-index: 1; }
 .closer-in { position: static; }
 .closer-text { position: relative; z-index: 1; }
 .film-box { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: #000; }
-.film-box::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(15, 26, 27, .94) 0%, rgba(15, 26, 27, .7) 36%, rgba(15, 26, 27, 0) 62%), linear-gradient(180deg, var(--ink) 0%, rgba(15, 26, 27, 0) 18%, rgba(15, 26, 27, 0) 82%, var(--ink) 100%); }
+.film-box::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(11, 20, 21, .94) 0%, rgba(11, 20, 21, .7) 36%, rgba(11, 20, 21, 0) 62%), linear-gradient(180deg, var(--ink) 0%, rgba(11, 20, 21, 0) 18%, rgba(11, 20, 21, 0) 82%, var(--ink) 100%); }
 .closer .film-bar { left: var(--gut); right: var(--gut); bottom: 36px; z-index: 1; }
 .film { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .film-frames { opacity: 0; transition: opacity .5s var(--ease); }
@@ -191,7 +191,7 @@ main, .hd, .ft { position: relative; z-index: 1; }
 .rail { position: absolute; right: 28px; top: 50%; transform: translateY(-50%); display: grid; gap: 12px; }
 .rail::before { content: ""; position: absolute; left: -18px; top: 6px; bottom: 6px; width: 1px; background: var(--line); }
 .rail::after { content: ""; position: absolute; left: -18px; top: 6px; bottom: 6px; width: 1px; background: var(--white); transform-origin: top; transform: scaleY(var(--jp, 0)); }
-.rail a { position: relative; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); background: rgba(15, 26, 27, .6); transition: background-color .35s var(--ease), border-color .35s var(--ease); }
+.rail a { position: relative; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); background: rgba(11, 20, 21, .6); transition: background-color .35s var(--ease), border-color .35s var(--ease); }
 .rail .ico { width: 24px; height: 24px; }
 .rail a:hover { border-color: var(--white); }
 .journey[data-active="0"] .rail a[data-i="0"], .journey[data-active="1"] .rail a[data-i="1"],
@@ -298,7 +298,7 @@ main, .hd, .ft { position: relative; z-index: 1; }
   .closer { height: 260vh; }
   .closer-text p:not(.eyebrow), .uses { display: none; }
   .closer-in { align-content: start; padding-top: 110px; }
-  .film-box::after { background: linear-gradient(180deg, rgba(15, 26, 27, .95) 0%, rgba(15, 26, 27, .5) 38%, rgba(15, 26, 27, 0) 60%, var(--ink) 100%); }
+  .film-box::after { background: linear-gradient(180deg, rgba(11, 20, 21, .95) 0%, rgba(11, 20, 21, .5) 38%, rgba(11, 20, 21, 0) 60%, var(--ink) 100%); }
   .film { object-position: 70% 50%; }
   .journey-head { top: 80px; left: 16px; right: 16px; }
   .stations { left: 16px; right: 16px; width: auto; top: auto; bottom: 40px; transform: none; height: 280px; }

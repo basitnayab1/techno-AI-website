@@ -52,7 +52,7 @@ Removed on purpose earlier (the owner asked for only the main website): the `tra
   All other URLs still serve the old cloned pages.
 - **Current design = "Mission Control" (2026-11-13)**, built after analysing cerebrium.ai, apple.com/apple-vision-pro,
   lusion.co, activetheory.net and unseen.co. Owner's rules: brand font Noto Sans + PDF colours only
-  (ink #0f1a1b page, blue #146b8c accent, text white/grey), and **no Magnific generation until the
+  (ink #0f1a1b — page uses it a little darker, #0b1415, owner asked 2026-11-13 — blue #146b8c accent, text white/grey), and **no Magnific generation until the
   whole design is approved** — placeholders are built in code.
 - Files in `app/redesign/`:
   - `data.ts` all text/links (copied from the current home page) — `SOLUTIONS[].slug` names the 3D slot.
