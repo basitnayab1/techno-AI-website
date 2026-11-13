@@ -9,6 +9,7 @@
     "clone": "node scripts/clone-site.mjs"
   },
   "dependencies": {
+    "lenis": "^1.1.21",
     "next": "15.5.4",
     "nodemailer": "^7.0.6",
     "react": "19.1.1",
