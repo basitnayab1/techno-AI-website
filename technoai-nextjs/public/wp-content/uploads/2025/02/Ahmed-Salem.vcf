@@ -1,0 +1,10 @@
+BEGIN:VCARD
+VERSION:3.0
+PRODID:-//Apple Inc.//iPhone OS 18.1.1//EN
+N:Salem;Ahmed ;;;
+FN:Ahmed  Salem
+ORG:TechnoAi;
+TITLE:Business Development Manager
+EMAIL;type=INTERNET;type=HOME;type=pref:ahmed.salem@technoai.ae
+TEL;type=CELL;type=VOICE;type=pref:+971545368888
+END:VCARD

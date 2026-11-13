@@ -1,0 +1,9 @@
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+clone.log
+.env.local
+.env*.local
+submissions/

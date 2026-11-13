@@ -1,0 +1,50 @@
+{
+  "88:f99fb42": {
+    "name": "Quotation Form Main",
+    "page": "/request-a-quote/",
+    "fields": {
+      "name": {
+        "label": "Name",
+        "required": true
+      },
+      "email": {
+        "label": "Email",
+        "required": true
+      },
+      "field_6577a9d": {
+        "label": "Mobile",
+        "required": true
+      },
+      "field_ead83e2": {
+        "label": "Country",
+        "required": true
+      },
+      "field_63d2796": {
+        "label": "Product",
+        "required": true
+      },
+      "field_941e9d2": {
+        "label": "Industry",
+        "required": true
+      },
+      "message": {
+        "label": "Message",
+        "required": false
+      }
+    }
+  },
+  "2006:6b6a6b8d": {
+    "name": "Newsletter Form",
+    "page": "/tii-technoai-in-cpo-strategy-magazine/",
+    "fields": {
+      "field_7a6d165": {
+        "label": "Full Name",
+        "required": false
+      },
+      "email": {
+        "label": "Email",
+        "required": true
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+# Local-only material (not part of the website)
+/tracking-system-backend-*.zip
+/site/
+/*.mp4
+/*.pdf
+.claude/settings.local.json
