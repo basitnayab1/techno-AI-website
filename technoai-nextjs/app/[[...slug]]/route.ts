@@ -8,7 +8,8 @@ export const dynamic = "force-static";
 export const dynamicParams = true; // unknown paths fall through to GET -> site 404 page
 
 const PAGES_DIR = path.join(process.cwd(), "content", "pages");
-const routeMap = routes as Record<string, string>;
+// "/" now shows the redesign (rewrite in next.config.mjs); the old home page stays at /old-home/.
+const routeMap: Record<string, string> = { ...(routes as Record<string, string>), "/old-home/": "index.html" };
 
 export function generateStaticParams() {
   return Object.keys(routeMap).map((p) => ({

@@ -7,6 +7,12 @@ const nextConfig = {
   outputFileTracingIncludes: {
     "/[[...slug]]": ["./content/**/*"],
   },
+  // The new design (app/redesign) is the home page. The old WordPress home stays at /old-home/.
+  async rewrites() {
+    return {
+      beforeFiles: [{ source: "/", destination: "/redesign/" }],
+    };
+  },
 };
 
 export default nextConfig;

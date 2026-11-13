@@ -143,7 +143,7 @@ export default function RedesignHome() {
 
       <header className="hd">
         <div className="wrap hd-in">
-          <a className="logo" href="/redesign/" aria-label="TechnoAi home" />
+          <a className="logo" href="/" aria-label="TechnoAi home" />
           <nav className="nav" aria-label="Main">
             {NAV.map(([label, href]) => (
               <a key={href} href={href}>{label}</a>

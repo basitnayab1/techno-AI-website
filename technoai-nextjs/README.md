@@ -2,6 +2,12 @@
 
 A Next.js (App Router) version of **https://technoai.ae**, identical to the live WordPress/Elementor site.
 
+## Home page
+
+`/` shows the new design (`app/redesign/`, via a rewrite in `next.config.mjs`).
+The old WordPress home page is still available at `/old-home/`; every other URL serves the
+cloned WordPress pages.
+
 ## How it works
 
 - `scripts/clone-site.mjs` crawls the live site (sitemap + internal links) and saves:

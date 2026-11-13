@@ -47,7 +47,10 @@ Removed on purpose earlier (the owner asked for only the main website): the `tra
 - Brand (from "TechnoAi Brand Identity Final.pdf"): ink `#0f1a1b` (use instead of black — the PDF's
   label on that swatch is a typo), `#9fe7e7`, `#289fb7`, `#146b8c`, white. Typeface Noto Sans
   (Light/Regular/Medium/Bold). Logo motif `//:ai`.
-- Sample home page: `app/redesign/` → http://localhost:3100/redesign/
+- The redesign IS the home page now (2026-11-13): `/` is rewritten to `/redesign/` in next.config.mjs
+  (beforeFiles). The old WordPress home stays reachable at `/old-home/` (alias in route.ts).
+  All other URLs still serve the old cloned pages.
+- Redesign code: `app/redesign/` → http://localhost:3100/
   (`layout.tsx` own root layout + font, `page.tsx` content arrays, `redesign.css`, `fx.tsx` = scroll
   reveal + hero canvas animation). Text/links/logos are taken from the current home page, not rewritten.
 - Direction from the owner (2026-11-12, after the first sample): wants a "full 3D" site like the
@@ -123,5 +126,8 @@ npm run clone      # re-snapshot live site after content changes in WordPress
 ## Open items
 
 - SMTP not set up → email not tested (owner said "later").
-- Not deployed anywhere yet; no git repo initialised.
+- Not deployed anywhere yet.
+- Git: repo at the project root (this folder), pushed to https://github.com/dev-technoAi/Techno-AI-website
+  (PUBLIC repo), branch main. Root .gitignore keeps the backup zip, site/, reference .mp4s and
+  personal PDFs out — never commit them.
 - The WordPress database was never provided, so the WordPress site itself can't run locally.

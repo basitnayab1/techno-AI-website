@@ -10,10 +10,9 @@ const noto = Noto_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "TechnoAi — Redesign sample",
+  title: "TechnoAi Technology, AI and Procurement Company in UAE - TechnoAi",
   description:
     "Advanced technology solutions for mission critical operations: drones, robotics, satellite connectivity, AI hardware and security systems.",
-  robots: { index: false, follow: false },
 };
 
 export default function RedesignLayout({ children }: { children: React.ReactNode }) {
