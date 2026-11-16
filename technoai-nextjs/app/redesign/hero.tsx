@@ -50,7 +50,7 @@ export default function Hero() {
       <section className="hx-hero" aria-labelledby="hx-title">
         <div className="hx-bg" aria-hidden="true">
           <video className="hx-bg-video" autoPlay muted loop playsInline preload="none" poster="/redesign/landing/hero-poster.jpg">
-            <source src="/redesign/landing/hero.mp4" type="video/mp4" />
+            <source src="/redesign/landing/hero-bg.mp4" type="video/mp4" />
           </video>
           <span className="hx-bg-veil" />
           <span className="hx-bg-floor" />

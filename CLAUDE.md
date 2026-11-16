@@ -176,3 +176,14 @@ npm run clone      # re-snapshot live site after content changes in WordPress
 - Owner: white theme with only ink #0f1a1b, blue #146b8c and aqua #9fe7e7, **no gradients**. `app/redesign/three-colour.css`
   (imported last in layout.tsx) overrides the old brand-gradient blocks; teal #289fb7 retired (TEAL const = blue in
   core-scene.tsx / capability-models.tsx). Glossy "venom" buttons (hx-gloss) still use their ink shine.
+
+## Fast loading + Vercel (2026-11-16)
+
+- GLBs re-exported from Blender with Draco + WebP: ~0.5 MB each (was ~2 MB). Decoder files in
+  `public/redesign/draco/` (copied from three/examples/jsm/libs/draco/gltf). `models.ts` starts both downloads
+  as soon as the page JS runs (`preloadModel`), page.tsx adds `<link rel="preload">` so they start with the HTML.
+- Hero background video is `landing/hero-bg.mp4` (720p, 0.9 MB) instead of the 6 MB 1080p file.
+- Drone film frames (97 jpgs) only start downloading when the section is ~2 screens away.
+- Splash loader: min 0.6 s, max 2.5 s.
+- Vercel (basitnayab1 repo, project root = technoai-nextjs) refused Next 15.5.4 (CVE-2025-66478) →
+  upgraded to next 15.5.29 + react/react-dom 19.1.10.

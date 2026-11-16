@@ -58,9 +58,15 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
   );
 }
 
+const PRELOAD = ["/redesign/models/robot.glb", "/redesign/models/drone.glb", "/redesign/draco/draco_wasm_wrapper.js", "/redesign/draco/draco_decoder.wasm"];
+
 export default function Home() {
   return (
     <>
+      {/* start downloading the 3D models + Draco decoder with the HTML, before any JS runs (React hoists these into <head>) */}
+      {PRELOAD.map((href) => (
+        <link key={href} rel="preload" href={href} as="fetch" crossOrigin="anonymous" />
+      ))}
       <Loader preload={[`${UP}/2026/07/Logo.svg`]} />
       <Motion />
       <div className="glow" aria-hidden="true"><i /><i /></div>

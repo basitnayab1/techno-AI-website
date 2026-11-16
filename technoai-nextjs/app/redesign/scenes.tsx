@@ -464,9 +464,16 @@ export function DroneFilm({ count, dir, poster, video }: { count: number; dir: s
   const ref = useRef<HTMLCanvasElement>(null);
   const [mode, setMode] = useState<"still" | "loop" | "scrub">("still");
 
+  // Don't download the 97 film frames (or the phone loop) at page load: they would compete with the
+  // hero and the 3D models. Start only when the section is about two screens away.
   useEffect(() => {
     if (reduced()) return;
-    setMode(window.innerWidth < 760 ? "loop" : "scrub");
+    const section = document.querySelector(".closer");
+    const go = () => setMode(window.innerWidth < 760 ? "loop" : "scrub");
+    if (!section) return go();
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && (go(), io.disconnect()), { rootMargin: "200% 0px" });
+    io.observe(section);
+    return () => io.disconnect();
   }, []);
 
   useEffect(() => {

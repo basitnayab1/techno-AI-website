@@ -1,5 +1,6 @@
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 
 // 3D models for the redesign.
 // Every slot first looks for a real model at /redesign/models/<slug>.glb (to be generated later).
@@ -268,6 +269,13 @@ export const BUILDERS: Record<string, (M: Mats) => Model> = {
 /* ------------------------------ real models (later) ------------------------------ */
 
 const loader = new GLTFLoader();
+const isBrowser = typeof window !== "undefined";
+if (isBrowser) {
+  // Models are Draco-compressed (Blender export) with WebP textures: ~0.5 MB each instead of ~2 MB.
+  const draco = new DRACOLoader().setDecoderPath("/redesign/draco/").setDecoderConfig({ type: "wasm" });
+  draco.preload(); // fetch + compile the decoder right away, not when the first model arrives
+  loader.setDRACOLoader(draco);
+}
 
 /**
  * Slots that have a real model in public/redesign/models/<slug>.glb.
@@ -279,6 +287,15 @@ export const REAL_MODELS: string[] = ["robot", "drone"];
 
 /** How a real model sits on the stage: "ground" rests on the floor, "hover" floats gently. */
 export const REAL_POSE: Record<string, "ground" | "hover"> = { robot: "ground", drone: "hover" };
+
+/** One download per model, started as soon as this module runs in the browser (page load), shared by every scene. */
+const pending = new Map<string, Promise<GLTF>>();
+const claimed = new Set<string>();
+export function preloadModel(slug: string) {
+  if (!pending.has(slug)) pending.set(slug, loader.loadAsync(`/redesign/models/${slug}.glb`));
+  return pending.get(slug)!;
+}
+if (isBrowser) REAL_MODELS.forEach((s) => void preloadModel(s).catch(() => {}));
 
 /**
  * Returns the placeholder at once and, if /redesign/models/<slug>.glb exists, swaps the real model
@@ -293,10 +310,10 @@ export function modelFor(slug: string, M: Mats): Model {
   const model: Model = { group: holder, update: ph.update, real: false };
   if (!REAL_MODELS.includes(slug)) return model;
   const url = `/redesign/models/${slug}.glb`;
-  loader.load(
-    url,
+  preloadModel(slug).then(
     (gltf) => {
-      const real = gltf.scene;
+      const real = claimed.has(slug) ? gltf.scene.clone(true) : gltf.scene; // a second scene using the same model gets a copy
+      claimed.add(slug);
       real.traverse((o) => {
         const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
         if (m && "envMapIntensity" in m) {
@@ -330,7 +347,6 @@ export function modelFor(slug: string, M: Mats): Model {
         last = t;
       };
     },
-    undefined,
     (err) => console.error(`[redesign] 3D model ${url} failed to load, showing placeholder`, err),
   );
   return model;

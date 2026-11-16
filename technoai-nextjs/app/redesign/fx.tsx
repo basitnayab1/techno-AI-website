@@ -140,10 +140,10 @@ export function Loader({ preload }: { preload: string[] }) {
     // Time-based (not per frame), so a slow or background tab can't get stuck.
     const timer = window.setInterval(() => {
       const elapsed = performance.now() - t0;
-      const v = Math.min(loaded / total, elapsed / 1400) * 100; // at least ~1.4 s, so the mark can draw
+      const v = Math.min(loaded / total, elapsed / 600) * 100; // short: at least ~0.6 s so the mark can draw
       shown.current = Math.max(shown.current, v);
       setPct(Math.round(shown.current));
-      if (shown.current >= 100 || elapsed > 5000) finish(); // never block longer than 5 s
+      if (shown.current >= 100 || elapsed > 2500) finish(); // never block longer than 2.5 s
     }, 50);
     return () => clearInterval(timer);
   }, [preload]);

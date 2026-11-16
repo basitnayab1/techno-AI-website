@@ -11,10 +11,10 @@
   "dependencies": {
     "@react-three/fiber": "^9.8.2",
     "lenis": "^1.1.21",
-    "next": "15.5.4",
+    "next": "15.5.29",
     "nodemailer": "^7.0.6",
-    "react": "19.1.1",
-    "react-dom": "19.1.1",
+    "react": "19.1.10",
+    "react-dom": "19.1.10",
     "three": "^0.169.0"
   },
   "devDependencies": {
