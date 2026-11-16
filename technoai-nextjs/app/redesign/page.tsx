@@ -1,6 +1,9 @@
 import { DOMAINS, DRONE_FILM, FOOTER, INDUSTRIES, NAV, OFFICES, PARTNERS, SOCIAL, SOLUTIONS, UP } from "./data";
 import { Loader, Motion, Terminal } from "./fx";
-import { DroneFilm, GlobeScene, HeroScene, JourneyScene } from "./scenes";
+import Hero from "./hero";
+import Capabilities from "./capabilities";
+import InkSample from "./ink-sample"; // SAMPLE ONLY: ?ink=1
+import { DroneFilm, GlobeScene, JourneyScene } from "./scenes";
 
 // New TechnoAi home page ("Mission Control"). Text and links come from the current technoai.ae
 // home page. Brand: Noto Sans, ink #0f1a1b + blue #146b8c (TechnoAi Brand Identity PDF).
@@ -15,18 +18,15 @@ const ICONS: Record<string, React.ReactNode> = {
   security: <><path d="M12 3l7.5 2.8v5.4c0 4.4-3 8-7.5 9.8-4.5-1.8-7.5-5.4-7.5-9.8V5.8z" /><path d="M9 12l2.2 2.2L15.5 10" /></>,
 };
 
-const STATEMENT =
-  "Not every project needs more technology. It needs the right combination of systems, delivered and integrated properly.";
-
 // The four uses named in the site's own "Drones & UAV Systems" text.
 const DRONE_USES = ["Inspection", "Mapping", "Surveillance", "Mission support"];
 
 const LOG = [
   "$ technoai deploy --mission critical-site",
-  "› Drones & UAV Systems ........ ready",
   "› AI & Robotics ............... ready",
   "› Satellite Communication ..... linked",
   "› AI Hardware ................. online",
+  "› Drones & UAV Systems ........ ready",
   "› Security & Monitoring ....... armed",
   "✓ All systems integrated.",
 ];
@@ -58,115 +58,25 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Splits a heading into words that rise in one after another. */
-function Words({ text, from = 0 }: { text: string; from?: number }) {
-  return (
-    <>
-      {text.split(" ").map((w, i) => (
-        <span key={i}>
-          <span className="w" style={{ ["--i" as string]: from + i }}>
-            <span>{w}</span>
-          </span>{" "}
-        </span>
-      ))}
-    </>
-  );
-}
-
 export default function Home() {
-  const words = STATEMENT.split(" ");
   return (
     <>
-      <Loader preload={[DRONE_FILM.poster, `${DRONE_FILM.dir}/f001.jpg`, `${UP}/2026/07/Logo.svg`]} />
+      <Loader preload={[`${UP}/2026/07/Logo.svg`]} />
       <Motion />
       <div className="glow" aria-hidden="true"><i /><i /></div>
 
-      <header className="hd">
-        <div className="wrap hd-in">
-          <a className="logo" href="/" aria-label="TechnoAi home" />
-          <nav className="nav" aria-label="Main">
-            {NAV.map(([label, href]) => (
-              <a key={href} href={href}>{label}</a>
-            ))}
-          </nav>
-          <a className="btn btn-blue hd-cta" href="/request-a-quote/">Start a Project</a>
-          <details className="menu">
-            <summary aria-label="Menu"><span /><span /></summary>
-            <div className="menu-panel">
-              {NAV.map(([label, href]) => (
-                <a key={href} href={href}>{label}</a>
-              ))}
-              <a className="btn btn-blue" href="/request-a-quote/">Start a Project</a>
-            </div>
-          </details>
-        </div>
-      </header>
+      <a className="skip-link" href="#main">Skip to content</a>
 
-      <main>
-        {/* 1 ── Hero: real-time 3D drone over an AI dot field */}
-        <section className="hero">
-          <HeroScene />
-          <div className="hero-fade" aria-hidden="true" />
-          <div className="wrap hero-in">
-            <Eyebrow>TechnoAi Advanced Solutions</Eyebrow>
-            <h1>
-              <Words text="Advanced Technology Solutions" />
-              <span className="dim"><Words text="for Mission Critical Operations" from={3} /></span>
-            </h1>
-            <p className="lead rise" style={{ ["--d" as string]: "0.7s" }}>
-              Delivering drones, robotics, satellite connectivity, AI hardware, security systems and
-              infrastructure technology for government, enterprise and industrial sectors.
-            </p>
-            <div className="actions rise" style={{ ["--d" as string]: "0.85s" }}>
-              <a className="btn btn-blue" href="/request-a-quote/">Start a Project <Arrow /></a>
-              <a className="btn btn-line" href="#solutions">Explore Solutions</a>
-            </div>
-          </div>
-          <div className="wrap hero-foot">
-            <p className="hold"><i aria-hidden="true" /> Press &amp; hold to scan</p>
-            <p className="scroll-cue">Scroll</p>
-          </div>
-        </section>
+      <main id="main">
+        {/* 1 ── Hero: glass navbar + 3D Intelligence Core (hero.tsx) */}
+        <InkSample />
+        <Hero />
 
-        {/* 2 ── Statement: words light up with the scroll (Apple) */}
-        <section className="statement" data-progress>
-          <div className="wrap sticky">
-            <Eyebrow>Solutions Built Around Real Operations</Eyebrow>
-            <p className="big" style={{ ["--n" as string]: words.length }}>
-              {words.map((w, i) => (
-                <span key={i} style={{ ["--i" as string]: i }}>{w} </span>
-              ))}
-            </p>
-          </div>
-        </section>
+        {/* 2 ── Find your starting point: three capability cards with live 3D models (capabilities.tsx) */}
+        <Capabilities />
 
-        {/* 3 ── Closer look: drone film plays with the scroll */}
-        <section className="closer" data-progress data-steps={DRONE_USES.length}>
-          <div className="sticky">
-            <div className="wrap closer-in">
-              <div className="closer-text">
-                <Eyebrow>Take a closer look</Eyebrow>
-                <h2>{DOMAINS[0][0]}</h2>
-                <p>{DOMAINS[0][1]}</p>
-                <ol className="uses">
-                  {DRONE_USES.map((u, i) => (
-                    <li key={u} data-i={i}>
-                      <span className="n">{num(i)}</span>
-                      {u}
-                    </li>
-                  ))}
-                </ol>
-              </div>
-              <div className="film-box">
-                <DroneFilm count={DRONE_FILM.frames} dir={DRONE_FILM.dir} poster={DRONE_FILM.poster} video={DRONE_FILM.video} />
-                <div className="film-bar"><i /></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 4 ── Solutions journey: one 3D station per solution (Unseen) */}
-        <section className="journey" id="solutions" data-active="0">
+        {/* Solutions journey: one 3D station per solution */}
+        <section className="journey" id="technology" data-active="0">
           <div className="sticky">
             <JourneyScene />
             <div className="wrap journey-in">
@@ -180,7 +90,7 @@ export default function Home() {
                     <span className="n">{num(i)}</span>
                     <h2>{s.title}</h2>
                     <p>{s.text}</p>
-                    <a className="btn btn-line" href={s.href}>Learn More <Arrow /></a>
+                    <a className="btn btn-line" href={s.href} aria-label={`Explore ${s.title}`}>Explore Solution <Arrow /></a>
                   </article>
                 ))}
               </div>
@@ -225,8 +135,34 @@ export default function Home() {
           </div>
         </section>
 
+        {/* 3 ── Closer look: drone film plays with the scroll */}
+        <section id="drones" className="closer" data-progress data-steps={DRONE_USES.length}>
+          <div className="sticky">
+            <div className="wrap closer-in">
+              <div className="closer-text">
+                <Eyebrow>Beyond the ground</Eyebrow>
+                <h2>Drones &amp; UAV Systems</h2>
+                <p>Aerial platforms for inspection, mapping, monitoring, and mission support.</p>
+                <a className="btn btn-line" href="/aerial-drone-solutions/">Explore Drone Solutions <Arrow /></a>
+                <ol className="uses">
+                  {DRONE_USES.map((u, i) => (
+                    <li key={u} data-i={i}>
+                      <span className="n">{num(i)}</span>
+                      {u}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+              <div className="film-box">
+                <DroneFilm count={DRONE_FILM.frames} dir={DRONE_FILM.dir} poster={DRONE_FILM.poster} video={DRONE_FILM.video} />
+                <div className="film-bar"><i /></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* 6 ── Industries: horizontal scroll */}
-        <section className="industries" data-progress data-hscroll>
+        <section id="industries" className="industries" data-progress data-hscroll>
           <div className="sticky">
             <div className="wrap ind-head">
               <Eyebrow>Industries We Serve</Eyebrow>
@@ -300,8 +236,7 @@ export default function Home() {
         <section className="wrap">
           <div className="cta" data-reveal>
             <p>
-              TechnoAi pioneers advanced solutions in drones, satellite communication, and AI-driven
-              technologies, delivering seamless connectivity and innovation for businesses worldwide.
+              Build your next AI or robotics project with us. Tell us what you need to automate, connect, or compute — we’ll help you choose the right systems.
             </p>
             <a className="btn btn-white" href="/request-a-quote/">Start a Project <Arrow /></a>
           </div>
@@ -336,3 +271,4 @@ export default function Home() {
     </>
   );
 }
+

@@ -3,30 +3,28 @@
 export const UP = "/wp-content/uploads";
 
 export const NAV = [
-  ["Solutions", "/solutions/"],
-  ["Industries", "/industries/"],
+  ["Solutions", "#solutions"],
+  ["Hardware", "/all-products/"],
+  ["Industries", "#industries"],
   ["Services", "/services/"],
-  ["Products", "/all-products/"],
-  ["Partners", "/partners/"],
-  ["Insights", "/insights/"],
 ] as const;
 
 /** slug = name of the 3D model slot (public/redesign/models/<slug>.glb replaces the placeholder). */
 export const SOLUTIONS = [
-  { slug: "financial", title: "Financial & Transaction", text: "Structure deals, manage procurement, and keep projects financially controlled.", href: "/financial-transaction-solutions/" },
-  { slug: "drone", title: "Aerial & Drone", text: "From deployment to data capture for inspection, monitoring, and security.", href: "/aerial-drone-solutions/" },
   { slug: "robot", title: "AI & Robotics", text: "Automation that actually fits into day to day operations.", href: "/ai-robotics/" },
-  { slug: "satellite", title: "Connectivity & Satellite", text: "Reliable communication where traditional networks do not work.", href: "/connectivity-satellite-systems/" },
   { slug: "industry", title: "Industrial & Infrastructure", text: "Systems built for continuous operation in demanding environments.", href: "/industrial-smart-infrastructure/" },
+  { slug: "satellite", title: "Connectivity & Satellite", text: "Reliable communication where traditional networks do not work.", href: "/connectivity-satellite-systems/" },
   { slug: "security", title: "Security Systems", text: "Detection, monitoring, and response for critical sites and assets.", href: "/security-mission-critical-systems/" },
+  { slug: "drone", title: "Aerial & Drone", text: "From deployment to data capture for inspection, monitoring, and security.", href: "/aerial-drone-solutions/" },
+  { slug: "financial", title: "Financial & Transaction", text: "Structure deals, manage procurement, and keep projects financially controlled.", href: "/financial-transaction-solutions/" },
 ];
 
 export const DOMAINS = [
-  ["Drones & UAV Systems", "Aerial platforms for inspection, mapping, surveillance, monitoring, and mission support."],
   ["AI & Robotics", "Autonomous robots, AI-powered systems, automation tools, and smart operational support."],
-  ["Satellite Communication", "Connectivity solutions for remote sites, field operations, maritime, and critical communication."],
   ["AI Hardware", "Advanced computing hardware, edge AI systems, NVIDIA platforms, and embedded intelligence."],
+  ["Satellite Communication", "Connectivity solutions for remote sites, field operations, maritime, and critical communication."],
   ["Security & Monitoring", "Detection, surveillance, monitoring, and protection systems for critical assets and locations."],
+  ["Drones & UAV Systems", "Aerial platforms for inspection, mapping, surveillance, monitoring, and mission support."],
 ] as const;
 
 export const INDUSTRIES = [

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { BLUE, INK, materials, modelFor, type Model } from "./models";
+import { BLUE, INK, materials, modelFor, REAL_POSE, type Model } from "./models";
 import { OFFICES, SOLUTIONS } from "./data";
 
 /* ============================== shared helpers ============================== */
@@ -104,8 +104,8 @@ const DOT_FRAG = /* glsl */ `
     gl_FragColor = vec4(col, clamp(vLight, 0., 1.));
   }`;
 
-/** Real-time hero: placeholder (or real) drone over a field of dots; press & hold to scan. */
-export function HeroScene() {
+/** Real-time hero: placeholder (or real) robot over a field of dots; press & hold to scan. */
+export function HeroScene({ particlesOnly = false }: { particlesOnly?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [noGL, setNoGL] = useState(false);
 
@@ -155,10 +155,12 @@ export function HeroScene() {
 
     // drone
     const M = materials();
-    const drone: Model = modelFor("drone", M);
-    scene.add(drone.group);
+    const robot: Model = modelFor("robot", M);
+    robot.group.visible = !particlesOnly;
+    scene.add(robot.group);
     const beamMat = new THREE.MeshBasicMaterial({ color: BLUE, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
     const beam = new THREE.Mesh(new THREE.ConeGeometry(1.4, 2.6, 48, 1, true), beamMat);
+    beam.visible = !particlesOnly;
     scene.add(beam);
 
     // input
@@ -200,8 +202,8 @@ export function HeroScene() {
       scan = holding ? Math.min(scan + dt * 0.55, 1) : Math.max(scan - dt * 1.4, 0);
       uniforms.uScan.value = holding ? (t * 0.45) % 1 : scan;
 
-      const d = drone.group;
-      drone.update(t);
+      const d = robot.group;
+      robot.update(t);
       const bx = wide ? 2.3 : 0;
       const by = wide ? 0.5 : 1.5;
       d.scale.setScalar(wide ? 1.15 : 0.6);
@@ -307,9 +309,17 @@ export function JourneyScene() {
         h.visible = s > 0.01;
         if (!h.visible) return;
         models[i].update(t);
-        h.position.set(wide ? 1.7 : 0, (wide ? 0 : 1.25) + Math.sin(t * 1.1) * 0.08, 0);
-        h.rotation.y = local * Math.PI * 0.9 - 0.45 + mouse.x * 0.4 + (1 - s) * 1.6;
-        h.rotation.x = 0.12 + mouse.y * 0.15;
+        const pose = models[i].real ? REAL_POSE[SOLUTIONS[i].slug] : undefined;
+        const floorY = pose === "ground" && wide ? -1.75 - (models[i].base ?? 0) * h.scale.x : null; // stand on the rings
+        h.position.set(wide ? 1.7 : 0, floorY ?? (wide ? 0 : pose === "ground" ? 0.8 : 1.25) + (pose === "ground" ? 0 : Math.sin(t * 1.1) * (pose ? 0.05 : 0.08)), 0);
+        if (pose) {
+          // real products: small turn only, so the robot face / drone camera stay in view
+          h.rotation.y = -0.55 + local * 0.7 + mouse.x * 0.25 + (1 - s) * 0.8;
+          h.rotation.x = (pose === "ground" ? 0.04 : 0.1) + mouse.y * 0.06;
+        } else {
+          h.rotation.y = local * Math.PI * 0.9 - 0.45 + mouse.x * 0.4 + (1 - s) * 1.6;
+          h.rotation.x = 0.12 + mouse.y * 0.15;
+        }
       });
       rings.forEach((r, i) => {
         r.position.x = wide ? 1.7 : 0;

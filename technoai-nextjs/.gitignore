@@ -7,3 +7,5 @@ clone.log
 .env.local
 .env*.local
 submissions/
+
+.next-verify/

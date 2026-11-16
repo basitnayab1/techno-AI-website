@@ -8,7 +8,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 export const BLUE = 0x146b8c; // brand blue (PDF)
 export const INK = 0x0b1415; // brand ink #0f1a1b, a little darker
 
-export type Model = { group: THREE.Group; update: (t: number) => void };
+export type Model = { group: THREE.Group; update: (t: number) => void; real?: boolean; base?: number };
 
 export function materials() {
   return {
@@ -271,42 +271,67 @@ const loader = new GLTFLoader();
 
 /**
  * Slots that have a real model in public/redesign/models/<slug>.glb.
- * Add the slug here after putting the file there (empty = placeholders everywhere).
+ * Add the slug here after putting the file there.
+ * robot = KEENON C40 cleaning robot, drone = enterprise drone (Magnific image-to-3D, Tripo H3.1,
+ * cleaned in Blender: front = +Z, origin = bottom centre, ~57k triangles, 2048 px texture).
  */
-export const REAL_MODELS: string[] = [];
+export const REAL_MODELS: string[] = ["robot", "drone"];
+
+/** How a real model sits on the stage: "ground" rests on the floor, "hover" floats gently. */
+export const REAL_POSE: Record<string, "ground" | "hover"> = { robot: "ground", drone: "hover" };
 
 /**
  * Returns the placeholder at once and, if /redesign/models/<slug>.glb exists, swaps the real model
- * into the same group when it has loaded (scaled to the placeholder's size, centred).
+ * into the same group when it has loaded (scaled to the placeholder's size, centred; "ground" models
+ * keep their base on the placeholder's base). If loading fails the placeholder stays and the error
+ * is logged, so a missing model is never silent.
  */
 export function modelFor(slug: string, M: Mats): Model {
   const ph = BUILDERS[slug](M);
   const holder = new THREE.Group();
   holder.add(ph.group);
-  const model: Model = { group: holder, update: ph.update };
+  const model: Model = { group: holder, update: ph.update, real: false };
   if (!REAL_MODELS.includes(slug)) return model;
   const url = `/redesign/models/${slug}.glb`;
-  Promise.resolve()
-    .then(() => {
-      loader.load(url, (gltf) => {
-        const real = gltf.scene;
-        const size = new THREE.Box3().setFromObject(ph.group).getSize(new THREE.Vector3()).length();
-        const box = new THREE.Box3().setFromObject(real);
-        real.position.sub(box.getCenter(new THREE.Vector3()));
-        const wrap = new THREE.Group();
-        wrap.add(real);
-        wrap.scale.setScalar(size / box.getSize(new THREE.Vector3()).length());
-        holder.remove(ph.group);
-        holder.add(wrap);
-        const mixer = gltf.animations.length ? new THREE.AnimationMixer(real) : null;
-        gltf.animations.forEach((a) => mixer!.clipAction(a).play());
-        let last = 0;
-        model.update = (t) => {
-          mixer?.update(Math.max(0, t - last));
-          last = t;
-        };
+  loader.load(
+    url,
+    (gltf) => {
+      const real = gltf.scene;
+      real.traverse((o) => {
+        const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
+        if (m && "envMapIntensity" in m) {
+          m.envMapIntensity = 0.9;
+          if (m.map) {
+            m.map.anisotropy = 4;
+            // the stage has strong blue rim lights; a little self-light keeps the product's real grey
+            m.emissiveMap = m.map;
+            m.emissive = new THREE.Color(0.32, 0.32, 0.32);
+          }
+        }
       });
-    })
-    .catch(() => {});
+      const phBox = new THREE.Box3().setFromObject(ph.group);
+      const size = phBox.getSize(new THREE.Vector3()).length();
+      const box = new THREE.Box3().setFromObject(real);
+      const k = size / box.getSize(new THREE.Vector3()).length();
+      real.position.sub(box.getCenter(new THREE.Vector3()));
+      const wrap = new THREE.Group();
+      wrap.add(real);
+      wrap.scale.setScalar(k);
+      if (REAL_POSE[slug] === "ground") wrap.position.y = phBox.min.y + (box.getSize(new THREE.Vector3()).y * k) / 2;
+      holder.remove(ph.group);
+      holder.add(wrap);
+      model.real = true;
+      model.base = phBox.min.y; // bottom of the model in its own space (used to stand it on the floor)
+      const mixer = gltf.animations.length ? new THREE.AnimationMixer(real) : null;
+      gltf.animations.forEach((a) => mixer!.clipAction(a).play());
+      let last = 0;
+      model.update = (t) => {
+        mixer?.update(Math.max(0, t - last));
+        last = t;
+      };
+    },
+    undefined,
+    (err) => console.error(`[redesign] 3D model ${url} failed to load, showing placeholder`, err),
+  );
   return model;
 }

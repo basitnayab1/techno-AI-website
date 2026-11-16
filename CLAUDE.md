@@ -79,6 +79,43 @@ Removed on purpose earlier (the owner asked for only the main website): the `tra
 - Not done yet: real 3D models / extra videos (after approval), inner pages in the new style
   (nav/footer links still open the old cloned pages), "Become a Partner" popup form.
 
+## Home hero (2026-11-14) — white theme, 3D "Intelligence Core"
+
+- Built from the owner's spec + reference image: `app/redesign/hero.tsx` (markup, nav data),
+  `hero-nav.tsx` (floating glass navbar, dropdowns, mobile panel), `core-stage.tsx` (lazy-loads the
+  scene with next/dynamic, CSS orb fallback without WebGL, HTML labels), `core-scene.tsx` (React
+  Three Fiber 9 since 2026-11-14 — @react-three/fiber only, no drei; components: StudioEnvironment
+  (RoomEnvironment), ResponsiveCamera, IntelligenceCore, Band, Cube, Particles; glass sphere, circuit shells, //:ai core from the
+  official Logo.svg, chrome orbital bands, pedestal, particles, glass cubes, mouse parallax, label
+  lines projected every frame, pauses off-screen, still frame for reduced motion), `hero.css`
+  (all classes prefixed `hx-`). page.tsx just renders `<Hero />` in place of the old header + hero.
+- Existing hero film `/redesign/landing/hero.mp4` is only a 7% grey texture behind the core.
+- Font: layout uses `Noto_Sans_TC`. In a dev server whose font download failed it shows Arial
+  ("Noto Sans TC Fallback"); restart the dev server. Production build has the real font.
+- Verify builds without touching a running dev server: `NEXT_BUILD_DIR=.next-verify npx next build`.
+
+## Section 02 (2026-11-14) — "Find your starting point", 3 capability cards
+
+- `app/redesign/capabilities.tsx` (+ `capabilities.css`, prefix `cx-`) replaces the old `.overview` block.
+  `capability-models.tsx` = three small R3F canvases (AI processor in a glass cube + neural net, robot
+  arm, edge server stack), lazy-loaded when the section is near, frameloop "never" off screen, shared
+  window mouse parallax, more motion on card hover. Reuses `StudioEnvironment` exported from core-scene.
+- Reveal = the page's existing `[data-reveal]` (fx.tsx + Lenis) with staggered transition-delay.
+  GSAP is NOT installed; the spec asked for GSAP ScrollTrigger but also "no duplicate animation
+  systems" — install gsap only if the owner insists.
+- Decorative robot hand + glass AI chip: Magnific image (65 credits) at
+  `public/redesign/capabilities/robot-hand.jpg`, multiply-blended on the light background.
+
+## Section 03 (2026-11-14) — connected intelligence ecosystem
+
+- `app/redesign/ecosystem.tsx` (+ `ecosystem.css`, prefix `ex-`) replaces the old `.statement` section.
+  Pinned 320vh section; uses the page's `[data-progress]` + `data-steps` (fx.tsx/Lenis) for the
+  headline word light-up, the 5-step list and the "Integrated" meter. `ecosystem-scene.tsx` (R3F)
+  reads the same scroll position: parts float → assemble (staggered) → blue data streams draw +
+  particles flow → platform/processor glow + labels. Parts: processor (new), RobotArm + EdgeServer
+  (exported from capability-models.tsx), sensors, rover, drone (buildDrone from models.ts), nodes.
+- Again no GSAP (not installed; same reason as section 02).
+
 ## Forms (work without WordPress)
 
 - `app/wp-admin/admin-ajax.php/route.ts` replaces WordPress admin-ajax for:
@@ -120,3 +157,22 @@ npm run clone      # re-snapshot live site after content changes in WordPress
   (PUBLIC repo), branch main. Root .gitignore keeps the backup zip, site/, reference .mp4s and
   personal PDFs out — never commit them.
 - The WordPress database was never provided, so the WordPress site itself can't run locally.
+
+## Real 3D models in the Solutions journey (2026-11-16)
+
+- `public/redesign/models/robot.glb` (KEENON C40, ~2.0 MB, 56k tris) and `drone.glb` (~2.0 MB, 57k tris):
+  Magnific image-to-3D, Tripo H3.1 detailed (1,160 credits each), from `output/3d-model-references/`
+  (`kleenbot-c40-front-three-quarter.png`, `drone-approved-reference.png`). Cleaned in Blender 5.3
+  (installed at C:/Program Files/Blender Foundation/Blender 5.3): front = glTF +Z, origin = bottom centre,
+  decimate 50 %, texture 4096 → 2048 JPEG. Single mesh each → propellers can't spin separately.
+- `models.ts`: `REAL_MODELS = ["robot", "drone"]`, `REAL_POSE` (robot "ground" = stands on the rings,
+  drone "hover"); load errors are logged and the placeholder stays. Real models get a little
+  emissive self-light so the stage's blue rim lights don't turn the grey products blue.
+- `scenes.tsx` JourneyScene: real models only turn slightly (face / camera stay in view).
+- Review renders: `output/3d-model-renders/`. Other four slots are still placeholders.
+
+## 3-colour theme (2026-11-16)
+
+- Owner: white theme with only ink #0f1a1b, blue #146b8c and aqua #9fe7e7, **no gradients**. `app/redesign/three-colour.css`
+  (imported last in layout.tsx) overrides the old brand-gradient blocks; teal #289fb7 retired (TEAL const = blue in
+  core-scene.tsx / capability-models.tsx). Glossy "venom" buttons (hx-gloss) still use their ink shine.

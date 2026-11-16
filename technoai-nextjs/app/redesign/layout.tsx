@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
-import { Noto_Sans } from "next/font/google";
+import { Noto_Sans_TC } from "next/font/google";
 import "./redesign.css";
+import "./mission-white.css";
+import "./three-colour.css"; // 3-colour white theme, no gradients (loaded last)
 
 // Brand typeface (TechnoAi Brand Identity): Noto Sans — Light / Regular / Medium / Bold.
-const noto = Noto_Sans({
+const noto = Noto_Sans_TC({
   subsets: ["latin"],
   weight: ["300", "400", "500", "700"],
   display: "swap",
@@ -12,7 +14,7 @@ const noto = Noto_Sans({
 export const metadata: Metadata = {
   title: "TechnoAi Technology, AI and Procurement Company in UAE - TechnoAi",
   description:
-    "Advanced technology solutions for mission critical operations: drones, robotics, satellite connectivity, AI hardware and security systems.",
+    "AI, robotics, and computing hardware for real-world operations. Explore integrated systems, edge AI, automation, and deployment support.",
 };
 
 export default function RedesignLayout({ children }: { children: React.ReactNode }) {
@@ -22,3 +24,4 @@ export default function RedesignLayout({ children }: { children: React.ReactNode
     </html>
   );
 }
+

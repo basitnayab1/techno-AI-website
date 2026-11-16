@@ -75,7 +75,9 @@ export function Motion() {
     // in-page links through Lenis
     const onClick = (e: MouseEvent) => {
       const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="#"]');
-      if (!a || !lenis) return;
+      if (!a) return;
+      a.closest("details")?.removeAttribute("open");
+      if (!lenis) return;
       const t = document.querySelector(a.getAttribute("href")!);
       if (!t) return;
       e.preventDefault();
