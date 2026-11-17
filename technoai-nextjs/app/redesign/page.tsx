@@ -3,7 +3,7 @@ import { Loader, Motion, Terminal } from "./fx";
 import Hero from "./hero";
 import Capabilities from "./capabilities";
 import InkSample from "./ink-sample"; // SAMPLE ONLY: ?ink=1
-import { DroneFilm, GlobeScene, JourneyScene } from "./scenes";
+import { DroneFilm, GlobeScene, JourneyScene } from "./deferred-scenes";
 
 // New TechnoAi home page ("Mission Control"). Text and links come from the current technoai.ae
 // home page. Brand: Noto Sans, ink #0f1a1b + blue #146b8c (TechnoAi Brand Identity PDF).
@@ -58,12 +58,13 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Download the 3D models + Draco decoder with the HTML (network only, no main-thread work); the
+// journey scene picks them up from the cache when it starts.
 const PRELOAD = ["/redesign/models/robot.glb", "/redesign/models/drone.glb", "/redesign/draco/draco_wasm_wrapper.js", "/redesign/draco/draco_decoder.wasm"];
 
 export default function Home() {
   return (
     <>
-      {/* start downloading the 3D models + Draco decoder with the HTML, before any JS runs (React hoists these into <head>) */}
       {PRELOAD.map((href) => (
         <link key={href} rel="preload" href={href} as="fetch" crossOrigin="anonymous" />
       ))}

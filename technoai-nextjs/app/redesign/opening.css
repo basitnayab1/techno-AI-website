@@ -1,0 +1,69 @@
+/* First-visit opener: light pass, centered logo, circular wave revealing the hero. */
+@property --op-hole {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+.op {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+  animation: opExit .01s linear 1.32s both;
+}
+.op-cover {
+  position: absolute;
+  inset: 0;
+  background: #0f1a1b;
+  --op-hole: 0px;
+  -webkit-mask-image: radial-gradient(circle at center, transparent var(--op-hole), #000 calc(var(--op-hole) + 1px));
+  mask-image: radial-gradient(circle at center, transparent var(--op-hole), #000 calc(var(--op-hole) + 1px));
+  animation: opCircle .64s cubic-bezier(.22, .61, .36, 1) .66s both;
+}
+.op::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 36%, rgba(159, 231, 231, .16) 48%, rgba(40, 159, 183, .3) 51%, transparent 64%);
+  transform: translateX(-110%);
+  animation: opSweep .34s ease-out .12s both;
+}
+.op-aura {
+  position: absolute;
+  z-index: 1;
+  width: 44vmax;
+  height: 44vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(40, 159, 183, .4), rgba(20, 107, 140, .13) 35%, transparent 70%);
+  opacity: 0;
+  animation: opBloom .48s ease-out .08s both;
+}
+.op-wave {
+  position: absolute;
+  z-index: 2;
+  width: 12vmax;
+  aspect-ratio: 1;
+  border: 2px solid rgba(159, 231, 231, .8);
+  border-radius: 50%;
+  box-shadow: 0 0 24px rgba(40, 159, 183, .6), inset 0 0 24px rgba(40, 159, 183, .3);
+  opacity: 0;
+  animation: opWave .64s ease-out .66s both;
+}
+.op-center {
+  position: relative;
+  z-index: 3;
+  animation: opLogoIn .2s ease-out both, opLogoOut .26s ease-in .76s forwards;
+}
+.op-logo { display: block; width: clamp(128px, 12vw, 176px); height: auto; }
+@keyframes opLogoIn { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: scale(1); } }
+@keyframes opLogoOut { to { opacity: 0; transform: scale(1.1); } }
+@keyframes opBloom { 35% { opacity: .75; } to { opacity: 0; transform: scale(2.2); } }
+@keyframes opSweep { to { transform: translateX(110%); } }
+@keyframes opCircle { to { --op-hole: 150vmax; } }
+@keyframes opWave { from { opacity: .9; transform: scale(.1); } to { opacity: 0; transform: scale(18); } }
+@keyframes opExit { to { visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { .op { display: none; } }

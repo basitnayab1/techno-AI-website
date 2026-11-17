@@ -17,16 +17,13 @@ function CoreFallback() {
   );
 }
 
-// three.js + the scene are loaded only on the client, after the page is interactive.
+// Load the hero scene as soon as React hydrates; the opener covers shader warmup.
 const CoreScene = dynamic(() => import("./core-scene"), { ssr: false, loading: () => <CoreFallback /> });
 
 function hasWebGL() {
-  try {
-    const c = document.createElement("canvas");
-    return !!(c.getContext("webgl2") || c.getContext("webgl"));
-  } catch {
-    return false;
-  }
+  // Cheap check only: creating a test WebGL context cost ~0.9 s on the first load. If the real
+  // context fails, CoreScene's onFail switches to the CSS fallback anyway.
+  return typeof window !== "undefined" && !!(window.WebGL2RenderingContext || window.WebGLRenderingContext);
 }
 
 const LABELS: [string, string][] = [
@@ -39,10 +36,13 @@ export default function CoreStage() {
   const [mode, setMode] = useState<"wait" | "gl" | "fallback">("wait");
   useEffect(() => setMode(hasWebGL() ? "gl" : "fallback"), []);
   const fail = useCallback(() => setMode("fallback"), []);
+  const [ready, setReady] = useState(false); // 3D shaders compiled → swap the CSS orb for the real core
+  const onReady = useCallback(() => setReady(true), []);
 
   return (
-    <div className="hx-stage" data-mode={mode}>
-      {mode === "gl" ? <CoreScene onFail={fail} /> : <CoreFallback />}
+    <div className="hx-stage" data-mode={mode} data-ready={ready || undefined}>
+      {mode === "gl" && <CoreScene onFail={fail} onReady={onReady} />}
+      {(mode !== "gl" || !ready) && <CoreFallback />}
       {LABELS.map(([k, text]) => (
         <p className={`hx-label hx-label-${k}`} data-label={k} key={k}>
           <span>{text}</span>

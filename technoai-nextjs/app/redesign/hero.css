@@ -279,3 +279,7 @@ html.fx:not(.loaded) .hx-scroll, html.fx:not(.loaded) .hx-stage { animation-play
 .hx-btn.hx-gloss.is-snap { animation: hxSnapGlow .6s var(--hx-ease); }
 @keyframes hxSnapGlow { 0% { filter: brightness(1.35); } 100% { filter: none; } }
 .stringy-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 70; pointer-events: none; }
+
+/* real 3D core fades in once its shaders have compiled in the background (core-stage data-ready) */
+.hx-stage .hx-canvas { opacity: 0; transition: opacity .6s ease; }
+.hx-stage[data-ready] .hx-canvas { opacity: 1; }

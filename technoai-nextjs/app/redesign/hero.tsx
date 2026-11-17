@@ -3,6 +3,7 @@ import { INDUSTRIES, SOLUTIONS } from "./data";
 import CoreStage from "./core-stage";
 import HeroNav from "./hero-nav";
 import Stringy from "./stringy";
+import HeroBackground from "./hero-background";
 
 // Home hero: floating glass navbar + headline + 3D "Intelligence Core".
 // Brand: Noto Sans (TC), #0f1a1b / #146b8c / #289fb7 / #9fe7e7 (TechnoAi Brand Identity PDF).
@@ -49,9 +50,7 @@ export default function Hero() {
       <Stringy />
       <section className="hx-hero" aria-labelledby="hx-title">
         <div className="hx-bg" aria-hidden="true">
-          <video className="hx-bg-video" autoPlay muted loop playsInline preload="none" poster="/redesign/landing/hero-poster.jpg">
-            <source src="/redesign/landing/hero-bg.mp4" type="video/mp4" />
-          </video>
+          <HeroBackground />
           <span className="hx-bg-veil" />
           <span className="hx-bg-floor" />
         </div>

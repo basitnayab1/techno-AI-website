@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Noto_Sans_TC } from "next/font/google";
+import { Noto_Sans } from "next/font/google";
 import "./redesign.css";
 import "./mission-white.css";
 import "./three-colour.css"; // 3-colour white theme, no gradients (loaded last)
 
 // Brand typeface (TechnoAi Brand Identity): Noto Sans — Light / Regular / Medium / Bold.
-const noto = Noto_Sans_TC({
+const noto = Noto_Sans({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
+  weight: "variable",
   display: "swap",
 });
 

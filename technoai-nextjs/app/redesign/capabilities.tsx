@@ -54,9 +54,21 @@ export default function Capabilities() {
   // load three.js models only when the section is getting close
   useEffect(() => {
     const el = ref.current!;
-    const io = new IntersectionObserver(([e]) => e.isIntersecting && (setShow(true), io.disconnect()), { rootMargin: "300px 0px" });
+    // start well before the section arrives, but in an idle moment, so the hero's own start-up isn't slowed
+    let idle = 0;
+    const go = () => {
+      const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+      if (w.requestIdleCallback) idle = w.requestIdleCallback(() => setShow(true), { timeout: 1500 });
+      else idle = window.setTimeout(() => setShow(true), 300);
+    };
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && (go(), io.disconnect()), { rootMargin: "150% 0px" });
     io.observe(el);
-    return () => io.disconnect();
+    return () => {
+      io.disconnect();
+      const w = window as Window & { cancelIdleCallback?: (id: number) => void };
+      if (w.cancelIdleCallback) w.cancelIdleCallback(idle);
+      clearTimeout(idle);
+    };
   }, []);
 
   return (

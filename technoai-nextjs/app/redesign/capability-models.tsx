@@ -1,9 +1,9 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { StudioEnvironment } from "./core-scene";
+import { StudioEnvironment, Warmup } from "./core-scene";
 
 // Small R3F models for the three capability cards (section 02).
 // Brand colours only: #0f1a1b, #146b8c, #289fb7, #9fe7e7, white/greys.
@@ -287,6 +287,8 @@ const MODELS: Record<Kind, { el: (l: Live) => React.ReactNode; cam: [number, num
 export default function CapabilityModel({ kind, hovered }: { kind: Kind; hovered: boolean }) {
   const wrap = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
+  const [compiled, setCompiled] = useState(false); // shaders compiled in the background → start drawing
+  const onCompiled = useCallback(() => setCompiled(true), []);
   const [still] = useState(() => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const live = useRef<Live>({ hover: 0, still }).current;
   live.hover = hovered ? 1 : 0;
@@ -306,14 +308,15 @@ export default function CapabilityModel({ kind, hovered }: { kind: Kind; hovered
 
   const m = MODELS[kind];
   return (
-    <div ref={wrap} className="cx-canvas">
+    <div ref={wrap} className="cx-canvas" data-ready={compiled || undefined}>
       <Canvas
         dpr={[1, 1.5]}
         gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
         camera={{ fov: 30, position: m.cam }}
-        frameloop={still ? "demand" : visible ? "always" : "never"}
+        frameloop={!compiled ? "never" : still ? "demand" : visible ? "always" : "never"}
         onCreated={({ gl, camera }) => {
           gl.toneMapping = THREE.ACESFilmicToneMapping;
+          gl.debug.checkShaderErrors = false; // no synchronous shader stall
           camera.lookAt(0, 0, 0);
         }}
         aria-hidden="true"
@@ -325,6 +328,7 @@ export default function CapabilityModel({ kind, hovered }: { kind: Kind; hovered
         <Parallax live={live} base={m.base}>
           {m.el(live)}
         </Parallax>
+        <Warmup onReady={onCompiled} />
       </Canvas>
     </div>
   );

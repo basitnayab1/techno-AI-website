@@ -133,3 +133,7 @@
 .cx-next-icon { border-color: transparent; background: linear-gradient(#fff, #fff) padding-box, var(--g-full) border-box; border: 1.5px solid transparent; }
 .cx-next:hover .cx-next-icon { background: var(--g-fill) padding-box, var(--g-full) border-box; }
 .cx-next-line { background: linear-gradient(90deg, #9fe7e7, rgba(40, 159, 183, .3), transparent); }
+
+/* small 3D models fade in once their shaders compiled in the background (no stall while scrolling) */
+.cx-canvas canvas { opacity: 0; transition: opacity .5s ease; }
+.cx-canvas[data-ready] canvas { opacity: 1; }

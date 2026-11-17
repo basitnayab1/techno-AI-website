@@ -13,6 +13,7 @@ function createStage(canvas: HTMLCanvasElement, fov = 35, z = 8) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.debug.checkShaderErrors = false; // don't stall on every shader compile (≈1.4 s on the first load)
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(fov, 1, 0.1, 200);
   camera.position.set(0, 0.4, z);
@@ -45,6 +46,29 @@ function createStage(canvas: HTMLCanvasElement, fov = 35, z = 8) {
 }
 
 /** Runs frame() every animation frame while `watch` is on screen. */
+/** Like useEffect, but runs `init` only when the element is about a screen away (keeps page load light). */
+function useNearEffect(ref: React.RefObject<HTMLElement | null>, init: () => void | (() => void)) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let cleanup: void | (() => void);
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        io.disconnect();
+        cleanup = init();
+      },
+      { rootMargin: "120% 0px" },
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      cleanup?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+}
+
 function runWhileVisible(watch: Element, frame: (t: number, dt: number) => void) {
   const clock = new THREE.Clock();
   let raf = 0;
@@ -67,11 +91,30 @@ function runWhileVisible(watch: Element, frame: (t: number, dt: number) => void)
   };
 }
 
+/** Page-space position of sections, measured only when the page size changes (no layout read per frame). */
+const geoCache = new Map<Element, { top: number; h: number }>();
+let geoObserver: ResizeObserver | null = null;
+function sectionGeo(el: Element) {
+  if (!geoObserver && typeof ResizeObserver !== "undefined") {
+    geoObserver = new ResizeObserver(() => geoCache.clear());
+    geoObserver.observe(document.body);
+  }
+  let g = geoCache.get(el);
+  if (!g) {
+    const r = el.getBoundingClientRect();
+    g = { top: r.top + window.scrollY, h: r.height };
+    geoCache.set(el, g);
+  }
+  return g;
+}
+
 /** 0..1 scroll progress of a tall (pinned) section. */
 function sectionProgress(el: Element) {
-  const r = el.getBoundingClientRect();
-  const total = Math.max(r.height - window.innerHeight, 1);
-  return Math.min(Math.max(-r.top / total, 0), 1);
+  const g = sectionGeo(el);
+  const lenis = (window as unknown as { lenis?: { scroll: number } }).lenis;
+  const top = g.top - (lenis ? lenis.scroll : window.scrollY); // no layout read per frame
+  const total = Math.max(g.h - window.innerHeight, 1);
+  return Math.min(Math.max(-top / total, 0), 1);
 }
 
 const damp = (a: number, b: number, k: number) => a + (b - a) * k;
@@ -242,7 +285,7 @@ export function HeroScene({ particlesOnly = false }: { particlesOnly?: boolean }
 export function JourneyScene() {
   const ref = useRef<HTMLCanvasElement>(null);
 
-  useEffect(() => {
+  useNearEffect(ref, () => {
     const canvas = ref.current;
     const section = canvas?.closest<HTMLElement>(".journey");
     if (!canvas || !section) return;
@@ -276,6 +319,8 @@ export function JourneyScene() {
     tick.rotation.x = -Math.PI / 2;
     tick.position.y = -1.74;
     scene.add(tick);
+    // compile the stage's shaders in the background now (scene starts ~2 screens early), not on the first visible frame
+    renderer.compileAsync(scene, camera).catch(() => {});
 
     const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
     const onMove = (e: PointerEvent) => {
@@ -285,6 +330,8 @@ export function JourneyScene() {
     window.addEventListener("pointermove", onMove, { passive: true });
 
     let shown = -1;
+    let lastSp = "";
+    let lastJp = "";
     const n = SOLUTIONS.length;
     const frame = (t: number) => {
       const p = sectionProgress(section);
@@ -295,8 +342,10 @@ export function JourneyScene() {
         shown = idx;
         section.dataset.active = String(idx);
       }
-      section.style.setProperty("--sp", local.toFixed(3));
-      section.style.setProperty("--jp", p.toFixed(3));
+      const sp = local.toFixed(3);
+      const jp = p.toFixed(3);
+      if (sp !== lastSp) section.style.setProperty("--sp", (lastSp = sp)); // write only on change (no layout thrash)
+      if (jp !== lastJp) section.style.setProperty("--jp", (lastJp = jp));
 
       mouse.x = damp(mouse.x, mouse.tx, 0.05);
       mouse.y = damp(mouse.y, mouse.ty, 0.05);
@@ -341,7 +390,7 @@ export function JourneyScene() {
       window.removeEventListener("pointermove", onMove);
       stage.dispose();
     };
-  }, []);
+  });
 
   return <canvas ref={ref} className="journey-gl" aria-hidden="true" />;
 }
@@ -358,7 +407,7 @@ function latLon(lat: number, lon: number, r: number) {
 export function GlobeScene() {
   const ref = useRef<HTMLCanvasElement>(null);
 
-  useEffect(() => {
+  useNearEffect(ref, () => {
     const canvas = ref.current;
     if (!canvas) return;
     let stage: ReturnType<typeof createStage>;
@@ -434,6 +483,7 @@ export function GlobeScene() {
     window.addEventListener("pointermove", mv);
     window.addEventListener("pointerup", upH);
 
+    renderer.compileAsync(scene, camera).catch(() => {}); // shaders compile in the background before it scrolls in
     const frame = (t: number) => {
       if (!drag.on) drag.off = damp(drag.off, Math.sin(t * 0.15) * 0.35, 0.01);
       globe.rotation.y = base + drag.off;
@@ -452,7 +502,7 @@ export function GlobeScene() {
       window.removeEventListener("pointerup", upH);
       stage.dispose();
     };
-  }, []);
+  });
 
   return <canvas ref={ref} className="globe-gl" aria-label="Globe showing TechnoAi hubs in Abu Dhabi, Prague and Lahore" role="img" />;
 }
@@ -464,14 +514,13 @@ export function DroneFilm({ count, dir, poster, video }: { count: number; dir: s
   const ref = useRef<HTMLCanvasElement>(null);
   const [mode, setMode] = useState<"still" | "loop" | "scrub">("still");
 
-  // Don't download the 97 film frames (or the phone loop) at page load: they would compete with the
-  // hero and the 3D models. Start only when the section is about two screens away.
+  // Keep the film dormant until the section approaches the viewport.
   useEffect(() => {
     if (reduced()) return;
     const section = document.querySelector(".closer");
     const go = () => setMode(window.innerWidth < 760 ? "loop" : "scrub");
     if (!section) return go();
-    const io = new IntersectionObserver(([e]) => e.isIntersecting && (go(), io.disconnect()), { rootMargin: "200% 0px" });
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && (go(), io.disconnect()), { rootMargin: "500px 0px" });
     io.observe(section);
     return () => io.disconnect();
   }, []);
@@ -483,25 +532,36 @@ export function DroneFilm({ count, dir, poster, video }: { count: number; dir: s
     const section = canvas?.closest<HTMLElement>(".closer");
     if (!canvas || !ctx || !section) return;
     const frames: (HTMLImageElement | null)[] = new Array(count).fill(null);
+    const requested = new Set<number>();
+    let active = true;
+    let sized = false;
     let drawn = -1;
-    for (let i = 0; i < count; i++) {
+    const loadFrame = (i: number) => {
+      if (i < 0 || i >= count || requested.has(i)) return;
+      requested.add(i);
       const img = new Image();
       img.decoding = "async";
       img.onload = () => {
+        if (!active) return;
         frames[i] = img;
-        if (i === 0) {
+        if (!sized) {
           canvas.width = img.naturalWidth;
           canvas.height = img.naturalHeight;
           drawn = -1;
+          sized = true;
         }
       };
       img.src = `${dir}/f${String(i + 1).padStart(3, "0")}.jpg`;
-    }
+    };
+    loadFrame(0);
     let cur = 0;
     const stop = runWhileVisible(section, () => {
       const target = sectionProgress(section) * (count - 1);
       cur = damp(cur, target, 0.15);
       let i = Math.round(cur);
+      loadFrame(i);
+      loadFrame(i + 1);
+      loadFrame(i - 1);
       while (i > 0 && !frames[i]) i--;
       if (frames[i] && i !== drawn) {
         ctx.drawImage(frames[i]!, 0, 0, canvas.width, canvas.height);
@@ -509,7 +569,7 @@ export function DroneFilm({ count, dir, poster, video }: { count: number; dir: s
         canvas.classList.add("ready");
       }
     });
-    return stop;
+    return () => { active = false; stop(); };
   }, [mode, count, dir]);
 
   return (

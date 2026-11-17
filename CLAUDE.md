@@ -187,3 +187,28 @@ npm run clone      # re-snapshot live site after content changes in WordPress
 - Splash loader: min 0.6 s, max 2.5 s.
 - Vercel (basitnayab1 repo, project root = technoai-nextjs) refused Next 15.5.4 (CVE-2025-66478) →
   upgraded to next 15.5.29 + react/react-dom 19.1.10.
+
+## Opening (2026-11-16)
+
+- After the owner's Instagram reel (alphenex.ai, first site in the reel): `fx.tsx` Loader + `opening.css` (prefix op-).
+  Ink dotted screen, blue left panel with white //:ai logo + 000→100 counter → panel slides left → "● Ready"
+  → screen lifts up and the hero animates in. Whole timeline is CSS keyframes (transform/opacity) started by
+  data-phase="play", so it stays smooth while the 3D hero compiles. Once per session (sessionStorage), skipped
+  for reduced motion. Old `.loader` CSS in redesign.css is now unused.
+
+## Load-time fixes (2026-11-16, from owner's screen recording)
+
+- Measured with real GPU (Intel Iris Xe) headless Chrome + CPU profile: ~3.2 s main-thread blocking at load.
+- Fixes: `debug.checkShaderErrors = false` on every renderer; hero shaders compiled with
+  `gl.compileAsync` (Warmup in core-scene.tsx) while the CSS orb shows, canvas fades in on `data-ready`;
+  `hasWebGL()` no longer creates a test WebGL context (~0.9 s); JourneyScene/GlobeScene build only when
+  ~1 screen away (`useNearEffect` in scenes.tsx). Result: blocking ~1.8 s, opening done ~2.5 s (was ~4.5 s).
+- Remaining cost is WebGL context creation + first frame of the hero (~0.65 s + ~0.75 s).
+
+## Owner/agent changes reviewed (2026-11-17)
+
+- `deferred-scenes.tsx` lazy-loads scenes.tsx (first-load JS 302 → 115 kB); `hero-background.tsx` poster first,
+  video after 1.8 s; font Noto_Sans (variable); new opening = dark screen, centred logo, sweep + circle wave (~1.3 s,
+  uses gradients + old teal — owner's call).
+- Fixed after review: JourneyScene also on phones (was disabled), starts 2 screens early (`useNear("200% 0px")`);
+  model + Draco `<link rel="preload">` restored in page.tsx; journey shaders `compileAsync` right after setup.

@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
@@ -467,7 +467,27 @@ class SceneBoundary extends Component<{ onFail: () => void; children: ReactNode 
 }
 
 /** React wrapper: R3F canvas + the SVG lines to the HTML labels. Loaded lazily by core-stage.tsx. */
-export default function CoreScene({ onFail }: { onFail: () => void }) {
+/**
+ * Compiles every shader of the scene on the GPU driver's background threads (KHR_parallel_shader_compile)
+ * before the first frame. Without this the first render blocked the page for ~1.5 s.
+ */
+export function Warmup({ onReady }: { onReady: () => void }) {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  const camera = useThree((s) => s.camera);
+  useEffect(() => {
+    let off = false;
+    const done = () => !off && onReady();
+    const t = window.setTimeout(() => gl.compileAsync(scene, camera).then(done, done), 0); // after the scene's own effects
+    return () => {
+      off = true;
+      clearTimeout(t);
+    };
+  }, [gl, scene, camera, onReady]);
+  return null;
+}
+
+export default function CoreScene({ onFail, onReady }: { onFail: () => void; onReady?: () => void }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [env] = useState(() => ({
@@ -475,6 +495,11 @@ export default function CoreScene({ onFail }: { onFail: () => void }) {
     mobile: typeof window !== "undefined" && window.innerWidth < 760,
   }));
   const [visible, setVisible] = useState(true);
+  const [compiled, setCompiled] = useState(false);
+  const ready = useCallback(() => {
+    setCompiled(true);
+    onReady?.();
+  }, [onReady]);
 
   // pause rendering while the hero is off screen
   useEffect(() => {
@@ -490,26 +515,36 @@ export default function CoreScene({ onFail }: { onFail: () => void }) {
     };
   }, []);
 
+  // Label dot positions (relative to the stage) are measured only now and then, not every frame:
+  // reading layout each frame after the SVG writes forced a layout per frame.
+  const anchorCache = useRef<{ at: number; dots: Record<string, [number, number]> }>({ at: -1, dots: {} });
   const onAnchors = useMemo(
     () => (pts: Pts) => {
       const svg = svgRef.current;
       const stage = wrapRef.current?.parentElement;
       if (!svg || !stage) return;
-      const sr = stage.getBoundingClientRect();
-      stage.querySelectorAll<HTMLElement>("[data-label]").forEach((el) => {
-        const k = el.dataset.label!;
+      const c = anchorCache.current;
+      const now = performance.now();
+      if (now - c.at > 500) {
+        // labels animate in / layout can change: refresh twice a second (cheap, no per-frame thrash)
+        c.at = now;
+        const sr = stage.getBoundingClientRect();
+        stage.querySelectorAll<HTMLElement>("[data-label]").forEach((el) => {
+          const r = (el.querySelector<HTMLElement>(".hx-label-dot") || el).getBoundingClientRect();
+          c.dots[el.dataset.label!] = [r.left + r.width / 2 - sr.left, r.top + r.height / 2 - sr.top];
+        });
+      }
+      for (const k of Object.keys(c.dots)) {
         const p = pts[k];
         const line = svg.querySelector<SVGPolylineElement>(`[data-line="${k}"]`);
-        if (!p || !line) return;
-        const r = (el.querySelector<HTMLElement>(".hx-label-dot") || el).getBoundingClientRect();
-        const lx = r.left + r.width / 2 - sr.left;
-        const ly = r.top + r.height / 2 - sr.top;
+        if (!p || !line) continue;
+        const [lx, ly] = c.dots[k];
         const mx = lx + (p.x - lx) * 0.45;
         line.setAttribute("points", `${lx},${ly} ${mx},${ly} ${p.x},${p.y}`);
         const end = svg.querySelector<SVGCircleElement>(`[data-end="${k}"]`);
         end?.setAttribute("cx", String(p.x));
         end?.setAttribute("cy", String(p.y));
-      });
+      }
     },
     [],
   );
@@ -521,9 +556,10 @@ export default function CoreScene({ onFail }: { onFail: () => void }) {
           dpr={[1, env.mobile ? 1.5 : 1.75]}
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
           camera={{ fov: 30, position: [0, 0.25, 8.7], near: 0.1, far: 100 }}
-          frameloop={env.still ? "demand" : visible ? "always" : "never"}
+          frameloop={!compiled ? "never" : env.still ? "demand" : visible ? "always" : "never"}
           onCreated={({ gl }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
+            gl.debug.checkShaderErrors = false; // no synchronous shader stall
             gl.toneMappingExposure = 1.05;
           }}
           aria-hidden="true"
@@ -533,6 +569,7 @@ export default function CoreScene({ onFail }: { onFail: () => void }) {
           <hemisphereLight args={["#ffffff", "#dbe6ea", 1.4]} />
           <directionalLight position={[-3, 5, 6]} intensity={2.2} />
           <IntelligenceCore mobile={env.mobile} still={env.still} onAnchors={onAnchors} />
+          <Warmup onReady={ready} />
         </Canvas>
       </SceneBoundary>
       <svg ref={svgRef} className="hx-lines" aria-hidden="true">

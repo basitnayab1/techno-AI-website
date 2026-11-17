@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Lenis from "lenis";
+import "./opening.css";
 
 const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -48,29 +49,61 @@ export function Motion() {
         el.style.height = shift ? `${shift + window.innerHeight}px` : "";
       });
     };
-    const update = () => {
-      header?.classList.toggle("scrolled", window.scrollY > 10);
-      const vh = window.innerHeight;
+    // Section positions are measured once (and again when the page size changes), so scrolling only
+    // reads window.scrollY. Measuring every frame forced a full layout per frame (the scroll stutter).
+    const geo = new Map<HTMLElement, { top: number; h: number }>();
+    const remeasure = () => {
+      const y = window.scrollY;
       prog.forEach((el) => {
         const r = el.getBoundingClientRect();
-        if (r.bottom < -vh || r.top > vh * 2) return;
-        const p = Math.min(Math.max(-r.top / Math.max(r.height - vh, 1), 0), 1);
-        el.style.setProperty("--p", p.toFixed(4));
-        const steps = Number(el.dataset.steps || 0);
-        if (steps) el.dataset.step = String(Math.min(steps - 1, Math.floor(p * steps)));
+        geo.set(el, { top: r.top + y, h: r.height });
       });
     };
+    const last = new Map<HTMLElement, string>();
+    const vhNow = { v: window.innerHeight };
+    const update = () => {
+      const vh = vhNow.v;
+      // Lenis already knows the scroll position; reading window.scrollY after style writes forces a layout
+      const y = lenis ? lenis.scroll : window.scrollY;
+      if (header) {
+        const sc = y > 10;
+        if (header.classList.contains("scrolled") !== sc) header.classList.toggle("scrolled", sc);
+      }
+      prog.forEach((el) => {
+        const g = geo.get(el);
+        if (!g) return;
+        const top = g.top - y;
+        if (top + g.h < -vh || top > vh * 2) return;
+        const p = Math.min(Math.max(-top / Math.max(g.h - vh, 1), 0), 1).toFixed(4);
+        if (last.get(el) === p) return;
+        last.set(el, p);
+        el.style.setProperty("--p", p);
+        const steps = Number(el.dataset.steps || 0);
+        if (steps) {
+          const step = String(Math.min(steps - 1, Math.floor(+p * steps)));
+          if (el.dataset.step !== step) el.dataset.step = step;
+        }
+      });
+    };
+    const ro = new ResizeObserver(() => {
+      vhNow.v = window.innerHeight;
+      remeasure();
+      update();
+    });
+    ro.observe(document.body);
 
     let raf = 0;
     const loop = (time: number) => {
       lenis?.raf(time);
-      update();
       raf = requestAnimationFrame(loop);
     };
     measure();
+    remeasure();
     update();
     raf = requestAnimationFrame(loop);
     window.addEventListener("resize", measure);
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, { passive: true });
 
     // in-page links through Lenis
     const onClick = (e: MouseEvent) => {
@@ -88,7 +121,10 @@ export function Motion() {
     return () => {
       cancelAnimationFrame(raf);
       io.disconnect();
+      ro.disconnect();
       window.removeEventListener("resize", measure);
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update);
       document.removeEventListener("click", onClick);
       lenis?.destroy();
       root.classList.remove("fx");
@@ -97,70 +133,52 @@ export function Motion() {
   return null;
 }
 
-/** Opening screen: the //:ai mark draws itself while the first visuals load (once per session). */
+/** Brief, CSS-only brand reveal. It does not wait for video, fonts, or WebGL. */
 export function Loader({ preload }: { preload: string[] }) {
-  const [pct, setPct] = useState(0);
   const [done, setDone] = useState(false);
-  const shown = useRef(0);
+  const finished = useRef(false);
+
+  const finish = () => {
+    if (finished.current) return;
+    finished.current = true;
+    document.documentElement.classList.add("loaded");
+    setDone(true);
+    try {
+      sessionStorage.setItem("tai-opener-v4", "1");
+    } catch {}
+  };
 
   useEffect(() => {
     const root = document.documentElement;
     let seen = false;
     try {
-      seen = sessionStorage.getItem("tai-loaded") === "1";
+      seen = sessionStorage.getItem("tai-opener-v4") === "1";
     } catch {}
     if (seen || reduced()) {
-      setDone(true);
-      root.classList.add("loaded");
+      finish();
       return;
     }
-    let loaded = 0;
-    const total = preload.length + 1;
-    const bump = () => (loaded += 1);
-    preload.forEach((src) => {
-      const img = new Image();
-      img.onload = img.onerror = bump;
-      img.src = src;
-    });
-    document.fonts?.ready.then(bump, bump);
-    const t0 = performance.now();
-    let finished = false;
-    const finish = () => {
-      if (finished) return;
-      finished = true;
-      setPct(100);
-      setTimeout(() => {
-        setDone(true);
-        root.classList.add("loaded");
-        try {
-          sessionStorage.setItem("tai-loaded", "1");
-        } catch {}
-      }, 300);
+    const reveal = window.setTimeout(() => root.classList.add("loaded"), 780);
+    const safety = window.setTimeout(finish, 1800);
+    return () => {
+      clearTimeout(reveal);
+      clearTimeout(safety);
     };
-    // Time-based (not per frame), so a slow or background tab can't get stuck.
-    const timer = window.setInterval(() => {
-      const elapsed = performance.now() - t0;
-      const v = Math.min(loaded / total, elapsed / 600) * 100; // short: at least ~0.6 s so the mark can draw
-      shown.current = Math.max(shown.current, v);
-      setPct(Math.round(shown.current));
-      if (shown.current >= 100 || elapsed > 2500) finish(); // never block longer than 2.5 s
-    }, 50);
-    return () => clearInterval(timer);
-  }, [preload]);
+  }, []);
+
+  const end = (e: React.AnimationEvent) => {
+    if (e.target === e.currentTarget && e.animationName === "opExit") finish();
+  };
 
   if (done) return null;
   return (
-    <div className={pct >= 100 ? "loader out" : "loader"} style={{ ["--lp" as string]: pct / 100 }} aria-hidden="true">
-      <svg className="loader-mark" viewBox="0 0 120 60">
-        <path d="M14 50 L30 10 M34 50 L50 10" />
-        <circle cx="62" cy="20" r="3.2" />
-        <circle cx="62" cy="44" r="3.2" />
-        <circle cx="86" cy="39" r="10" />
-        <path d="M96 28 V50 M108 28 V50" />
-        <circle cx="108" cy="17" r="3.2" />
-      </svg>
-      <div className="loader-bar"><i /></div>
-      <span className="loader-pct">{String(pct).padStart(3, "0")}</span>
+    <div className="op" aria-hidden="true" onAnimationEnd={end}>
+      <span className="op-cover" />
+      <span className="op-aura" />
+      <span className="op-wave" />
+      <div className="op-center">
+        <img className="op-logo" src={preload[0]} alt="" width="225" height="105" />
+      </div>
     </div>
   );
 }
