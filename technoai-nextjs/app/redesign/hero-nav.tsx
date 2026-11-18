@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MENU_ICONS, MENU_LINKS } from "./menu-data";
+import ThemeToggle from "./theme-toggle";
 
 type Item = { label: string; href: string; links: [string, string][] };
 
@@ -102,6 +103,7 @@ export default function HeroNav({ items }: { items: Item[] }) {
         </a>
 
         {/* same menu icon as the live technoai.ae header: dark glass box, two long lines + a short one */}
+        <ThemeToggle />
         <button className="hx-burger" aria-expanded={open} aria-label={open ? "Close menu" : "Open menu"} onClick={() => setOpen((o) => !o)}>
           {open ? (
             <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" /></svg>
