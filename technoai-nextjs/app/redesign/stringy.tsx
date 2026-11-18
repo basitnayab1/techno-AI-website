@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 /**
  * "Venom" buttons (reference: owner's Instagram reel).
  * Cursor near (not touching) → black goo tendrils grow out of the button edge and reach for it.
- * Any element with [data-stringy] gets: hover → it sticks to the cursor with thin elastic strings;
+ * CTA buttons get: hover → they stick to the cursor with thin elastic strings;
  * move away → strings stretch, the button tilts/leans after the cursor; too far → strings snap and
  * the button springs back with a wobble. One shared canvas, drawn only while something is active.
  * Mouse only (touch/pen pointer events are ignored); off for prefers-reduced-motion.
@@ -24,8 +24,8 @@ type Item = {
 };
 
 const SNAP = 190; // px beyond the button edge before the strings snap
-const N = 14; // strings per button
-const REACH = 170; // px around the button where the venom tendrils start reaching for the cursor
+const N = 18; // strings per button
+const REACH = 185; // px around the button where the venom tendrils start reaching for the cursor
 const INK = "15, 26, 27";
 
 /** Tapered, wobbling goo strand from (ax,ay) to (bx,by) bending through (cx,cy). Thick at the button, thin at the tip. */
@@ -64,9 +64,13 @@ export default function Stringy() {
     const canvas = ref.current!;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const ctx = canvas.getContext("2d")!;
-    const items: Item[] = Array.from(document.querySelectorAll<HTMLElement>("[data-stringy]")).map((el) => ({
+    const items: Item[] = Array.from(document.querySelectorAll<HTMLElement>("a.btn, a.hx-btn, [data-stringy]")).map((el) => ({
       el, attached: false, anchored: false, snapping: 1, strings: [], reach: 0, tx: 0, ty: 0, rx: 0, ry: 0, vtx: 0, vty: 0, vrx: 0, vry: 0,
     }));
+    const available = (el: HTMLElement) => {
+      const style = getComputedStyle(el);
+      return style.display !== "none" && style.visibility !== "hidden" && style.pointerEvents !== "none" && el.getClientRects().length > 0;
+    };
     const mouse = { x: -1e4, y: -1e4 };
     let raf = 0;
     let running = false;
@@ -125,6 +129,15 @@ export default function Stringy() {
       let busy = false;
       for (const it of items) {
         const el = it.el;
+        if (!available(el)) {
+          it.attached = false;
+          it.snapping = 1;
+          it.strings = [];
+          it.reach = 0;
+          el.classList.remove("is-reaching", "is-stuck", "is-snap");
+          el.style.transform = "";
+          continue;
+        }
         const r = el.getBoundingClientRect();
         const cx = r.left + r.width / 2;
         const cy = r.top + r.height / 2;
@@ -154,9 +167,12 @@ export default function Stringy() {
           const far = Math.hypot(ddx, ddy);
           const target = !it.attached && it.snapping >= 1 && !inside && far < REACH ? Math.pow(1 - far / REACH, 1.3) : 0;
           it.reach += (target - it.reach) * 0.14;
+          el.classList.toggle("is-reaching", it.reach > 0.12 && !it.attached);
           if (it.reach > 0.01) {
             busy = true;
             ctx.lineCap = "round";
+            ctx.shadowColor = "rgba(15, 26, 27, .3)";
+            ctx.shadowBlur = 4;
             const anchors = anchorsFor(r);
             for (let i = 0; i < anchors.length; i += 2) {
               const [ax, ay] = anchors[i];
@@ -167,7 +183,7 @@ export default function Stringy() {
               const cxp = (ax + bx) / 2 + Math.sin(now * 3 + seed) * 10 * it.reach;
               const cyp = (ay + by) / 2 + Math.cos(now * 2.4 + seed) * 8 * it.reach;
               const reachLen = Math.hypot(bx - ax, by - ay);
-              const [tx2, ty2] = strand(ctx, ax, ay, cxp, cyp, bx, by, 2 + 4 * it.reach, 0.8, Math.min(2 + reachLen * 0.06, 6), now * 0.6, seed, 0.85 * Math.min(1, it.reach * 2.2));
+              const [tx2, ty2] = strand(ctx, ax, ay, cxp, cyp, bx, by, 3 + 5 * it.reach, 1, Math.min(2 + reachLen * 0.06, 6), now * 0.6, seed, 0.85 * Math.min(1, it.reach * 2.2));
               // little goo droplet at the tip and a swelling at the base
               ctx.fillStyle = `rgba(${INK}, ${(0.8 * Math.min(1, it.reach * 2)).toFixed(3)})`;
               ctx.beginPath();
@@ -175,6 +191,7 @@ export default function Stringy() {
               ctx.arc(ax, ay, 2 + 4 * it.reach, 0, Math.PI * 2);
               ctx.fill();
             }
+            ctx.shadowBlur = 0;
           }
         }
 
@@ -235,30 +252,38 @@ export default function Stringy() {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
       for (const it of items) {
-        if (it.attached) continue;
+        if (it.attached || !available(it.el)) continue;
         const r = it.el.getBoundingClientRect();
         if (mouse.x >= r.left && mouse.x <= r.right && mouse.y >= r.top && mouse.y <= r.bottom) attach(it);
       }
       const near = items.some((i) => {
+        if (!available(i.el)) return false;
         const r = i.el.getBoundingClientRect();
         return Math.hypot(Math.max(r.left - mouse.x, 0, mouse.x - r.right), Math.max(r.top - mouse.y, 0, mouse.y - r.bottom)) < REACH;
       });
       if (near || items.some((i) => i.attached || i.reach > 0.01)) kick();
     };
-    const onLeaveWindow = () => items.forEach((it) => it.attached && (snap(it), kick()));
+    const onLeaveWindow = () => {
+      mouse.x = -1e4;
+      mouse.y = -1e4;
+      items.forEach((it) => it.attached && snap(it));
+      kick();
+    };
+    const onScroll = () => items.forEach((it) => it.attached && kick());
     window.addEventListener("pointermove", onMove, { passive: true });
     document.addEventListener("pointerleave", onLeaveWindow);
     window.addEventListener("resize", size);
-    window.addEventListener("scroll", () => items.forEach((it) => it.attached && kick()), { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("pointermove", onMove);
       document.removeEventListener("pointerleave", onLeaveWindow);
       window.removeEventListener("resize", size);
+      window.removeEventListener("scroll", onScroll);
       items.forEach((it) => {
         it.el.style.transform = "";
-        it.el.classList.remove("is-stuck", "is-snap");
+        it.el.classList.remove("is-reaching", "is-stuck", "is-snap");
       });
     };
   }, []);

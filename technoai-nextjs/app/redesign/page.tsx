@@ -1,8 +1,11 @@
-import { DOMAINS, DRONE_FILM, FOOTER, INDUSTRIES, NAV, OFFICES, PARTNERS, SOCIAL, SOLUTIONS, UP } from "./data";
+import { DOMAINS, DRONE_FILM, INDUSTRIES, NAV, OFFICES, PARTNERS, SOCIAL, SOLUTIONS, UP } from "./data";
 import { Loader, Motion, Terminal } from "./fx";
 import Hero from "./hero";
 import Capabilities from "./capabilities";
+import Flight from "./flight";
 import InkSample from "./ink-sample"; // SAMPLE ONLY: ?ink=1
+import JourneyPeek from "./journey-peeks";
+import "./journey-scenes.css";
 import { DroneFilm, GlobeScene, JourneyScene } from "./deferred-scenes";
 
 // New TechnoAi home page ("Mission Control"). Text and links come from the current technoai.ae
@@ -62,6 +65,12 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 // journey scene picks them up from the cache when it starts.
 const PRELOAD = ["/redesign/models/robot.glb", "/redesign/models/drone.glb", "/redesign/draco/draco_wasm_wrapper.js", "/redesign/draco/draco_decoder.wasm"];
 
+/** Stations that show a real 3D product get a scene photo behind them: [slot, image name]. */
+const JX: [string, string][] = [
+  ["robot", "lobby"],
+  ["drone", "rooftop"],
+];
+
 export default function Home() {
   return (
     <>
@@ -78,6 +87,8 @@ export default function Home() {
         {/* 1 ── Hero: glass navbar + 3D Intelligence Core (hero.tsx) */}
         <InkSample />
         <Hero />
+        {/* Phase 2: the drone flies with the scroll from the hero to the journey (flight-scene.tsx) */}
+        <Flight />
 
         {/* 2 ── Find your starting point: three capability cards with live 3D models (capabilities.tsx) */}
         <Capabilities />
@@ -85,6 +96,16 @@ export default function Home() {
         {/* Solutions journey: one 3D station per solution */}
         <section className="journey" id="technology" data-active="0">
           <div className="sticky">
+            {/* scene photos behind the real robot / drone stations (fade in with data-active) */}
+            <div className="jx-bg" aria-hidden="true">
+              {JX.map(([slug, img]) => (
+                <img key={slug} data-i={SOLUTIONS.findIndex((s) => s.slug === slug)} src={`/redesign/journey/${img}.webp`} srcSet={`/redesign/journey/${img}-sm.webp 960w, /redesign/journey/${img}.webp 1920w`} sizes="100vw" alt="" loading="lazy" decoding="async" />
+              ))}
+              <span className="jx-dust-floor" />
+              <svg className="jx-ink-crescent" viewBox="0 0 1920 1080" preserveAspectRatio="none" focusable="false">
+                <path d="M0 0 H85 C-30 275 -25 625 150 1080 H0 Z" />
+              </svg>
+            </div>
             <JourneyScene />
             <div className="wrap journey-in">
               <div className="journey-head">
@@ -95,11 +116,22 @@ export default function Home() {
                 {SOLUTIONS.map((s, i) => (
                   <article className="station" data-i={i} key={s.slug}>
                     <span className="n">{num(i)}</span>
-                    <h2>{s.title}</h2>
+                    <div className="jx-title-wrap" data-peek={s.slug}>
+                      <span className="jx-peek-product" aria-hidden="true"><JourneyPeek slug={s.slug} /></span>
+                      <h2>{s.title}</h2>
+                    </div>
                     <p>{s.text}</p>
-                    <a className="btn btn-line" href={s.href} aria-label={`Explore ${s.title}`}>Explore Solution <Arrow /></a>
+                    <a className="btn btn-line" href={s.href} aria-label={`Explore ${s.title}`} data-stringy={i === 0 ? "" : undefined}>Explore Solution <Arrow /></a>
                   </article>
                 ))}
+              </div>
+              <div className="jx-card jx-clean" data-i={SOLUTIONS.findIndex((s) => s.slug === "robot")} aria-hidden="true">
+                <p className="jx-card-head">
+                  <svg viewBox="0 0 24 24"><path d="M9 3h6M12 3v6M7 9h10l1.5 6h-13zM5.5 15 4 21M9 15l-.5 6M12 15v6M15 15l.5 6M18.5 15l1.5 6" /></svg>
+                  Cleaning in progress
+                </p>
+                <span className="jx-bar"><i /></span>
+                <p className="jx-card-foot"><b data-jx="clean">40%</b> Area complete</p>
               </div>
               <nav className="rail" aria-label="Solutions">
                 {SOLUTIONS.map((s, i) => (
@@ -251,29 +283,15 @@ export default function Home() {
       </main>
 
       <footer className="ft">
-        <div className="wrap ft-grid">
-          <div className="ft-brand">
-            <span className="logo logo-lg" role="img" aria-label="TechnoAi" />
-            <p>Redefining Intelligence</p>
-          </div>
-          {FOOTER.map(([title, links]) => (
-            <nav key={title} aria-label={title}>
-              <h4>{title}</h4>
-              {links.map(([label, href]) => (
-                <a key={href} href={href}>{label}</a>
-              ))}
-            </nav>
-          ))}
-        </div>
-        <div className="wrap ft-bottom">
-          <span>technoai.ae</span>
-          <div>
+        <div className="ft-bottom">
+          <span>© TechnoAi <span aria-hidden="true">·</span> <a href="https://technoai.ae/">technoai.ae</a></span>
+          <nav aria-label="Social media">
             {SOCIAL.map(([label, href]) => (
               <a key={label} href={href} target="_blank" rel="noopener noreferrer">{label}</a>
             ))}
-          </div>
+          </nav>
         </div>
-        <div className="ft-word" aria-hidden="true">technoai</div>
+        <div className="ft-word" aria-hidden="true">//:technoai</div>
       </footer>
     </>
   );

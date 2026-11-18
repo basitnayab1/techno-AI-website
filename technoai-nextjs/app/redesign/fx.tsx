@@ -35,9 +35,35 @@ export function Motion() {
         }),
       { rootMargin: "0px 0px -8% 0px", threshold: 0.06 },
     );
+    // more things rise in as you scroll: list items, cards, footer columns (staggered per group)
+    const AUTO: [string, string?][] = [
+      [".offices li"],
+      [".ind", "right"],
+      [".ft-grid > *"],
+      [".ft-bottom"],
+      [".ft-word", "zoom"],
+      [".center-head > *"],
+      [".cx-head > *"],
+    ];
+    AUTO.forEach(([sel, kind]) => {
+      const groups = new Map<Element | null, number>();
+      document.querySelectorAll<HTMLElement>(sel).forEach((el) => {
+        // a block that already rose as a whole now staggers its children instead (no double fade)
+        if (el.parentElement?.hasAttribute("data-reveal")) el.parentElement.removeAttribute("data-reveal");
+        const n = groups.get(el.parentElement) ?? 0;
+        groups.set(el.parentElement, n + 1);
+        el.setAttribute("data-reveal", kind ?? "");
+        el.style.setProperty("--rd", `${Math.min(n, 6) * 0.09}s`);
+      });
+    });
+    document.querySelectorAll<HTMLElement>(".rows li[data-reveal]").forEach((el, i) => el.style.setProperty("--rd", `${(i % 6) * 0.07}s`));
     document.querySelectorAll("[data-reveal]").forEach((el) => io.observe(el));
 
     const header = document.querySelector(".hd");
+    const hero = document.querySelector<HTMLElement>(".hx-hero");
+    const flow = hero?.querySelector<HTMLElement>(".hx-flow");
+    let heroGeo: { top: number; h: number } | null = null;
+    let lastFlow = "";
     const prog = Array.from(document.querySelectorAll<HTMLElement>("[data-progress]"));
     const hs = Array.from(document.querySelectorAll<HTMLElement>("[data-hscroll]"));
 
@@ -54,6 +80,10 @@ export function Motion() {
     const geo = new Map<HTMLElement, { top: number; h: number }>();
     const remeasure = () => {
       const y = window.scrollY;
+      if (hero) {
+        const r = hero.getBoundingClientRect();
+        heroGeo = { top: r.top + y, h: r.height };
+      }
       prog.forEach((el) => {
         const r = el.getBoundingClientRect();
         geo.set(el, { top: r.top + y, h: r.height });
@@ -68,6 +98,15 @@ export function Motion() {
       if (header) {
         const sc = y > 10;
         if (header.classList.contains("scrolled") !== sc) header.classList.toggle("scrolled", sc);
+      }
+      if (flow && heroGeo && y < heroGeo.top + heroGeo.h + vh) {
+        const p = Math.min(Math.max((y - heroGeo.top) / Math.max(heroGeo.h, 1), 0), 1).toFixed(3);
+        if (p !== lastFlow) {
+          lastFlow = p;
+          flow.style.setProperty("--flow-x", `${Math.round(-90 * +p)}px`);
+          flow.style.setProperty("--flow-y", `${Math.round(145 * +p)}px`);
+          flow.style.opacity = (0.68 + 0.2 * +p).toFixed(3);
+        }
       }
       prog.forEach((el) => {
         const g = geo.get(el);
@@ -249,4 +288,12 @@ export function Terminal({ lines }: { lines: string[] }) {
       </pre>
     </div>
   );
+}
+
+/** Pages without the opening (Loader) mark themselves ready at once, so the navbar and reveal animations run. */
+export function Ready() {
+  useEffect(() => {
+    document.documentElement.classList.add("loaded");
+  }, []);
+  return null;
 }

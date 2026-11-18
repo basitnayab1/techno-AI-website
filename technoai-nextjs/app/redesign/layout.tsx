@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
 import "./redesign.css";
 import "./mission-white.css";
-import "./three-colour.css"; // 3-colour white theme, no gradients (loaded last)
+import "./three-colour.css"; // 3-colour white theme, no gradients
+import "./effects.css"; // site-wide scroll reveals + hover lift/shadow (loaded last)
+import "./footer.css";
 
 // Brand typeface (TechnoAi Brand Identity): Noto Sans — Light / Regular / Medium / Bold.
 const noto = Noto_Sans({
@@ -20,7 +22,8 @@ export const metadata: Metadata = {
 export default function RedesignLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={noto.className}>{children}</body>
+      {/* browser extensions (e.g. Grammarly) add attributes to <body> before React loads: not a real mismatch */}
+      <body className={noto.className} suppressHydrationWarning>{children}</body>
     </html>
   );
 }

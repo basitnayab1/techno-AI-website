@@ -1,4 +1,5 @@
 import "./hero.css";
+import "./menu.css";
 import { INDUSTRIES, SOLUTIONS } from "./data";
 import CoreStage from "./core-stage";
 import HeroNav from "./hero-nav";
@@ -8,7 +9,7 @@ import HeroBackground from "./hero-background";
 // Home hero: floating glass navbar + headline + 3D "Intelligence Core".
 // Brand: Noto Sans (TC), #0f1a1b / #146b8c / #289fb7 / #9fe7e7 (TechnoAi Brand Identity PDF).
 
-const NAV_ITEMS = [
+export const NAV_ITEMS = [
   { label: "Solutions", href: "#solutions", links: SOLUTIONS.map((s) => [s.title, s.href] as [string, string]) },
   {
     label: "Hardware",
@@ -52,11 +53,15 @@ export default function Hero() {
         <div className="hx-bg" aria-hidden="true">
           <HeroBackground />
           <span className="hx-bg-veil" />
+          <span className="hx-flow"><i /><i /><i /></span>
           <span className="hx-bg-floor" />
         </div>
 
         <div className="hx-inner">
           <div className="hx-copy">
+            <span className="hx-uae-mark hx-rise" role="img" aria-label="Proud of UAE" style={{ ["--d" as string]: "0.05s" }}>
+              <img src="/redesign/hero/proud-of-uae.png" width="269" height="300" alt="" loading="eager" decoding="async" />
+            </span>
             <p className="hx-eyebrow hx-rise" style={{ ["--d" as string]: "0.05s" }}>
               <span className="hx-chip" aria-hidden="true">//:</span>
               AI <i>/</i> Robotics <i>/</i> Hardware

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+import { makeAlive } from "./alive";
 
 // 3D models for the redesign.
 // Every slot first looks for a real model at /redesign/models/<slug>.glb (to be generated later).
@@ -9,7 +10,7 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 export const BLUE = 0x146b8c; // brand blue (PDF)
 export const INK = 0x0b1415; // brand ink #0f1a1b, a little darker
 
-export type Model = { group: THREE.Group; update: (t: number) => void; real?: boolean; base?: number };
+export type Model = { group: THREE.Group; update: (t: number) => void; real?: boolean; base?: number; screen?: { x: number; y: number }; cam?: THREE.Vector3 };
 
 export function materials() {
   return {
@@ -290,12 +291,67 @@ export const REAL_POSE: Record<string, "ground" | "hover"> = { robot: "ground", 
 
 /** One download per model, started as soon as this module runs in the browser (page load), shared by every scene. */
 const pending = new Map<string, Promise<GLTF>>();
-const claimed = new Set<string>();
 export function preloadModel(slug: string) {
   if (!pending.has(slug)) pending.set(slug, loader.loadAsync(`/redesign/models/${slug}.glb`));
   return pending.get(slug)!;
 }
 if (isBrowser) REAL_MODELS.forEach((s) => void preloadModel(s).catch(() => {}));
+
+/* ---------- motion detail for the real products (the GLBs are single meshes, nothing moves by itself) ---------- */
+
+/** A soft spinning-blade disc: two blurred streaks on a faint disc (propeller / brush motion blur). */
+function blurDisc(radius: number, opacity: number, blades = 2) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const g = c.getContext("2d")!;
+  g.translate(64, 64);
+  g.fillStyle = "rgba(15,26,27,0.18)";
+  g.beginPath();
+  g.arc(0, 0, 62, 0, Math.PI * 2);
+  g.fill();
+  g.filter = "blur(3px)";
+  g.fillStyle = "rgba(15,26,27,0.9)";
+  for (let b = 0; b < blades; b++) {
+    g.rotate((Math.PI * 2) / blades);
+    g.beginPath();
+    g.moveTo(0, -4);
+    g.quadraticCurveTo(40, -12, 60, -2);
+    g.lineTo(60, 4);
+    g.quadraticCurveTo(30, 6, 0, 4);
+    g.fill();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mesh = new THREE.Mesh(
+    new THREE.CircleGeometry(radius, 40),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }),
+  );
+  mesh.rotation.x = -Math.PI / 2;
+  return mesh;
+}
+
+/** Positions are in the GLB's own space (front = +Z, origin = bottom centre), read off the Blender renders. */
+export function addMotionDetail(slug: string, real: THREE.Object3D): [THREE.Object3D, number][] {
+  const out: [THREE.Object3D, number][] = [];
+  if (slug === "drone") {
+    const hubs: [number, number][] = [[-0.291, 0.252], [0.308, 0.216], [-0.309, -0.248], [0.248, -0.287]];
+    hubs.forEach(([x, z], i) => {
+      const d = blurDisc(0.23, 0.55);
+      d.position.set(x, 0.214, z);
+      real.add(d);
+      out.push([d, i % 2 ? -38 : 38]);
+    });
+  }
+  if (slug === "robot") {
+    [-0.2, 0.2].forEach((x, i) => {
+      const d = blurDisc(0.085, 0.7, 6);
+      d.position.set(x, 0.012, 0.215);
+      real.add(d);
+      out.push([d, i ? -9 : 9]);
+    });
+  }
+  return out;
+}
 
 /**
  * Returns the placeholder at once and, if /redesign/models/<slug>.glb exists, swaps the real model
@@ -312,8 +368,8 @@ export function modelFor(slug: string, M: Mats): Model {
   const url = `/redesign/models/${slug}.glb`;
   preloadModel(slug).then(
     (gltf) => {
-      const real = claimed.has(slug) ? gltf.scene.clone(true) : gltf.scene; // a second scene using the same model gets a copy
-      claimed.add(slug);
+      // Each scene owns its transforms and animation helpers; keep the cached source untouched.
+      const real = gltf.scene.clone(true);
       real.traverse((o) => {
         const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
         if (m && "envMapIntensity" in m) {
@@ -332,18 +388,25 @@ export function modelFor(slug: string, M: Mats): Model {
       const k = size / box.getSize(new THREE.Vector3()).length();
       real.position.sub(box.getCenter(new THREE.Vector3()));
       const wrap = new THREE.Group();
-      wrap.add(real);
+      // "alive" motion (springs, mouse look/push, blink…) wraps the model inside the scaled group
+      const gsize = box.getSize(new THREE.Vector3());
+      const alive = slug === "robot" || slug === "drone" ? makeAlive(slug, real, slug === "robot" ? gsize.y : gsize.x) : null;
+      wrap.add(alive ? alive.group : real);
       wrap.scale.setScalar(k);
       if (REAL_POSE[slug] === "ground") wrap.position.y = phBox.min.y + (box.getSize(new THREE.Vector3()).y * k) / 2;
       holder.remove(ph.group);
       holder.add(wrap);
       model.real = true;
+      const spinners = addMotionDetail(slug, real);
       model.base = phBox.min.y; // bottom of the model in its own space (used to stand it on the floor)
       const mixer = gltf.animations.length ? new THREE.AnimationMixer(real) : null;
       gltf.animations.forEach((a) => mixer!.clipAction(a).play());
       let last = 0;
       model.update = (t) => {
-        mixer?.update(Math.max(0, t - last));
+        const dt = Math.max(0, t - last);
+        mixer?.update(dt);
+        spinners.forEach(([o, speed]) => (o.rotation.z += dt * speed));
+        alive?.update(t, model.screen, model.cam);
         last = t;
       };
     },

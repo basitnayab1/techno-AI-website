@@ -1,6 +1,8 @@
 "use client";
 
 import "./capabilities.css";
+import DotField from "./dot-field";
+import SplineCard from "./spline-card";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import type { Kind } from "./capability-models";
@@ -36,7 +38,8 @@ function Card({ c, show }: { c: (typeof CARDS)[number]; show: boolean }) {
         <span className="cx-n">{c.n}</span>
         <span className="cx-rule" aria-hidden="true" />
       </div>
-      <div className="cx-model">{show && <CapabilityModel kind={c.kind} hovered={hover} />}</div>
+      {/* Robotics card: the owner's Spline robot (iframe); the other cards keep their small 3D models */}
+      <div className="cx-model">{show && (c.kind === "robotics" ? <SplineCard /> : <CapabilityModel kind={c.kind} hovered={hover} />)}</div>
       <h3>{c.title}</h3>
       <p>{c.text}</p>
       <span className="cx-link">
@@ -73,6 +76,7 @@ export default function Capabilities() {
 
   return (
     <section ref={ref} className="cx" id="solutions" aria-labelledby="cx-title">
+      <DotField />
       {/* particles drifting on from the hero */}
       <div className="cx-particles" aria-hidden="true">
         {Array.from({ length: 22 }, (_, i) => (

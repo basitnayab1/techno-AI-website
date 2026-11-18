@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { BLUE, INK, materials, modelFor, REAL_POSE, type Model } from "./models";
 import { OFFICES, SOLUTIONS } from "./data";
+import { buildJourneyParticles } from "./journey-particles";
 
 /* ============================== shared helpers ============================== */
 
@@ -282,6 +283,128 @@ export function HeroScene({ particlesOnly = false }: { particlesOnly?: boolean }
 /* ============================== services journey ============================== */
 
 /** Pinned 3D stage: scrolling moves through the six solutions, one model per station. */
+/* ---------- journey scene effects (robot cleaning route + dust, drone flight route + roof scan) ---------- */
+
+const FLOOR = -1.75;
+const AQUA_C = new THREE.Color("#9fe7e7");
+const BLUE_C = new THREE.Color("#146b8c");
+
+type Fx = { group: THREE.Group; mats: [THREE.Material & { opacity: number }, number][] };
+function fxMat<T extends THREE.Material & { opacity: number }>(fx: Fx, m: T) {
+  m.transparent = true;
+  m.depthWrite = false;
+  fx.mats.push([m, m.opacity]);
+  return m;
+}
+function fadeFx(fx: Fx, a: number) {
+  fx.group.visible = a > 0.02;
+  fx.mats.forEach(([m, o]) => (m.opacity = o * a));
+}
+function chevron() {
+  const sh = new THREE.Shape();
+  sh.moveTo(-0.09, -0.11);
+  sh.lineTo(0.03, 0);
+  sh.lineTo(-0.09, 0.11);
+  sh.lineTo(-0.05, 0.11);
+  sh.lineTo(0.07, 0);
+  sh.lineTo(-0.05, -0.11);
+  return new THREE.ShapeGeometry(sh);
+}
+
+function buildRobotFx() {
+  const fx: Fx = { group: new THREE.Group(), mats: [] };
+  // cleaning route on the floor (x, z relative to the robot's spot)
+  const route = new THREE.CatmullRomCurve3(
+    [[-6, 3.6], [-3.4, 2.7], [-1.4, 1.5], [0, 0.35], [1, -0.5], [2.5, -1.15], [3.7, -0.7], [4.3, 0.5]].map(([x, z]) => new THREE.Vector3(x, 0, z)),
+  );
+  const ROBOT_U = 0.4;
+  const glow = new THREE.Mesh(new THREE.TubeGeometry(route, 220, 0.05, 6), fxMat(fx, new THREE.MeshBasicMaterial({ color: AQUA_C, opacity: 0.55, toneMapped: false })));
+  const core = new THREE.Mesh(new THREE.TubeGeometry(route, 220, 0.014, 6), fxMat(fx, new THREE.MeshBasicMaterial({ color: BLUE_C, opacity: 0.9, toneMapped: false })));
+  glow.scale.y = core.scale.y = 0.15; // flat on the floor
+  fx.group.add(glow, core);
+  const chevMat = fxMat(fx, new THREE.MeshBasicMaterial({ color: BLUE_C, opacity: 0.85, side: THREE.DoubleSide, toneMapped: false }));
+  const chevGeo = chevron();
+  const chevs = [0.18, 0.205, 0.72, 0.745].map((u) => {
+    const m = new THREE.Mesh(chevGeo, chevMat);
+    m.rotation.x = -Math.PI / 2;
+    m.rotation.order = "YXZ";
+    fx.group.add(m);
+    return { m, u };
+  });
+  // dust kicked up by the brushes
+  const N = 70;
+  const pos = new Float32Array(N * 3);
+  const col = new Float32Array(N * 4);
+  const vel = new Float32Array(N * 3);
+  const life = new Float32Array(N).map(() => Math.random());
+  const dustGeo = new THREE.BufferGeometry();
+  dustGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  dustGeo.setAttribute("color", new THREE.BufferAttribute(col, 4));
+  const dustMat = fxMat(fx, new THREE.PointsMaterial({ size: 0.035, vertexColors: true, opacity: 1, sizeAttenuation: true }));
+  const dust = new THREE.Points(dustGeo, dustMat);
+  dust.frustumCulled = false;
+  fx.group.add(dust);
+
+  // A soft clean strip grows behind the C40 as it travels across the floor.
+  const cleanStrip = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.85, 0.78),
+    fxMat(fx, new THREE.MeshBasicMaterial({ color: AQUA_C, opacity: 0.18, side: THREE.DoubleSide, toneMapped: false })),
+  );
+  cleanStrip.rotation.x = -Math.PI / 2;
+  fx.group.add(cleanStrip);
+
+  const p0 = route.getPointAt(ROBOT_U);
+  const tmp = new THREE.Vector3();
+  const offsetAt = (progress: number) => {
+    const eased = progress * progress * (3 - 2 * progress);
+    route.getPointAt(ROBOT_U - 0.065 + eased * 0.13, tmp);
+    return { x: tmp.x - p0.x, z: tmp.z - p0.z };
+  };
+  let lastT = 0;
+  const update = (t: number, a: number, cx: number, robotPos: THREE.Vector3, progress: number) => {
+    fadeFx(fx, Math.min(1, a));
+    if (!fx.group.visible) return;
+    fx.group.position.set(cx - p0.x, FLOOR + 0.004, -p0.z);
+    cleanStrip.position.set(p0.x - 0.58 + progress * 0.56, 0.006, p0.z + 0.18);
+    cleanStrip.scale.x = 0.08 + progress * 0.92;
+    chevs.forEach(({ m, u }) => {
+      const uu = (u + t * 0.012) % 1;
+      route.getPointAt(uu, tmp);
+      m.position.set(tmp.x, 0.003, tmp.z);
+      const tan = route.getTangentAt(uu);
+      m.rotation.y = Math.atan2(-tan.z, tan.x);
+    });
+    // dust: spawn at the two front brushes, drift out and settle
+    const dt = Math.min(0.05, Math.max(0, t - lastT));
+    lastT = t;
+    const bx = robotPos.x - fx.group.position.x;
+    const bz = robotPos.z - fx.group.position.z;
+    for (let i = 0; i < N; i++) {
+      life[i] += dt * 0.7;
+      if (life[i] >= 1) {
+        life[i] = 0;
+        const side = i % 2 ? 1 : -1;
+        pos[i * 3] = bx + side * (0.42 + Math.random() * 0.1);
+        pos[i * 3 + 1] = 0.02;
+        pos[i * 3 + 2] = bz + 0.35 + Math.random() * 0.1;
+        vel[i * 3] = side * (0.25 + Math.random() * 0.4);
+        vel[i * 3 + 1] = 0.12 + Math.random() * 0.2;
+        vel[i * 3 + 2] = 0.2 + Math.random() * 0.4;
+      }
+      pos[i * 3] += vel[i * 3] * dt;
+      pos[i * 3 + 1] = Math.max(0.01, pos[i * 3 + 1] + vel[i * 3 + 1] * dt);
+      pos[i * 3 + 2] += vel[i * 3 + 2] * dt;
+      vel[i * 3 + 1] -= dt * 0.6;
+      const fade = Math.sin(life[i] * Math.PI);
+      col[i * 4] = col[i * 4 + 1] = col[i * 4 + 2] = 0.42;
+      col[i * 4 + 3] = fade * 0.75;
+    }
+    dustGeo.attributes.position.needsUpdate = true;
+    dustGeo.attributes.color.needsUpdate = true;
+  };
+  return { group: fx.group, update, offsetAt };
+}
+
 export function JourneyScene() {
   const ref = useRef<HTMLCanvasElement>(null);
 
@@ -296,13 +419,15 @@ export function JourneyScene() {
       return;
     }
     const { scene, camera, renderer } = stage;
+    const robotI = SOLUTIONS.findIndex((x) => x.slug === "robot");
+    const droneI = SOLUTIONS.findIndex((x) => x.slug === "drone");
     const M = materials();
     const models = SOLUTIONS.map((s) => modelFor(s.slug, M));
     const holders = models.map((m) => {
       const h = new THREE.Group();
       h.add(m.group);
-      h.scale.setScalar(0.001);
       scene.add(h);
+      h.scale.setScalar(0.001);
       return h;
     });
 
@@ -319,6 +444,19 @@ export function JourneyScene() {
     tick.rotation.x = -Math.PI / 2;
     tick.position.y = -1.74;
     scene.add(tick);
+    const ringMats = [...rings.map((r) => r.material as THREE.MeshBasicMaterial), tick.material as THREE.MeshBasicMaterial];
+    const ringBase = ringMats.map((m) => m.opacity);
+
+    // scene effects for the real robot (cleaning route + dust) and drone (flight route + scan of the roof)
+    const robotFx = buildRobotFx();
+    const transitionParticles = buildJourneyParticles();
+    scene.add(robotFx.group, transitionParticles.points);
+    const cleanEl = section.querySelector<HTMLElement>('[data-jx="clean"]');
+    const routeEl = section.querySelector<HTMLElement>('[data-jx="route"]');
+    const stepsEl = section.querySelector<HTMLElement>(".jx-steps");
+    let lastClean = "";
+    let lastRoute = "";
+    let ringFade = 1;
     // compile the stage's shaders in the background now (scene starts ~2 screens early), not on the first visible frame
     renderer.compileAsync(scene, camera).catch(() => {});
 
@@ -329,6 +467,8 @@ export function JourneyScene() {
     };
     window.addEventListener("pointermove", onMove, { passive: true });
 
+    const _ndc = new THREE.Vector3();
+    const droneAnchor = new THREE.Vector3();
     let shown = -1;
     let lastSp = "";
     let lastJp = "";
@@ -350,18 +490,47 @@ export function JourneyScene() {
       mouse.x = damp(mouse.x, mouse.tx, 0.05);
       mouse.y = damp(mouse.y, mouse.ty, 0.05);
       const wide = camera.aspect > 1.1;
+      const arrived = section.getBoundingClientRect().top <= 20;
+      section.dataset.arrived = arrived ? "true" : "false";
+
       holders.forEach((h, i) => {
-        const target = i === idx ? 1 : 0;
-        const k = wide ? 1 : 0.62;
-        const s = damp(h.scale.x / k, target, 0.1);
-        h.scale.setScalar(Math.max(s * k, 0.001));
-        h.visible = s > 0.01;
+        // The drone flying in from Section 2 is the sole 3D drone in this station.
+        const target = i === idx && i !== droneI ? 1 : 0;
+        // real products on a scene photo sit a little smaller on desktop so they clear the rail and the card
+        const k = wide
+          ? (models[i].real && i === robotI ? 0.78 : 1)
+          : (i === droneI ? 0.42 : i === robotI ? 0.52 : 0.62);
+        const s = i === droneI ? target : damp(h.scale.x / k, target, i === idx ? 0.12 : 0.28);
+        h.scale.setScalar(s < 0.03 ? 0.001 : Math.max(s * k, 0.001));
+        h.visible = s > 0.03;
         if (!h.visible) return;
+        // where the model is on screen (NDC), so the "alive" motion reacts to the mouse relative to it
+        _ndc.setFromMatrixPosition(h.matrixWorld).project(camera);
+        models[i].screen = { x: _ndc.x, y: _ndc.y + 0.15 };
+        models[i].cam = camera.position;
         models[i].update(t);
         const pose = models[i].real ? REAL_POSE[SOLUTIONS[i].slug] : undefined;
         const floorY = pose === "ground" && wide ? -1.75 - (models[i].base ?? 0) * h.scale.x : null; // stand on the rings
         h.position.set(wide ? 1.7 : 0, floorY ?? (wide ? 0 : pose === "ground" ? 0.8 : 1.25) + (pose === "ground" ? 0 : Math.sin(t * 1.1) * (pose ? 0.05 : 0.08)), 0);
-        if (pose) {
+        if (models[i].real && wide && i === robotI) {
+          // drive slowly along the cleaning route (face stays to the camera)
+          const off = robotFx.offsetAt(local);
+          h.position.x += off.x;
+          h.position.z += off.z;
+        }
+        if (i === droneI) {
+          // 3D inspection flight motion across the rooftop
+          const arcX = Math.sin(local * Math.PI * 2) * 0.42;
+          const arcY = Math.sin(local * Math.PI) * 0.18 - Math.sin(local * Math.PI * 2) * 0.06;
+          const arcZ = Math.cos(local * Math.PI * 2) * 0.28 - 0.28;
+          h.position.x += arcX;
+          h.position.y += arcY;
+          h.position.z += arcZ;
+          // Bank smoothly into flight turns
+          h.rotation.y = -0.55 + Math.sin(local * Math.PI * 2) * 0.32 + mouse.x * 0.2;
+          h.rotation.x = 0.10 + Math.cos(local * Math.PI * 2) * 0.08 + mouse.y * 0.06;
+          h.rotation.z = -Math.cos(local * Math.PI * 2) * 0.16;
+        } else if (pose) {
           // real products: small turn only, so the robot face / drone camera stay in view
           h.rotation.y = -0.55 + local * 0.7 + mouse.x * 0.25 + (1 - s) * 0.8;
           h.rotation.x = (pose === "ground" ? 0.04 : 0.1) + mouse.y * 0.06;
@@ -370,6 +539,26 @@ export function JourneyScene() {
           h.rotation.x = 0.12 + mouse.y * 0.15;
         }
       });
+      const realHere = (idx === robotI || idx === droneI) && models[idx].real;
+      ringFade = damp(ringFade, realHere ? 0 : 1, 0.12);
+      ringMats.forEach((m, i) => (m.opacity = ringBase[i] * ringFade));
+      const cx = wide ? 1.7 : 0;
+      robotFx.update(t, wide && models[robotI].real && idx === robotI ? holders[robotI].scale.x : 0, cx, holders[robotI].position, idx === robotI ? local : 0);
+      // Screen-aligned apex under the flying drone; the inspection area remains in the journey scene.
+      droneAnchor.set(cx, 0, 0);
+      transitionParticles.update(t, f, droneAnchor, cx);
+      if (idx === robotI) {
+        const c = Math.round(local * 100) + "%";
+        if (c !== lastClean && cleanEl) cleanEl.textContent = lastClean = c;
+      }
+      if (idx === droneI) {
+        const r = String(Math.min(4, 1 + Math.floor(local * 4)));
+        if (r !== lastRoute) {
+          lastRoute = r;
+          if (routeEl) routeEl.textContent = "0" + r;
+          if (stepsEl) stepsEl.dataset.step = r;
+        }
+      }
       rings.forEach((r, i) => {
         r.position.x = wide ? 1.7 : 0;
         r.rotation.z = t * (0.1 + i * 0.05) * (i % 2 ? -1 : 1);
@@ -384,10 +573,12 @@ export function JourneyScene() {
     if (reduced()) {
       section.dataset.active = "0";
       frame(2);
+      transitionParticles.points.visible = false;
     } else stop = runWhileVisible(section, frame);
     return () => {
       stop();
       window.removeEventListener("pointermove", onMove);
+      transitionParticles.dispose();
       stage.dispose();
     };
   });

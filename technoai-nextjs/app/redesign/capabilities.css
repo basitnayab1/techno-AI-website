@@ -137,3 +137,87 @@
 /* small 3D models fade in once their shaders compiled in the background (no stall while scrolling) */
 .cx-canvas canvas { opacity: 0; transition: opacity .5s ease; }
 .cx-canvas[data-ready] canvas { opacity: 1; }
+
+/* ======================================================================================
+   2026-11-17 owner's reference: aqua section, white header panel, white cards with a blue
+   left edge, filled number badge, model beside the text. Flat colours only (ink / blue / aqua).
+   `section.cx` prefix so it wins over three-colour.css regardless of load order.
+   ====================================================================================== */
+section.cx { background: #9fe7e7; padding: 40px 0 68px; }
+section.cx .cx-particles, section.cx .cx-art { display: none; }
+section.cx .cx-inner { max-width: 1520px; padding: 0 40px; }
+section.cx .cx-head {
+  position: relative; isolation: isolate; overflow: hidden;
+  max-width: none; padding: 30px 48px 28px; border-radius: 20px; background: #fff;
+  box-shadow: 0 24px 50px -36px rgba(15, 26, 27, .35);
+}
+section.cx .cx-head::after {
+  content: ""; position: absolute; z-index: -1; inset: 0 0 0 auto; width: 53%;
+  background: url('/redesign/capabilities/robot-hand.jpg') 59% 52% / cover no-repeat;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 24%);
+  mask-image: linear-gradient(90deg, transparent, #000 24%);
+  pointer-events: none;
+}
+section.cx .cx-eyebrow { color: #0f1a1b; font-weight: 600; margin-bottom: 18px; }
+section.cx .cx-chip { width: 36px; height: 36px; border-radius: 8px; background: #146b8c; box-shadow: none; }
+section.cx .cx-chip svg { width: 17px; height: 17px; stroke-width: 1.8; }
+section.cx .cx-eyebrow-line { background: #9fe7e7; height: 2px; width: 96px; }
+section.cx h2 { font-size: clamp(2.25rem, 3.35vw, 3.5rem); line-height: 1.08; font-weight: 700; letter-spacing: -.035em; }
+section.cx h2 span { color: #146b8c; }
+section.cx .cx-sub { color: #0f1a1b; max-width: none; margin-top: 18px; font-size: 1rem; }
+section.cx .cx-progress { height: 2px; background: #9fe7e7; margin-top: 22px; max-width: 420px; }
+section.cx .cx-progress i { top: -2px; height: 6px; width: 166px; border-radius: 3px; background: #146b8c; }
+
+section.cx .cx-grid { gap: 24px; margin-top: 32px; }
+section.cx .cx-card {
+  min-height: 350px; padding: 28px 26px 26px 40px; border-radius: 18px; border: 0; overflow: hidden;
+  background: #fff; backdrop-filter: none; -webkit-backdrop-filter: none;
+  box-shadow: 0 26px 50px -34px rgba(15, 26, 27, .4);
+}
+section.cx .cx-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 12px; background: #146b8c; }
+section.cx .cx-card::after { display: none; }
+section.cx .cx-card:hover, section.cx .cx-card:focus-visible { transform: translateY(-8px); box-shadow: 0 36px 60px -34px rgba(15, 26, 27, .45); }
+section.cx .cx-glow { display: none; }
+section.cx .cx-n { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 8px; background: #146b8c; color: #fff; font-size: 1rem; font-weight: 600; }
+section.cx .cx-rule { width: 58px; height: 3px; border-radius: 2px; background: #9fe7e7; opacity: 1; }
+section.cx .cx-model { top: auto; bottom: 48px; right: -6px; width: 46%; height: 210px; }
+section.cx .cx-card h3 { margin: 22px 0 0; max-width: 11em; font-size: clamp(1.3rem, 1.55vw, 1.65rem); line-height: 1.18; font-weight: 700; letter-spacing: -.02em; }
+section.cx .cx-card p { max-width: 52%; margin: 18px 0 24px; color: #0f1a1b; font-size: .96rem; }
+section.cx .cx-link { font-weight: 700; color: #146b8c; }
+section.cx .cx-next { color: #0f1a1b; margin-top: 42px; }
+section.cx .cx-next-icon { background: #fff; border-color: #fff; }
+section.cx .cx-next-line { background: #fff; }
+
+@media (max-width: 1100px) {
+  section.cx .cx-inner { padding: 0 24px; }
+  section.cx .cx-head { padding: 30px 32px; }
+  section.cx .cx-head::after { width: 45%; opacity: .5; }
+  section.cx .cx-grid { grid-template-columns: 1fr; }
+  section.cx .cx-card { min-height: 330px; }
+  section.cx .cx-model { width: 44%; bottom: 34px; height: 190px; }
+}
+@media (max-width: 640px) {
+  section.cx { padding: 28px 0 54px; }
+  section.cx .cx-inner { padding: 0 14px; }
+  section.cx .cx-head { padding: 24px 22px; border-radius: 16px; }
+  section.cx .cx-head::after { display: none; }
+  section.cx h2 { font-size: clamp(2rem, 8vw, 2.6rem); }
+  section.cx .cx-eyebrow { margin-bottom: 16px; }
+  section.cx .cx-chip { width: 34px; height: 34px; }
+  section.cx .cx-grid { margin-top: 28px; gap: 18px; }
+  section.cx .cx-card { min-height: 0; padding: 26px 20px 24px 34px; }
+  section.cx .cx-card::before { width: 12px; }
+  section.cx .cx-model { position: relative; bottom: auto; right: auto; width: 100%; height: 190px; margin: 6px 0 -6px; }
+  section.cx .cx-card p { max-width: none; margin-top: 14px; }
+}
+
+/* interactive dot grid on the aqua background (dot-field.tsx) — dots react to the mouse between the cards */
+section.cx .dot-field { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+section.cx .cx-inner { z-index: 1; }
+
+/* Spline robot in the Robotics card (spline-card.tsx) */
+.cx-spline { position: absolute; inset: 0; opacity: 0; transition: opacity .6s ease; pointer-events: auto; }
+.cx-spline.is-ready { opacity: 1; }
+.cx-spline iframe { width: 100%; height: 100%; border: 0; background: transparent; color-scheme: normal; }
+/* soft bottom edge so the robot does not end on a hard line in the card */
+.cx-spline { -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); }

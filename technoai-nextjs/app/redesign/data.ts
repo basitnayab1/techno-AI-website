@@ -11,11 +11,11 @@ export const NAV = [
 
 /** slug = name of the 3D model slot (public/redesign/models/<slug>.glb replaces the placeholder). */
 export const SOLUTIONS = [
+  { slug: "drone", title: "Aerial & Drone", text: "From deployment to data capture for inspection, monitoring, and security.", href: "/aerial-drone-solutions/" },
   { slug: "robot", title: "AI & Robotics", text: "Automation that actually fits into day to day operations.", href: "/ai-robotics/" },
   { slug: "industry", title: "Industrial & Infrastructure", text: "Systems built for continuous operation in demanding environments.", href: "/industrial-smart-infrastructure/" },
   { slug: "satellite", title: "Connectivity & Satellite", text: "Reliable communication where traditional networks do not work.", href: "/connectivity-satellite-systems/" },
   { slug: "security", title: "Security Systems", text: "Detection, monitoring, and response for critical sites and assets.", href: "/security-mission-critical-systems/" },
-  { slug: "drone", title: "Aerial & Drone", text: "From deployment to data capture for inspection, monitoring, and security.", href: "/aerial-drone-solutions/" },
   { slug: "financial", title: "Financial & Transaction", text: "Structure deals, manage procurement, and keep projects financially controlled.", href: "/financial-transaction-solutions/" },
 ];
 
