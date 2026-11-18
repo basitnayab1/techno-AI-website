@@ -6,6 +6,7 @@ import Flight from "./flight";
 import InkSample from "./ink-sample"; // SAMPLE ONLY: ?ink=1
 import JourneyPeek from "./journey-peeks";
 import "./journey-scenes.css";
+import "./responsive.css";
 import { DroneFilm, GlobeScene, JourneyScene } from "./deferred-scenes";
 
 // New TechnoAi home page ("Mission Control"). Text and links come from the current technoai.ae

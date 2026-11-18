@@ -1,0 +1,68 @@
+/* Phone and tablet layout, including the pinned product scenes. */
+@media (max-width: 1024px) {
+  html body .domains, html body .where { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  html body .domains-side { position: relative; top: auto; }
+  html body .where-globe { max-width: 480px; width: 100%; margin-inline: auto; }
+}
+
+@media (max-width: 760px) {
+  html { overflow-x: clip; scroll-padding-top: 90px; }
+  body { overflow-x: clip; }
+  main { min-width: 0; }
+  html body .wrap, html body .h-track { width: 100%; max-width: 100%; }
+  html body .h-track { box-sizing: border-box; padding-inline: 16px; }
+  html body .ind { min-width: 0; width: 100%; height: 270px; padding: 24px; }
+  html body .sec { padding-block: 60px; }
+  html body .eyebrow { font-size: .66rem; letter-spacing: .13em; flex-wrap: wrap; }
+  html body h2 { overflow-wrap: break-word; }
+  html body .rows { margin-top: 28px; }
+  html body .rows li, html body .offices li { grid-template-columns: 32px minmax(0, 1fr); gap: 8px; }
+  html body .rows h3 { font-size: 1.2rem; }
+  html body .rows p, html body .offices li { font-size: .95rem; }
+
+  html body .journey { height: 580svh; }
+  html body .journey .sticky { height: 100svh; }
+  html body .journey-head { top: 94px; left: 16px; right: 16px; align-items: center; }
+  html body .journey-head .eyebrow { font-size: .61rem; gap: 8px; letter-spacing: .12em; }
+  html body .journey-head .count { font-size: .75rem; flex-shrink: 0; }
+  html body .journey .stations { left: 16px; right: 16px; top: auto; bottom: max(28px, env(safe-area-inset-bottom)); height: 230px; transform: none; }
+  html body .journey .station { padding-top: 8px; }
+  html body .journey .station .jx-title-wrap h2 { font-size: clamp(1.45rem, 6.5vw, 2rem); padding: 10px 28px 12px 18px; line-height: 1.15; }
+  html body .journey .station p { margin-top: 16px; font-size: .95rem; line-height: 1.55; max-width: 35em; }
+  html body .journey .station .btn { margin-top: 20px; height: 46px; padding-inline: 22px; font-size: .9rem; }
+  html body .jx-clean { top: 150px; bottom: auto; left: 20px; width: 190px; }
+  html body .jx-bg::after { content: ''; position: absolute; inset: 50% 0 0; background: linear-gradient(transparent, rgba(255,255,255,.94) 55%); pointer-events: none; }
+  html body section.cx .cx-eyebrow { font-size: .61rem; letter-spacing: .14em; gap: 10px; flex-wrap: wrap; }
+  html body section.cx .cx-head { padding: 24px 20px; }
+  html body section.cx h2 { font-size: clamp(1.65rem, 7.7vw, 2.4rem); }
+  html body section.cx .cx-head p { font-size: .95rem; }
+  html body section.cx .cx-next { gap: 12px; font-size: .85rem; }
+  html body section.cx .cx-next-line { display: none; }
+  html body .cta { gap: 24px; padding: 26px 22px; border-radius: 20px; }
+  html body .cta .btn { width: 100%; }
+  html body .ft { margin-top: 48px; }
+  html body .ft-bottom { padding-inline: 20px; gap: 18px; }
+  html body .ft-bottom nav { flex-wrap: wrap; gap: 12px 20px; }
+  html body .tm-left { min-width: 0; padding: 90px 20px 40px; overflow-y: auto; justify-content: center; }
+  html body .tm-links { gap: 24px; width: 100%; }
+  html body .tm-item { font-size: clamp(.85rem, 4vw, 1.1rem); overflow-wrap: anywhere; }
+  html body .tm-ico { min-height: 44px; min-width: 44px; padding: 8px; }
+  html body section.cx, html body .journey, html body .closer, html body .industries { animation: none; translate: none; clip-path: none; }
+}
+
+@media (max-width: 380px) {
+  html body .hx-brand-name { font-size: .7rem; letter-spacing: .13em; }
+  html body .hx-brand { gap: 9px; }
+  html body .hx-title { font-size: 2rem; }
+  html body .hx-eyebrow { font-size: .61rem; gap: 7px; letter-spacing: .1em; }
+  html body .journey .stations { height: 242px; }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  html body .hx-nav-bar { height: 52px; }
+  html body .journey-head { top: 76px; }
+  html body .journey .stations { width: 48%; bottom: 14px; height: 190px; }
+  html body .journey .station p { font-size: .8rem; margin-top: 10px; }
+  html body .journey .station .btn { margin-top: 10px; height: 40px; }
+  html body .tm-links { gap: 14px; }
+}
