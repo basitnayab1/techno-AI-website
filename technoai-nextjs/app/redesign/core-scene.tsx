@@ -272,7 +272,7 @@ function Particles({ count }: { count: number }) {
 
 /** The object itself. Reports the screen position of the label anchors after every frame. */
 function IntelligenceCore({ mobile, still, onAnchors }: { mobile: boolean; still: boolean; onAnchors: (p: Pts) => void }) {
-  const seg = mobile ? 64 : 112;
+  const seg = mobile ? 40 : 80;
   const logoMap = useLogoTexture();
   const time = useMemo(() => ({ value: 0 }), []);
   const coreUniforms = useMemo(() => ({ uTime: time, uInk: { value: INK }, uBlue: { value: BLUE }, uTeal: { value: TEAL }, uAqua: { value: AQUA } }), [time]);
@@ -442,7 +442,7 @@ function IntelligenceCore({ mobile, still, onAnchors }: { mobile: boolean; still
         ))}
       </group>
 
-      <Particles count={mobile ? 120 : 260} />
+      <Particles count={mobile ? 70 : 180} />
       {CUBES.map(([x, y, z, s], i) => (
         <Cube key={i} at={[x, y, z]} size={s} phase={i * 1.3} />
       ))}
@@ -553,7 +553,7 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
     <div ref={wrapRef} className="hx-canvas">
       <SceneBoundary onFail={onFail}>
         <Canvas
-          dpr={[1, env.mobile ? 1.5 : 1.75]}
+          dpr={[1, env.mobile ? 1.25 : 1.5]}
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
           camera={{ fov: 30, position: [0, 0.25, 8.7], near: 0.1, far: 100 }}
           frameloop={!compiled ? "never" : env.still ? "demand" : visible ? "always" : "never"}

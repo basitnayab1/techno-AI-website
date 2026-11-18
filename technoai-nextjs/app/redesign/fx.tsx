@@ -197,8 +197,8 @@ export function Loader({ preload }: { preload: string[] }) {
       finish();
       return;
     }
-    const reveal = window.setTimeout(() => root.classList.add("loaded"), 780);
-    const safety = window.setTimeout(finish, 1800);
+    const reveal = window.setTimeout(() => root.classList.add("loaded"), 420);
+    const safety = window.setTimeout(finish, 1200);
     return () => {
       clearTimeout(reveal);
       clearTimeout(safety);

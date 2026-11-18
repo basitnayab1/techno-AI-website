@@ -12,7 +12,7 @@ const reduced = () => typeof window !== "undefined" && window.matchMedia("(prefe
 
 function createStage(canvas: HTMLCanvasElement, fov = 35, z = 8) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.innerWidth < 760 ? 1 : 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.debug.checkShaderErrors = false; // don't stall on every shader compile (≈1.4 s on the first load)
   const scene = new THREE.Scene();
@@ -490,7 +490,8 @@ export function JourneyScene() {
       mouse.x = damp(mouse.x, mouse.tx, 0.05);
       mouse.y = damp(mouse.y, mouse.ty, 0.05);
       const wide = camera.aspect > 1.1;
-      const arrived = section.getBoundingClientRect().top <= 20;
+      const sectionTop = sectionGeo(section).top - window.scrollY;
+      const arrived = sectionTop <= 20;
       section.dataset.arrived = arrived ? "true" : "false";
 
       holders.forEach((h, i) => {

@@ -7,9 +7,12 @@ export default function HeroBackground() {
 
   // Show the small poster immediately; start the decorative video after the opener.
   useEffect(() => {
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const timer = window.setTimeout(() => setPlay(true), 1800);
-    return () => clearTimeout(timer);
+    if (matchMedia("(prefers-reduced-motion: reduce), (max-width: 640px)").matches) return;
+    const hero = document.querySelector(".hx-hero");
+    if (!hero) return;
+    const observer = new IntersectionObserver(([entry]) => setPlay(entry.isIntersecting));
+    const timer = window.setTimeout(() => observer.observe(hero), 2200);
+    return () => { clearTimeout(timer); observer.disconnect(); };
   }, []);
 
   return <>

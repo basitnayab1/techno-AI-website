@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { addMotionDetail, buildDrone, materials, preloadModel } from "./models";
-import { flightOwnsDrone } from "./drone-handoff";
 import { SOLUTIONS } from "./data";
 
 /**
@@ -69,7 +68,7 @@ export default function FlightScene() {
       return;
     }
     renderer.debug.checkShaderErrors = false;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.innerWidth < 760 ? 1 : 1.5));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     const scene = new THREE.Scene();
     scene.add(new THREE.HemisphereLight(0xffffff, 0xd9e4e7, 1.8));
@@ -136,7 +135,9 @@ export default function FlightScene() {
       const h = hero.getBoundingClientRect();
       const j = journey.getBoundingClientRect();
       range = { a: h.top + docY + h.height * 0.45, b: j.top + docY };
+      journeyHeight = j.height;
     };
+    let journeyHeight = journey.offsetHeight;
     const bodyRo = new ResizeObserver(measure);
     bodyRo.observe(document.body);
     measure();
@@ -167,16 +168,20 @@ export default function FlightScene() {
     let raf = 0;
     let wasOn = false;
     let lastT = 0;
+    let lastFrame = 0;
     const halfH = Math.tan((camera.fov * Math.PI) / 360) * camera.position.z;
-    const frame = () => {
+    const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
+      if (document.hidden || now - lastFrame < (W < 760 ? 1000 / 30 : 1000 / 60) - 1) return;
+      lastFrame = now;
       const lenis = (window as unknown as { lenis?: { scroll: number } }).lenis;
       const docY = window.pageYOffset || document.documentElement.scrollTop || window.scrollY || 0;
       const y = lenis ? lenis.scroll : docY;
       const q = (y - range.a) / Math.max(range.b - range.a, 1);
 
       // Aerial station keeps the flying drone; the journey canvas never draws a second copy.
-      const on = q >= -0.05 && flightOwnsDrone(journey, SOLUTIONS.length);
+      const aerialProgress = Math.max(0, (y - range.b) / Math.max(journeyHeight - H, 1) * SOLUTIONS.length);
+      const on = q >= -0.05 && aerialProgress < 1;
       if (!on) {
         if (wasOn) {
           renderer.clear();
@@ -186,8 +191,6 @@ export default function FlightScene() {
         return;
       }
       wasOn = true;
-      const jRect = journey.getBoundingClientRect();
-      const aerialProgress = Math.max(0, -jRect.top / Math.max(jRect.height - H, 1) * SOLUTIONS.length);
       canvas.style.opacity = String(Math.min(1, Math.max(0, (1 - aerialProgress) / 0.12)));
 
       const t = clock.getElapsedTime();

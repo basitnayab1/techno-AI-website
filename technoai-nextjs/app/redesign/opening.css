@@ -12,7 +12,7 @@
   pointer-events: none;
   display: grid;
   place-items: center;
-  animation: opExit .01s linear 1.32s both;
+  animation: opExit .01s linear .90s both;
 }
 .op-cover {
   position: absolute;
@@ -21,7 +21,7 @@
   --op-hole: 0px;
   -webkit-mask-image: radial-gradient(circle at center, transparent var(--op-hole), #000 calc(var(--op-hole) + 1px));
   mask-image: radial-gradient(circle at center, transparent var(--op-hole), #000 calc(var(--op-hole) + 1px));
-  animation: opCircle .64s cubic-bezier(.22, .61, .36, 1) .66s both;
+  animation: opCircle .48s cubic-bezier(.22, .61, .36, 1) .40s both;
 }
 .op::before {
   content: "";
@@ -51,12 +51,12 @@
   border-radius: 50%;
   box-shadow: 0 0 24px rgba(40, 159, 183, .6), inset 0 0 24px rgba(40, 159, 183, .3);
   opacity: 0;
-  animation: opWave .64s ease-out .66s both;
+  animation: opWave .48s ease-out .40s both;
 }
 .op-center {
   position: relative;
   z-index: 3;
-  animation: opLogoIn .2s ease-out both, opLogoOut .26s ease-in .76s forwards;
+  animation: opLogoIn .16s ease-out both, opLogoOut .22s ease-in .48s forwards;
 }
 .op-logo { display: block; width: clamp(128px, 12vw, 176px); height: auto; }
 @keyframes opLogoIn { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: scale(1); } }

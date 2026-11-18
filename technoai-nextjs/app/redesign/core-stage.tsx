@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /** CSS-only version of the core, shown while three.js loads and when WebGL is not available. */
 function CoreFallback() {
@@ -33,14 +33,25 @@ const LABELS: [string, string][] = [
 ];
 
 export default function CoreStage() {
+  const stageRef = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<"wait" | "gl" | "fallback">("wait");
-  useEffect(() => setMode(hasWebGL() ? "gl" : "fallback"), []);
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      setMode(hasWebGL() ? "gl" : "fallback");
+      observer.disconnect();
+    }, { rootMargin: "150px" });
+    observer.observe(stage);
+    return () => observer.disconnect();
+  }, []);
   const fail = useCallback(() => setMode("fallback"), []);
   const [ready, setReady] = useState(false); // 3D shaders compiled → swap the CSS orb for the real core
   const onReady = useCallback(() => setReady(true), []);
 
   return (
-    <div className="hx-stage" data-mode={mode} data-ready={ready || undefined}>
+    <div ref={stageRef} className="hx-stage" data-mode={mode} data-ready={ready || undefined}>
       {mode === "gl" && <CoreScene onFail={fail} onReady={onReady} />}
       {(mode !== "gl" || !ready) && <CoreFallback />}
       {LABELS.map(([k, text]) => (
