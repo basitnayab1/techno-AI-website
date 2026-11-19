@@ -14,6 +14,6 @@ html body main a.btn-line, html body .hx-hero .hx-actions a.hx-btn-ghost { backg
 html body main a.btn-line:hover, html body .hx-hero .hx-actions a.hx-btn-ghost:hover { background: rgba(15,26,27,.05); border-color: #0f1a1b; }
 html[data-theme="dark"] body main a.btn-line, html[data-theme="dark"] body .hx-hero .hx-actions a.hx-btn-ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,.2); }
 html[data-theme="dark"] body main a.btn-line:hover, html[data-theme="dark"] body .hx-hero .hx-actions a.hx-btn-ghost:hover { background: rgba(255,255,255,.05); color: #fff; border-color: #fff; }
-html body main a.btn-white { background: #fff; color: #0f1a1b; border-color: #fff; }
-html body main a.btn-white:hover { background: #030505; color: #fff; border-color: #030505; }
+html body main a.btn.btn-white { background: #fff; color: #0f1a1b; border-color: #fff; }
+html body main a.btn.btn-white:hover { background: #030505; color: #fff; border-color: #030505; }
 @media (max-width: 760px) { html body main a.btn, html body .hx-hero .hx-actions a.hx-btn { min-height: 50px; padding: 13px 22px; white-space: normal; text-align: center; } }

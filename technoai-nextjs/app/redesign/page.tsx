@@ -14,6 +14,7 @@ import "./responsive.css";
 import { JourneyScene } from "./deferred-scenes";
 import "./section-robot.css";
 import JourneyFilms from "./journey-films";
+import MobileJourney from "./mobile-journey";
 import "./cursor.css";
 import SplineCard from "./spline-card";
 import SplineStage from "./spline-stage";
@@ -161,6 +162,8 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <MobileJourney />
 
         {/* 3 ── Robotics with the same interactive Spline model as Section 02 */}
         <section id="robotics" className="closer closer-robot" data-progress data-steps={ROBOT_USES.length}>

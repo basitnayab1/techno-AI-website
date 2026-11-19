@@ -430,6 +430,36 @@ export function JourneyScene() {
       return h;
     });
 
+    // Fit the mobile robot between its progress strip and copy, including short phones.
+    const copy = section.querySelector<HTMLElement>(".stations");
+    const clean = section.querySelector<HTMLElement>(".jx-clean");
+    const phoneLayout = matchMedia("(max-width: 760px)");
+    let robotArea = { top: 212, bottom: 500, height: 844, width: 390 };
+    const measureRobotArea = () => {
+      const height = canvas.clientHeight || innerHeight;
+      const top = (clean ? clean.offsetTop + clean.offsetHeight : 196) + 14;
+      const bottom = height - (copy?.offsetHeight || 230) - 64;
+      robotArea = { top, bottom: Math.max(top + 60, bottom), height, width: canvas.clientWidth };
+    };
+    const robotLayout = new ResizeObserver(measureRobotArea);
+    [canvas, copy, clean].forEach(el => { if (el) robotLayout.observe(el); });
+    measureRobotArea();
+    let robotBounds: { height: number; min: number; width: number; depth: number } | null = null;
+    const robotRay = new THREE.Raycaster();
+    const robotPoint = new THREE.Vector3();
+    const robotNdc = new THREE.Vector2();
+    const robotPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+    const contactMaterial = new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, side: THREE.DoubleSide,
+      uniforms: { opacity: { value: .65 } },
+      vertexShader: "varying vec2 uvShadow; void main(){uvShadow=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}",
+      fragmentShader: "varying vec2 uvShadow; uniform float opacity; void main(){float d=length((uvShadow-.5)*2.);float a=1.-smoothstep(.12,1.,d);gl_FragColor=vec4(.015,.02,.02,a*a*opacity);}",
+    });
+    const contact = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), contactMaterial);
+    contact.rotation.x = -Math.PI / 2;
+    contact.visible = false;
+    scene.add(contact);
+
     // floor rings
     const ringMat = (o: number) => new THREE.MeshBasicMaterial({ color: BLUE, transparent: true, opacity: o, side: THREE.DoubleSide });
     const rings = [1.9, 2.5, 3.3].map((r, i) => {
@@ -470,8 +500,8 @@ export function JourneyScene() {
     let shown = -1;
     let lastSp = "";
     let lastJp = "";
-    const n = SOLUTIONS.length;
     const frame = (t: number) => {
+      const n = phoneLayout.matches ? 2 : SOLUTIONS.length;
       const p = sectionProgress(section);
       const f = Math.min(p * n, n - 0.001);
       const idx = Math.floor(f);
@@ -489,6 +519,7 @@ export function JourneyScene() {
         return;
       }
       canvas.hidden = false;
+      contact.visible = idx === robotI && !!models[robotI].real;
 
       mouse.x = damp(mouse.x, mouse.tx, 0.05);
       mouse.y = damp(mouse.y, mouse.ty, 0.05);
@@ -507,9 +538,19 @@ export function JourneyScene() {
         // The drone flying in from Section 2 is the sole 3D drone in this station.
         const target = i === idx && i !== droneI ? 1 : 0;
         // real products on a scene photo sit a little smaller on desktop so they clear the rail and the card
-        const k = wide
+        let k = wide
           ? (models[i].real && i === robotI ? 0.78 : 1)
           : (i === droneI ? 0.42 : i === robotI ? 0.52 : 0.62);
+        if (!wide && phoneLayout.matches && i === robotI && models[i].real) {
+          if (!robotBounds) {
+            h.updateMatrixWorld(true);
+            const box = new THREE.Box3().setFromObject(models[i].group);
+            box.applyMatrix4(new THREE.Matrix4().copy(h.matrixWorld).invert());
+            robotBounds = { height: box.max.y - box.min.y, min: box.min.y, width: box.max.x - box.min.x, depth: box.max.z - box.min.z };
+          }
+          const viewHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
+          k = Math.max(.32, Math.min(k, (robotArea.bottom - robotArea.top) * .82 / robotArea.height * viewHeight / Math.max(robotBounds.height, .1)));
+        }
         const s = showcase || i === droneI ? target : damp(h.scale.x / k, target, i === idx ? 0.12 : 0.28);
         h.scale.setScalar(s < 0.03 ? 0.001 : Math.max(s * k, 0.001));
         h.visible = s > 0.03;
@@ -522,6 +563,14 @@ export function JourneyScene() {
         const pose = models[i].real ? REAL_POSE[SOLUTIONS[i].slug] : undefined;
         const floorY = pose === "ground" && wide ? -1.75 - (models[i].base ?? 0) * h.scale.x : null; // stand on the rings
         h.position.set(wide ? 1.7 : 0, floorY ?? (wide ? 0 : pose === "ground" ? 0.8 : 1.25) + (pose === "ground" ? 0 : Math.sin(t * 1.1) * (pose ? 0.05 : 0.08)), 0);
+        if (!wide && phoneLayout.matches && i === robotI && robotBounds) {
+          camera.updateMatrixWorld();
+          // Anchor the wheels to the floor, rather than centring the body in the free space.
+          robotRay.setFromCamera(robotNdc.set(0, 1 - robotArea.bottom / robotArea.height * 2), camera);
+          if (robotRay.ray.intersectPlane(robotPlane, robotPoint)) {
+            h.position.y = robotPoint.y - (models[i].base ?? robotBounds.min) * h.scale.y;
+          }
+        }
         if (showcase && models[i].real) {
           h.position.set(wide ? 1.8 : 0, wide ? 0 : .85, 0);
         }
@@ -552,12 +601,18 @@ export function JourneyScene() {
             if (slug === "financial" || slug === "satellite") h.rotation.y -= Math.PI / 2;
             if (slug === "industry") h.rotation.y += .85;
           }
-          h.rotation.x = (pose === "ground" ? 0.04 : 0.1) + mouse.y * 0.06;
+          h.rotation.x = !wide && i === robotI ? 0 : (pose === "ground" ? 0.04 : 0.1) + mouse.y * 0.06;
         } else {
           h.rotation.y = local * Math.PI * 0.9 - 0.45 + mouse.x * 0.4 + (1 - s) * 1.6;
           h.rotation.x = 0.12 + mouse.y * 0.15;
         }
       });
+      if (contact.visible) {
+        const robot = holders[robotI];
+        contact.position.set(robot.position.x, robot.position.y + (models[robotI].base ?? robotBounds?.min ?? -1) * robot.scale.y - .008, robot.position.z);
+        contact.scale.set((robotBounds?.width ?? 2.6) * robot.scale.x * 1.3, (robotBounds?.depth ?? 2.2) * robot.scale.z * 1.45, 1);
+        contactMaterial.uniforms.opacity.value = Math.min(.65, robot.scale.x * 1.4);
+      }
       const realHere = (idx === robotI || idx === droneI) && models[idx].real;
       ringFade = damp(ringFade, realHere ? 0 : 1, 0.12);
       ringMats.forEach((m, i) => (m.opacity = ringBase[i] * ringFade));
@@ -593,6 +648,8 @@ export function JourneyScene() {
     return () => {
       stop();
       window.removeEventListener("pointermove", onMove);
+      robotLayout.disconnect();
+      contactMaterial.dispose();
       stage.dispose();
     };
   });

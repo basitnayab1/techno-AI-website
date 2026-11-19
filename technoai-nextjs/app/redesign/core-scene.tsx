@@ -272,9 +272,12 @@ function Particles({ count }: { count: number }) {
 
 /** The object itself. Reports the screen position of the label anchors after every frame. */
 function IntelligenceCore({ mobile, still, onAnchors }: { mobile: boolean; still: boolean; onAnchors: (p: Pts) => void }) {
-  const seg = mobile ? 40 : 80;
+  const seg = mobile ? 40 : 64;
   const logoMap = useLogoTexture();
   const time = useMemo(() => ({ value: 0 }), []);
+  const coreShader = useRef<THREE.ShaderMaterial>(null);
+  const shellAShader = useRef<THREE.ShaderMaterial>(null);
+  const shellBShader = useRef<THREE.ShaderMaterial>(null);
   const coreUniforms = useMemo(() => ({ uTime: time, uInk: { value: INK }, uBlue: { value: BLUE }, uTeal: { value: TEAL }, uAqua: { value: AQUA } }), [time]);
   const shellA = useMemo(() => ({ uTime: time, uColor: { value: BLUE }, uOpacity: { value: 0.55 } }), [time]);
   const shellB = useMemo(() => ({ uTime: time, uColor: { value: TEAL }, uOpacity: { value: 0.32 } }), [time]);
@@ -308,7 +311,11 @@ function IntelligenceCore({ mobile, still, onAnchors }: { mobile: boolean; still
   const v = useMemo(() => new THREE.Vector3(), []);
   useFrame(({ clock, camera, size }) => {
     const t = still ? 2.5 : clock.elapsedTime;
-    time.value = t;
+    // R3F preserves its own uniform objects; update the mounted materials,
+    // rather than the input uniform object copied when they were created.
+    for (const shader of [coreShader.current, shellAShader.current, shellBShader.current]) {
+      if (shader) shader.uniforms.uTime.value = t;
+    }
     const m = mouse.current;
     m.x += (m.tx - m.x) * 0.05;
     m.y += (m.ty - m.y) * 0.05;
@@ -335,8 +342,10 @@ function IntelligenceCore({ mobile, still, onAnchors }: { mobile: boolean; still
     glowRing.current!.scale.setScalar(1 + Math.sin(t * 2) * 0.01);
     ripples.current.forEach((r, i) => r && ((r.material as THREE.MeshBasicMaterial).opacity = (0.42 - i * 0.08) * (0.75 + 0.25 * Math.sin(t * 1.2 - i))));
 
-    camera.position.x = m.x * 0.25;
-    camera.position.y = 0.25 - m.y * 0.15;
+    // Cursor tilt belongs to the floating core. Keep the camera and landing
+    // platform fixed so the parked drone does not drift with the cursor.
+    camera.position.x = 0;
+    camera.position.y = 0.25;
     camera.lookAt(0, 0.05, 0);
 
     // label anchors → canvas pixels
@@ -356,16 +365,16 @@ function IntelligenceCore({ mobile, still, onAnchors }: { mobile: boolean; still
           {/* inner energy core */}
           <mesh>
             <sphereGeometry args={[0.72, seg, seg / 2]} />
-            <shaderMaterial vertexShader={VERT} fragmentShader={CORE_FRAG} uniforms={coreUniforms} />
+            <shaderMaterial ref={coreShader} vertexShader={VERT} fragmentShader={CORE_FRAG} uniforms={coreUniforms} />
           </mesh>
           {/* circuit shells */}
           <mesh>
             <sphereGeometry args={[1.02, seg, seg / 2]} />
-            <shaderMaterial vertexShader={VERT} fragmentShader={SHELL_FRAG} uniforms={shellA} transparent depthWrite={false} side={THREE.DoubleSide} />
+            <shaderMaterial ref={shellAShader} vertexShader={VERT} fragmentShader={SHELL_FRAG} uniforms={shellA} transparent depthWrite={false} side={THREE.DoubleSide} />
           </mesh>
           <mesh ref={shellBRef} rotation={[0.6, 0, 0.3]}>
             <sphereGeometry args={[1.18, seg, seg / 2]} />
-            <shaderMaterial vertexShader={VERT} fragmentShader={SHELL_FRAG} uniforms={shellB} transparent depthWrite={false} side={THREE.DoubleSide} />
+            <shaderMaterial ref={shellBShader} vertexShader={VERT} fragmentShader={SHELL_FRAG} uniforms={shellB} transparent depthWrite={false} side={THREE.DoubleSide} />
           </mesh>
         </group>
 
@@ -488,6 +497,23 @@ export function Warmup({ onReady }: { onReady: () => void }) {
   return null;
 }
 
+function CoreFrames({ active, ready }: { active: boolean; ready: boolean }) {
+  const invalidate = useThree(state => state.invalidate);
+  const setFrameloop = useThree(state => state.setFrameloop);
+  // Start the clock in the canvas lifecycle after shader warmup. Changing only
+  // the outer Canvas prop can render demand frames with its initial clock stopped.
+  useEffect(() => {
+    setFrameloop(ready ? "demand" : "never");
+  }, [ready, setFrameloop]);
+  useEffect(() => {
+    invalidate();
+    if (!active) return;
+    const timer = window.setInterval(() => { if (!document.hidden) invalidate(); }, 1000 / 30);
+    return () => clearInterval(timer);
+  }, [active, invalidate, ready]);
+  return null;
+}
+
 export default function CoreScene({ onFail, onReady }: { onFail: () => void; onReady?: () => void }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -538,7 +564,7 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
         });
       }
       // Share the projected platform position with the existing flight canvas, without a layout read per frame.
-      if (pts.dock) {
+      if (pts.dock && c.at >= 0) {
         (stage as HTMLElement & { __technoDroneDock?: { x: number; y: number } }).__technoDroneDock = {
           x: c.left + pts.dock.x, y: c.top + pts.dock.y,
         };
@@ -562,10 +588,10 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
     <div ref={wrapRef} className="hx-canvas">
       <SceneBoundary onFail={onFail}>
         <Canvas
-          dpr={[1, env.mobile ? 1 : 1.25]}
+          dpr={1}
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
           camera={{ fov: 30, position: [0, 0.25, 8.7], near: 0.1, far: 100 }}
-          frameloop={!compiled ? "never" : env.still ? "demand" : visible ? "always" : "never"}
+          frameloop="never"
           onCreated={({ gl }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.debug.checkShaderErrors = false; // no synchronous shader stall
@@ -579,6 +605,7 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
           <directionalLight position={[-3, 5, 6]} intensity={2.2} />
           <IntelligenceCore mobile={env.mobile} still={env.still} onAnchors={onAnchors} />
           <Warmup onReady={ready} />
+          <CoreFrames active={compiled && visible && !env.still} ready={compiled} />
         </Canvas>
       </SceneBoundary>
       <svg ref={svgRef} className="hx-lines" aria-hidden="true">

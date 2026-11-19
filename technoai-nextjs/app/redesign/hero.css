@@ -235,7 +235,9 @@ html.fx:not(.loaded) .hx-scroll, html.fx:not(.loaded) .hx-stage { animation-play
   .hx-label-robotics { right: 4%; top: 44%; }
   .hx-label-edge { left: 4%; top: 76%; }
   .hx-scroll-text::before, .hx-scroll-text::after { width: 56px; }
-  .hx-bg-video { display: none; }
+  .hx-bg-video { display: block; opacity: .48; filter: none; mask-image: linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,.5) 42%,#000 75%); -webkit-mask-image: linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,.5) 42%,#000 75%); object-position: 65% center; }
+  .hx-bg-veil { background: rgba(255,255,255,.68); }
+  html[data-theme="dark"] .hx-bg-veil { background: linear-gradient(180deg,rgba(3,5,5,.5),rgba(3,5,5,.28) 60%,rgba(3,5,5,.6)); }
   .hx-uae-mark { width: 62px; margin: 0 0 10px 3px; }
 }
 
@@ -243,7 +245,7 @@ html.fx:not(.loaded) .hx-scroll, html.fx:not(.loaded) .hx-stage { animation-play
   .hx-flow { display: none; }
   .hx-nav, .hx-w > span, .hx-rise, .hx-stage, .hx-scroll, .hx-mouse i, .hx-fb-core { animation: none !important; }
   .hx-label { transition: none; }
-  .hx-bg-video { display: none; }
+  video.hx-bg-video { display: none; }
 }
 
 /* ---------------- third brand accent: #9fe7e7 ---------------- */
@@ -356,3 +358,50 @@ html[data-theme="dark"] body .hx-hero .hx-actions .hx-btn-ghost:hover { border-c
 @media (max-width: 760px) {
   html body .hx-hero .hx-actions .hx-btn { height: 54px; min-width: 0; width: 100%; padding-inline: 24px; }
 }
+
+/* Match the imported hero's background-only parallax and slow zoom. */
+.hx-video-parallax {
+  position: absolute;
+  inset: -6% 0 -160px;
+  transform: translate3d(0, calc(var(--hp, 0) * 140px), 0);
+  will-change: transform;
+  animation: hxVideoDrift 24s ease-in-out infinite alternate;
+}
+@keyframes hxVideoDrift { from { scale: 1; } to { scale: 1.12; } }
+@media (prefers-reduced-motion: reduce) {
+  .hx-video-parallax { transform: none; animation: none; will-change: auto; }
+}
+
+.hx-scroll-story { height: 260svh; position: relative; }
+.hx-scroll-story > .hx-hero { position: sticky; top: 0; height: 100svh; min-height: 0; box-sizing: border-box; }
+.hx-story-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .8s ease; }
+.hx-scroll-story .hx-video-parallax { transition: opacity .8s ease; }
+.hx-story-copy { position: relative; min-width: 0; }
+.hx-story-copy .hx-copy { transition: opacity .5s ease; }
+.hx-scene-copy { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 24px; opacity: 0; visibility: hidden; transition: opacity .5s ease, visibility .5s; }
+.hx-scroll-story[data-scene="1"] .hx-story-satellite,
+.hx-scroll-story[data-scene="2"] .hx-story-ai { opacity: 1; }
+.hx-scroll-story[data-scene="1"] .hx-scene-satellite,
+.hx-scroll-story[data-scene="2"] .hx-scene-ai { opacity: 1; visibility: visible; }
+.hx-scroll-story:not([data-scene="0"]) .hx-copy { opacity: 0; visibility: hidden; pointer-events: none; }
+.hx-scroll-story:not([data-scene="0"]) .hx-video-parallax { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .hx-scroll-story { height: auto; }
+  .hx-scroll-story > .hx-hero { position: relative; height: auto; min-height: 100svh; }
+}
+.hx-scroll-story:not([data-scene="0"]) .hx-video-parallax { opacity: 1; }
+.hx-story-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.hx-scroll-story:not([data-scene="0"]) .hx-stage { opacity: .18; pointer-events: none; }
+.hx-scroll-story .hx-stage { transition: opacity .6s ease; }
+.hx-scene-copy { z-index: 2; }
+@media (max-width: 1020px) {
+  .hx-scroll-story > .hx-hero { padding: 100px 0 45px; }
+  .hx-scroll-story .hx-inner { grid-template-rows: auto minmax(180px, 1fr); min-height: 0; }
+  .hx-scroll-story .hx-stage { height: 100%; min-height: 0; max-height: 360px; margin-top: 10px; }
+  .hx-scroll-story .hx-story-copy .hx-eyebrow { margin-bottom: 16px; font-size: .65rem; }
+  .hx-scroll-story .hx-actions { flex-direction: row; margin-top: 20px; gap: 10px; }
+  .hx-scroll-story .hx-actions .hx-btn { padding-inline: 12px; font-size: .8rem; height: 44px; }
+  .hx-scroll-story .hx-uae-mark { display: none; }
+  .hx-scroll-story .hx-scene-copy { gap: 16px; }
+}
+.hx-scroll-story:not([data-scene="0"]) .hx-stage { animation: none; opacity: .1; }

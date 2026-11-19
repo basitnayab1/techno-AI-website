@@ -3,9 +3,10 @@
 import { Component, useEffect, useRef, useState, type ReactNode } from "react";
 import Spline from "@splinetool/react-spline";
 
-// Same crop/scale as the owner's snippet: the scene is laid out at 1440x900, 15 % cropped, scaled to the frame width.
-const BASE_WIDTH = 1440;
-const BASE_HEIGHT = 900;
+// Preserve the owner's 16:10 composition/crop with a smaller drawing buffer.
+// CSS applies the same final size; the GPU renders 56% fewer pixels.
+const BASE_WIDTH = 960;
+const BASE_HEIGHT = 600;
 const CROP_PERCENT = 15;
 const SIZE_MULTIPLIER = 0.85;
 const SCENE = "/redesign/spline/robot-13bd456a.splinecode";
@@ -26,6 +27,7 @@ export default function Frame() {
   const [card, setCard] = useState(false); // read after mount (no server/client mismatch)
   const [box, setBox] = useState({ w: 300, h: 250 });
   const readyFrame = useRef(0);
+  const sizeFrame = useRef(0);
   const loaded = useRef(false);
 
   useEffect(() => {
@@ -35,25 +37,58 @@ export default function Frame() {
   useEffect(() => {
     // the parent page pauses/resumes the scene when its section leaves/enters the screen
     const onMsg = (e: MessageEvent) => {
-      if (e.origin !== window.location.origin) return;
+      if (e.origin !== window.location.origin || e.source !== window.parent) return;
       if (e.data === "spline:stop") appRef.current?.stop?.();
       if (e.data === "spline:play") appRef.current?.play?.();
       if (e.data === "spline:status" && loaded.current) window.parent.postMessage("spline:ready", location.origin);
+      if (e.data?.type === "spline:pointer" && loaded.current && Number.isFinite(e.data.x) && Number.isFinite(e.data.y)) {
+        const canvas = outerRef.current?.querySelector("canvas");
+        if (!canvas) return;
+        const point = { clientX: e.data.x, clientY: e.data.y, bubbles: true };
+        canvas.dispatchEvent(new PointerEvent("pointermove", { ...point, pointerType: "mouse", isPrimary: true }));
+        appRef.current?.requestRender?.();
+      }
     };
     window.addEventListener("message", onMsg);
+    let nativePointer: { x: number; y: number } | null = null;
+    const onNativePointer = (event: PointerEvent) => {
+      if (!event.isTrusted || event.pointerType !== "mouse") return;
+      // Moving the iframe under a stationary cursor is not a new mouse gesture.
+      if (nativePointer && nativePointer.x === event.screenX && nativePointer.y === event.screenY) {
+        event.stopImmediatePropagation();
+        return;
+      }
+      nativePointer = { x: event.screenX, y: event.screenY };
+    };
+    window.addEventListener("pointermove", onNativePointer, { capture: true, passive: true });
     // This embedded scene must not swallow the page's wheel gestures.
     const onWheel = (event: WheelEvent) => {
       if (window.parent === window || event.ctrlKey) return;
       event.preventDefault();
+      event.stopImmediatePropagation();
       window.parent.postMessage({ type: "spline:wheel", deltaY: event.deltaY, deltaMode: event.deltaMode }, window.location.origin);
     };
     window.addEventListener("wheel", onWheel, { passive: false, capture: true });
     return () => {
       cancelAnimationFrame(readyFrame.current);
+      cancelAnimationFrame(sizeFrame.current);
       window.removeEventListener("message", onMsg);
+      window.removeEventListener("pointermove", onNativePointer, true);
       window.removeEventListener("wheel", onWheel, true);
     };
   }, []);
+
+  useEffect(() => {
+    // Acknowledge the crop only after React and the scene have painted the new size.
+    // The shared parent keeps a stale-sized frame hidden while switching placements.
+    sizeFrame.current = requestAnimationFrame(() => {
+      appRef.current?.requestRender?.();
+      sizeFrame.current = requestAnimationFrame(() => {
+        window.parent.postMessage({ type: "spline:viewport-ready", width: box.w, height: box.h }, location.origin);
+      });
+    });
+    return () => cancelAnimationFrame(sizeFrame.current);
+  }, [box, card]);
 
   useEffect(() => {
     const el = outerRef.current;
@@ -96,7 +131,7 @@ export default function Frame() {
     <div ref={outerRef} style={{ width: "100%", height: "100vh", overflow: "hidden", position: "relative" }}>
       <div
         style={card ? {
-          position: "absolute", left: box.w / 2 - 720 * s, top: box.h / 2 - 560 * s,
+          position: "absolute", left: box.w / 2 - BASE_WIDTH * .5 * s, top: box.h / 2 - BASE_HEIGHT * (560 / 900) * s,
           width: BASE_WIDTH, height: BASE_HEIGHT, transform: `scale(${s})`, transformOrigin: "0 0",
         } : {
           position: "absolute",

@@ -1,4 +1,24 @@
 .closer.closer-robot { background: #0b1213; }
+
+html[data-theme="dark"] .sec.partners { position: relative; }
+html[data-theme="dark"] .closer-robot > .sticky::before,
+html[data-theme="dark"] .sec.partners::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto auto;
+  width: min(38vw, 520px);
+  height: min(28vh, 220px);
+  pointer-events: none;
+  background: url("/redesign/teal-dots.png") repeat;
+  mix-blend-mode: screen;
+  opacity: .68;
+  mask-image: radial-gradient(ellipse at top right, black 15%, transparent 74%);
+}
+html[data-theme="dark"] .sec.partners::before {
+  left: 0;
+  right: auto;
+  mask-image: radial-gradient(ellipse at top left, black 15%, transparent 74%);
+}
 .closer-robot .section-robot { position: relative; min-width: 0; width: 100%; height: min(75svh, 760px); }
 .closer-robot .section-robot .cx-spline { position: absolute; inset: 0; width: 100%; height: 100%; }
 @media (max-width: 900px) {

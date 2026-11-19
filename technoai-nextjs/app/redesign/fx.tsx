@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Lenis from "lenis";
 import PageCurtain from "../page-curtain";
 import { pageTransitions } from "../interior-kit/motion";
 import "./opening.css";
@@ -10,7 +9,7 @@ const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matc
 
 /**
  * Page-wide motion:
- * - Lenis smooth scrolling
+ * - Native compositor scrolling with smooth anchor navigation
  * - [data-reveal] fades in when it enters the screen
  * - [data-progress] sections get --p (0..1 scroll progress) and data-step="n" when data-steps is set
  * - [data-hscroll] gets --shift (px the inner track must move to show everything)
@@ -21,12 +20,6 @@ export function Motion() {
     const root = document.documentElement;
     const still = reduced();
     const cleanPageTransitions = pageTransitions(root);
-    let lenis: Lenis | null = null;
-    // Touch stays native; only a desktop wheel needs an interpolated scroll position.
-    if (!still && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-      lenis = new Lenis({ lerp: .12, smoothWheel: true, syncTouch: false, overscroll: false });
-      (window as unknown as { lenis: Lenis }).lenis = lenis;
-    }
 
     root.classList.add("fx");
     const io = new IntersectionObserver(
@@ -101,8 +94,7 @@ export function Motion() {
     const vhNow = { v: window.innerHeight };
     const update = () => {
       const vh = vhNow.v;
-      // Lenis already knows the scroll position; reading window.scrollY after style writes forces a layout
-      const y = lenis ? lenis.scroll : window.scrollY;
+      const y = window.scrollY;
       if (header) {
         const sc = y > 10;
         if (header.classList.contains("scrolled") !== sc) header.classList.toggle("scrolled", sc);
@@ -111,6 +103,7 @@ export function Motion() {
         const p = Math.min(Math.max((y - heroGeo.top) / Math.max(heroGeo.h, 1), 0), 1).toFixed(3);
         if (p !== lastFlow) {
           lastFlow = p;
+          hero?.style.setProperty("--hp", p);
           flow.style.setProperty("--flow-x", `${Math.round(-90 * +p)}px`);
           flow.style.setProperty("--flow-y", `${Math.round(145 * +p)}px`);
           flow.style.opacity = (0.68 + 0.2 * +p).toFixed(3);
@@ -140,7 +133,6 @@ export function Motion() {
         layoutRaf = 0;
         vhNow.v = window.innerHeight;
         measure();
-        lenis?.resize();
         remeasure();
         last.clear();
         update();
@@ -152,12 +144,10 @@ export function Motion() {
     let raf = 0;
     let dirty = true;
     let lastY = -1;
-    const loop = (time: number) => {
+    const loop = () => {
       raf = 0;
-      lenis?.raf(time);
-      const y = lenis ? lenis.scroll : window.scrollY;
+      const y = window.scrollY;
       if (dirty || y !== lastY) { dirty = false; lastY = y; update(); }
-      if (lenis && !document.hidden) raf = requestAnimationFrame(loop);
     };
     const requestTick = () => {
       dirty = true;
@@ -166,7 +156,7 @@ export function Motion() {
     const visibility = () => {
       cancelAnimationFrame(raf);
       raf = 0;
-      if (!document.hidden) { lenis?.resize(); requestTick(); }
+      if (!document.hidden) requestTick();
     };
     measure();
     remeasure();
@@ -177,7 +167,7 @@ export function Motion() {
     document.addEventListener("visibilitychange", visibility);
     document.fonts.ready.then(scheduleLayout);
 
-    // in-page links through Lenis
+    // Native smooth anchors keep scrolling independent of the WebGL frame budget.
     const onClick = (e: MouseEvent) => {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="#"]');
@@ -189,8 +179,7 @@ export function Motion() {
       try { t = document.querySelector(hash); } catch { return; }
       if (!t) return;
       e.preventDefault();
-      if (lenis) lenis.scrollTo(t as HTMLElement, { offset: -70 });
-      else window.scrollTo({
+      window.scrollTo({
         top: Math.max(0, window.scrollY + t.getBoundingClientRect().top - 90),
         behavior: still ? "instant" : "smooth",
       });
@@ -208,8 +197,6 @@ export function Motion() {
       window.removeEventListener("scroll", requestTick);
       document.removeEventListener("visibilitychange", visibility);
       document.removeEventListener("click", onClick);
-      if ((window as Window & { lenis?: Lenis }).lenis === lenis) delete (window as Window & { lenis?: Lenis }).lenis;
-      lenis?.destroy();
       root.classList.remove("fx");
     };
   }, []);

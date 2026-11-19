@@ -11,7 +11,15 @@ function FibreFrames({ active }: { active: boolean }) {
   useEffect(() => {
     invalidate();
     if (!active) return;
-    const timer = window.setInterval(() => { if (!document.hidden) invalidate(); }, 1000 / 30);
+    let last = 0;
+    const timer = window.setInterval(() => {
+      if (document.hidden) return;
+      const busy = document.querySelector('.robot-stage[data-visible="true"]');
+      const now = performance.now();
+      if (now - last < (busy ? 1000 / 15 : 1000 / 30) - 2) return;
+      last = now;
+      invalidate();
+    }, 1000 / 30);
     return () => clearInterval(timer);
   }, [active, invalidate]);
   return null;
