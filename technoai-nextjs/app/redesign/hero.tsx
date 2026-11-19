@@ -2,7 +2,6 @@ import "./hero.css";
 import "./menu.css";
 import { INDUSTRIES, SOLUTIONS } from "./data";
 import CoreStage from "./core-stage";
-import HeroNav from "./hero-nav";
 import HeroBackground from "./hero-background";
 
 // Home hero: floating glass navbar + headline + 3D "Intelligence Core".
@@ -46,7 +45,6 @@ const words = (text: string, from: number) =>
 export default function Hero() {
   return (
     <>
-      <HeroNav items={NAV_ITEMS} />
       <section className="hx-hero" aria-labelledby="hx-title">
         <div className="hx-bg" aria-hidden="true">
           <HeroBackground />
@@ -72,13 +70,12 @@ export default function Hero() {
               AI systems, autonomous robotics, and computing hardware, selected and integrated for your operations.
             </p>
             <div className="hx-actions hx-rise" style={{ ["--d" as string]: "0.9s" }}>
-              <a className="hx-btn hx-btn-primary hx-gloss" href="#solutions" data-stringy>
-                Explore Solutions
+              <a className="hx-btn hx-btn-primary" href="/request-a-quote/">
+                Start a Project
                 <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12M11 5l5 5-5 5" /></svg>
               </a>
-              <a className="hx-btn hx-btn-ghost" href="/services/">
-                <span className="hx-play" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M4.5 3.2v5.6L9 6z" /></svg></span>
-                Discover Our Approach
+              <a className="hx-btn hx-btn-ghost" href="#solutions">
+                Explore Solutions
               </a>
             </div>
           </div>

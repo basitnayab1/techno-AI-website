@@ -1,0 +1,9 @@
+.closer.closer-robot { background: #0b1213; }
+.closer-robot .section-robot { position: relative; min-width: 0; width: 100%; height: min(75svh, 760px); }
+.closer-robot .section-robot .cx-spline { position: absolute; inset: 0; width: 100%; height: 100%; }
+@media (max-width: 900px) {
+  .closer.closer-robot { height: auto; }
+  .closer-robot .sticky { position: relative; height: auto; min-height: 100svh; }
+  .closer-robot .closer-in { grid-template-columns: 1fr; padding-top: 100px; padding-bottom: 40px; gap: 28px; }
+  .closer-robot .section-robot { height: clamp(320px, 50svh, 520px); }
+}

@@ -52,12 +52,13 @@ export function parseProForm(fd: FormData):
 
   const fields = keys.map((k) => ({ label: def?.fields[k]?.label || k, value: values[k] ?? "" }));
   const replyTo = Object.entries(values).find(([k, v]) => /email/i.test(k) && EMAIL_RE.test(v))?.[1];
+  const currentPage = clean(fd.get("page_url"));
   return {
     ok: true,
     submission: {
       formName: def?.name || "Form",
       page: clean(fd.get("referer_title")),
-      pageUrl: def?.page || "",
+      pageUrl: /^\/(?!\/)[^\s?#]*$/.test(currentPage) ? currentPage : def?.page || "",
       fields,
       replyTo,
     },

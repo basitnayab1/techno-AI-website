@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import routes from "../../content/routes.json";
+import { themeDocument } from "../theme-document";
 
 // Every page of technoai.ae is served exactly as WordPress/Elementor rendered it.
 // Pages are pre-rendered at build time; unknown paths get the site's own 404 page.
@@ -51,6 +52,7 @@ export async function GET(
     html = html.replace("</body>", '<script src="/technoai-form-fixes.js" defer></script></body>');
   }
   if (HERO_MODELS[key]) html = addHeroModel(html, HERO_MODELS[key]);
+  if (key !== "/" && key !== "/old-home/") html = themeDocument(html, key);
   return new Response(html, {
     status: file ? 200 : 404,
     headers: { "Content-Type": "text/html; charset=UTF-8" },

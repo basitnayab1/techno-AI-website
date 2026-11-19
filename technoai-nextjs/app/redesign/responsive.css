@@ -1,4 +1,7 @@
 /* Phone and tablet layout, including the pinned product scenes. */
+/* R3F sets touch-action:none inline; these scenes use window pointer tracking, so vertical swipes belong to the page. */
+.hx-canvas, .hx-canvas > div, .hx-canvas canvas, .journey-gl { touch-action: pan-y !important; }
+@media (hover: none), (pointer: coarse) { .cx-spline iframe { pointer-events: none; } }
 @media (max-width: 1024px) {
   html body .domains, html body .where { grid-template-columns: minmax(0, 1fr); gap: 32px; }
   html body .domains-side { position: relative; top: auto; }

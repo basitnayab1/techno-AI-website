@@ -295,7 +295,7 @@ export default function CapabilityModel({ kind, hovered }: { kind: Kind; hovered
 
   useEffect(() => {
     const el = wrap.current!;
-    const io = new IntersectionObserver(([e]) => setVisible(e.isIntersecting), { rootMargin: "120px" });
+    const io = new IntersectionObserver(([e]) => setVisible(e.isIntersecting));
     io.observe(el);
     if (!still) {
       if (mouseUsers++ === 0) window.addEventListener("pointermove", onMove, { passive: true });
@@ -310,7 +310,7 @@ export default function CapabilityModel({ kind, hovered }: { kind: Kind; hovered
   return (
     <div ref={wrap} className="cx-canvas" data-ready={compiled || undefined}>
       <Canvas
-        dpr={[1, 1.5]}
+        dpr={[1, 1.25]}
         gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
         camera={{ fov: 30, position: m.cam }}
         frameloop={!compiled ? "never" : still ? "demand" : visible ? "always" : "never"}

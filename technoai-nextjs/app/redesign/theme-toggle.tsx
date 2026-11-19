@@ -2,17 +2,20 @@
 
 import { useEffect, useState } from "react";
 import "./theme.css";
+import { applyTheme, readTheme } from "../theme-preference";
 
 export default function ThemeToggle() {
   const [dark, setDark] = useState(true);
   useEffect(() => {
-    document.documentElement.dataset.theme = "dark";
+    const theme = readTheme();
+    applyTheme(theme);
+    setDark(theme === "dark");
   }, []);
 
   const toggle = () => {
     const next = !dark;
     setDark(next);
-    document.documentElement.dataset.theme = next ? "dark" : "light";
+    applyTheme(next ? "dark" : "light", true);
   };
 
   return <button type="button" className="theme-toggle" onClick={toggle} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"} aria-pressed={dark} title={dark ? "Light mode" : "Dark mode"}>

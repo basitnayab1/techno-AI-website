@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 // Keep the three.js journey, globe, and frame player out of the first-page bundle.
 const Journey = dynamic(() => import("./scenes").then((m) => m.JourneyScene), { ssr: false });
-const Globe = dynamic(() => import("./scenes").then((m) => m.GlobeScene), { ssr: false });
+const Globe = dynamic(() => import("./presence-globe"), { ssr: false });
 const Film = dynamic(() => import("./scenes").then((m) => m.DroneFilm), { ssr: false });
 
 function useNear(margin = "500px 0px") {
@@ -32,9 +32,9 @@ export function JourneyScene() {
   return <div ref={ref} style={{ position: "absolute", inset: 0 }} aria-hidden="true">{near && <Journey />}</div>;
 }
 
-export function GlobeScene() {
+export function GlobeScene({ active = 0, onSelect }: { active?: number; onSelect?: (index: number) => void }) {
   const { ref, near } = useNear();
-  return <div ref={ref} style={{ width: "100%", height: "100%" }} role={near ? undefined : "img"} aria-label={near ? undefined : "Globe showing TechnoAi hubs in Abu Dhabi, Prague and Lahore"}>{near && <Globe />}</div>;
+  return <div ref={ref} style={{ width: "100%", height: "100%" }} role={near ? undefined : "img"} aria-label={near ? undefined : "Globe showing TechnoAi hubs in Abu Dhabi, Prague and Lahore"}>{near && <Globe active={active} onSelect={onSelect} />}</div>;
 }
 
 export function DroneFilm({ count, dir, poster, video }: { count: number; dir: string; poster: string; video: string }) {

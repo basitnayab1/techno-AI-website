@@ -37,7 +37,9 @@ function along(q: number, isWide: boolean, aspect: number) {
     const a = ROUTE[i];
     const b = ROUTE[i + 1];
     if (q <= b[0]) {
-      const k = smooth((q - a[0]) / (b[0] - a[0]));
+      const span = b[0] - a[0];
+      const u = (q - a[0]) / span;
+      const k = smooth(u);
       let bx = b[1];
       let by = b[2];
       let bs = b[3];
@@ -46,7 +48,17 @@ function along(q: number, isWide: boolean, aspect: number) {
         by = endY;
         bs = endS;
       }
-      return { x: a[1] + (bx - a[1]) * k, y: a[2] + (by - a[2]) * k, s: a[3] + (bs - a[3]) * k };
+      // Match velocity across neighbouring waypoints so flight continues through each turn.
+      const prev = ROUTE[Math.max(0, i - 1)];
+      const next = ROUTE[Math.min(ROUTE.length - 1, i + 2)];
+      function interpolate(axis: 1 | 2 | 3, dest: number, end: number) {
+        const after = i >= ROUTE.length - 3 ? end : next[axis];
+        const startSlope = i === 0 ? 0 : (dest - prev[axis]) / (b[0] - prev[0]);
+        const endSlope = i === ROUTE.length - 2 ? 0 : (after - a[axis]) / (next[0] - a[0]);
+        return THREE.MathUtils.lerp(a[axis], dest, k)
+          + span * u * (1 - u) * ((1 - u) * startSlope - u * endSlope);
+      }
+      return { x: interpolate(1, bx, endX), y: interpolate(2, by, endY), s: interpolate(3, bs, endS) };
     }
   }
   return { x: endX, y: endY, s: endS };
@@ -60,6 +72,7 @@ export default function FlightScene() {
     if (!canvas) return;
     const hero = document.querySelector<HTMLElement>(".hx-hero");
     const journey = document.querySelector<HTMLElement>(".journey");
+    const coreStage = document.querySelector<HTMLElement>(".hx-stage") as (HTMLElement & { __technoDroneDock?: { x: number; y: number } }) | null;
     if (!hero || !journey) return;
     let renderer: THREE.WebGLRenderer;
     try {
@@ -68,7 +81,7 @@ export default function FlightScene() {
       return;
     }
     renderer.debug.checkShaderErrors = false;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.innerWidth < 760 ? 1 : 1.5));
+    renderer.setPixelRatio(1);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     const scene = new THREE.Scene();
     scene.add(new THREE.HemisphereLight(0xffffff, 0xd9e4e7, 1.8));
@@ -81,6 +94,17 @@ export default function FlightScene() {
     const holder = new THREE.Group();
     holder.visible = false;
     scene.add(holder);
+    const shadowCanvas = document.createElement("canvas");
+    shadowCanvas.width = shadowCanvas.height = 64;
+    const shadowContext = shadowCanvas.getContext("2d")!;
+    const shadowGradient = shadowContext.createRadialGradient(32, 32, 2, 32, 32, 32);
+    shadowGradient.addColorStop(0, "rgba(0,0,0,.65)");
+    shadowGradient.addColorStop(1, "rgba(0,0,0,0)");
+    shadowContext.fillStyle = shadowGradient;
+    shadowContext.fillRect(0, 0, 64, 64);
+    const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
+    const shadow = new THREE.Mesh(new THREE.PlaneGeometry(.9, .2), new THREE.MeshBasicMaterial({ map: shadowTexture, transparent: true, depthWrite: false }));
+    scene.add(shadow);
     const fallback = buildDrone(materials());
     const fallbackWidth = new THREE.Box3().setFromObject(fallback.group).getSize(new THREE.Vector3()).x;
     fallback.group.scale.setScalar(1 / Math.max(fallbackWidth, 0.01));
@@ -88,6 +112,7 @@ export default function FlightScene() {
     let modelReady = false;
     let spin: [THREE.Object3D, number][] = [];
     let wrapObj: THREE.Group | null = null;
+    let restingBottom = .18;
     let disposed = false;
     preloadModel("drone").then(
       (gltf) => {
@@ -119,6 +144,7 @@ export default function FlightScene() {
         wrap.add(model);
         modelReady = true;
         wrap.rotation.set(0.12, -0.55, 0); // three-quarter view from slightly above, matches journey station angle
+        restingBottom = Math.max(0, -new THREE.Box3().setFromObject(wrap).min.y);
         wrapObj = wrap;
         holder.remove(fallback.group);
         holder.add(wrap);
@@ -130,10 +156,17 @@ export default function FlightScene() {
 
     // scroll range: from hero mid-point to the arrival at the journey section
     let range = { a: 0, b: 1 };
+    let heroTop = 0;
+    let fallbackDock = { x: 0, y: 0 };
     const measure = () => {
       const docY = window.pageYOffset || document.documentElement.scrollTop || window.scrollY || 0;
       const h = hero.getBoundingClientRect();
       const j = journey.getBoundingClientRect();
+      heroTop = h.top + docY;
+      const stageRect = coreStage?.getBoundingClientRect();
+      fallbackDock = stageRect
+        ? { x: stageRect.left + stageRect.width * .5, y: stageRect.top + docY + stageRect.height * .85 }
+        : { x: h.left + h.width * .75, y: heroTop + h.height * .85 };
       range = { a: h.top + docY + h.height * 0.45, b: j.top + docY };
       journeyHeight = j.height;
     };
@@ -167,31 +200,31 @@ export default function FlightScene() {
     const ndc = new THREE.Vector3();
     let raf = 0;
     let wasOn = false;
+    let lastOpacity = "";
     let lastT = 0;
-    let lastFrame = 0;
     const halfH = Math.tan((camera.fov * Math.PI) / 360) * camera.position.z;
-    const frame = (now: number) => {
+    const frame = () => {
       raf = requestAnimationFrame(frame);
-      if (document.hidden || now - lastFrame < (W < 760 ? 1000 / 30 : 1000 / 60) - 1) return;
-      lastFrame = now;
+      if (document.hidden) return;
       const lenis = (window as unknown as { lenis?: { scroll: number } }).lenis;
-      const docY = window.pageYOffset || document.documentElement.scrollTop || window.scrollY || 0;
-      const y = lenis ? lenis.scroll : docY;
+      const y = lenis?.scroll ?? window.scrollY;
       const q = (y - range.a) / Math.max(range.b - range.a, 1);
 
       // Aerial station keeps the flying drone; the journey canvas never draws a second copy.
       const aerialProgress = Math.max(0, (y - range.b) / Math.max(journeyHeight - H, 1) * SOLUTIONS.length);
-      const on = q >= -0.05 && aerialProgress < 1;
+      const on = y >= heroTop - H && aerialProgress < 1;
       if (!on) {
         if (wasOn) {
           renderer.clear();
+          canvas.style.opacity = "0";
+          lastOpacity = "0";
         }
-        canvas.style.opacity = "0";
         wasOn = false;
         return;
       }
       wasOn = true;
-      canvas.style.opacity = String(Math.min(1, Math.max(0, (1 - aerialProgress) / 0.12)));
+      const opacity = Math.min(1, Math.max(0, (1 - aerialProgress) / 0.12)).toFixed(3);
+      if (opacity !== lastOpacity) canvas.style.opacity = lastOpacity = opacity;
 
       const t = clock.getElapsedTime();
       const dt = Math.min(0.05, Math.max(0, t - lastT));
@@ -203,6 +236,25 @@ export default function FlightScene() {
       const p = along(Math.max(0, Math.min(q, 1.0)), isWide, camera.aspect);
       const halfW = halfH * camera.aspect;
       const small = W < 760 ? 0.6 : 1;
+      const sizeFactor = small * Math.min(1.35, Math.max(0.75, halfW * 0.35));
+      const takeoff = smooth(THREE.MathUtils.clamp(q / .12, 0, 1));
+      shadow.visible = false;
+
+      // Park this same drone on the hero platform, then join the original flight route smoothly.
+      if (q < .12) {
+        const dock = coreStage?.__technoDroneDock ?? fallbackDock;
+        const dockSize = isWide ? .8 : 1.05;
+        const dockX = dock.x / Math.max(W, 1) * 2 - 1;
+        const surfaceY = 1 - (dock.y - y) / Math.max(H, 1) * 2;
+        const dockY = surfaceY + Math.max(0, restingBottom - .015) * dockSize * sizeFactor / halfH;
+        p.x = THREE.MathUtils.lerp(dockX, p.x, takeoff);
+        p.y = THREE.MathUtils.lerp(dockY, p.y, takeoff);
+        p.s = THREE.MathUtils.lerp(dockSize, p.s, takeoff);
+        shadow.visible = true;
+        shadow.position.set(dockX * halfW, surfaceY * halfH, -.02);
+        shadow.scale.setScalar(dockSize * sizeFactor);
+        shadow.material.opacity = 1 - takeoff;
+      }
 
       let px = p.x;
       let py = p.y;
@@ -210,14 +262,13 @@ export default function FlightScene() {
         // Continue the flight through the aerial station as the visitor scrolls.
         px += Math.sin(aerialProgress * Math.PI * 2) * (isWide ? 0.10 : 0.045);
         py += Math.sin(aerialProgress * Math.PI) * 0.12;
-        px += Math.sin(t * 0.45) * 0.012;
-        py += Math.sin(t * 0.9) * 0.015;
-        px += pointer.x * 0.045;
-        py += pointer.y * 0.035;
+        const arrival = smooth(Math.min(1, aerialProgress / 0.12));
+        px += (Math.sin(t * 0.45) * 0.012 + pointer.x * 0.045) * arrival;
+        py += (Math.sin(t * 0.9) * 0.015 + pointer.y * 0.035) * arrival;
       }
 
       holder.position.set(px * halfW, py * halfH, 0);
-      holder.scale.setScalar(p.s * small * Math.min(1.35, Math.max(0.75, halfW * 0.35)));
+      holder.scale.setScalar(p.s * sizeFactor);
       holder.visible = true;
       if (wrapObj) {
         const rotK = Math.max(0, Math.min(1, (q - 0.68) / 0.32));
@@ -225,11 +276,11 @@ export default function FlightScene() {
         const rotY = -0.52 + (-0.55 - -0.52) * rotK;
         const response = THREE.MathUtils.smoothstep(q, 0.8, 1);
         const bank = q >= 1 ? Math.sin(aerialProgress * Math.PI * 2) : 0;
-        wrapObj.rotation.set(rotX - pointer.y * 0.14 * response, rotY + pointer.x * 0.28 * response + bank * 0.18, -pointer.x * 0.10 * response - bank * 0.08);
+        wrapObj.rotation.set(THREE.MathUtils.lerp(.12, rotX, takeoff) - pointer.y * 0.14 * response, THREE.MathUtils.lerp(-.55, rotY, takeoff) + pointer.x * 0.28 * response + bank * 0.18, -pointer.x * 0.10 * response - bank * 0.08);
       }
       ndc.copy(holder.position).project(camera);
-      if (!modelReady) fallback.update(t);
-      spin.forEach(([o, sp]) => (o.rotation.z += dt * sp));
+      if (!modelReady && takeoff > 0) fallback.update(t);
+      spin.forEach(([o, sp]) => { o.visible = takeoff > 0; o.rotation.z += dt * sp * takeoff; });
       renderer.render(scene, camera);
     };
     raf = requestAnimationFrame(frame);
@@ -241,6 +292,9 @@ export default function FlightScene() {
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onPointer);
       window.removeEventListener("blur", resetPointer);
+      shadow.geometry.dispose();
+      shadow.material.dispose();
+      shadowTexture.dispose();
       renderer.dispose();
     };
   }, []);

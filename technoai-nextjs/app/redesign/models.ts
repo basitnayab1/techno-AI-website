@@ -284,10 +284,12 @@ if (isBrowser) {
  * robot = KEENON C40 cleaning robot, drone = enterprise drone (Magnific image-to-3D, Tripo H3.1,
  * cleaned in Blender: front = +Z, origin = bottom centre, ~57k triangles, 2048 px texture).
  */
-export const REAL_MODELS: string[] = ["robot", "drone"];
+export const REAL_MODELS: string[] = ["robot", "drone", "industry", "satellite", "security", "financial"];
 
 /** How a real model sits on the stage: "ground" rests on the floor, "hover" floats gently. */
-export const REAL_POSE: Record<string, "ground" | "hover"> = { robot: "ground", drone: "hover" };
+export const REAL_POSE: Record<string, "ground" | "hover"> = {
+  robot: "ground", drone: "hover", industry: "ground", satellite: "hover", security: "hover", financial: "ground",
+};
 
 /** One download per model, started as soon as this module runs in the browser (page load), shared by every scene. */
 const pending = new Map<string, Promise<GLTF>>();
@@ -295,7 +297,7 @@ export function preloadModel(slug: string) {
   if (!pending.has(slug)) pending.set(slug, loader.loadAsync(`/redesign/models/${slug}.glb`));
   return pending.get(slug)!;
 }
-if (isBrowser) REAL_MODELS.forEach((s) => void preloadModel(s).catch(() => {}));
+if (isBrowser) ["robot", "drone"].forEach((s) => void preloadModel(s).catch(() => {}));
 
 /* ---------- motion detail for the real products (the GLBs are single meshes, nothing moves by itself) ---------- */
 
@@ -396,7 +398,8 @@ export function modelFor(slug: string, M: Mats): Model {
         console.error(`[redesign] Invalid bounds for ${url}, keeping placeholder`);
         return;
       }
-      const k = size / realLength;
+      const showcase = slug !== "robot" && slug !== "drone";
+      const k = showcase ? 3.15 / Math.max(realSize.x, realSize.y, realSize.z) : size / realLength;
       real.position.sub(box.getCenter(new THREE.Vector3()));
       const wrap = new THREE.Group();
       // "alive" motion (springs, mouse look/push, blink…) wraps the model inside the scaled group
@@ -404,7 +407,7 @@ export function modelFor(slug: string, M: Mats): Model {
       const alive = slug === "robot" || slug === "drone" ? makeAlive(slug, real, slug === "robot" ? gsize.y : gsize.x) : null;
       wrap.add(alive ? alive.group : real);
       wrap.scale.setScalar(k);
-      if (REAL_POSE[slug] === "ground") wrap.position.y = phBox.min.y + (box.getSize(new THREE.Vector3()).y * k) / 2;
+      if (!showcase && REAL_POSE[slug] === "ground") wrap.position.y = phBox.min.y + (realSize.y * k) / 2;
       holder.remove(ph.group);
       holder.add(wrap);
       model.real = true;

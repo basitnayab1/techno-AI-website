@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Lenis from "lenis";
+import PageCurtain from "../page-curtain";
+import { pageTransitions } from "../interior-kit/motion";
 import "./opening.css";
 
 const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -18,9 +20,11 @@ export function Motion() {
   useEffect(() => {
     const root = document.documentElement;
     const still = reduced();
+    const cleanPageTransitions = pageTransitions(root);
     let lenis: Lenis | null = null;
-    if (!still) {
-      lenis = new Lenis({ duration: 1.15, smoothWheel: true });
+    // Touch stays native; only a desktop wheel needs an interpolated scroll position.
+    if (!still && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      lenis = new Lenis({ lerp: .12, smoothWheel: true, syncTouch: false, overscroll: false });
       (window as unknown as { lenis: Lenis }).lenis = lenis;
     }
 
@@ -68,11 +72,15 @@ export function Motion() {
     const hs = Array.from(document.querySelectorAll<HTMLElement>("[data-hscroll]"));
 
     const measure = () => {
-      hs.forEach((el) => {
+      const sizes = hs.map((el) => {
         const track = el.querySelector<HTMLElement>(".h-track");
         const shift = window.innerWidth < 760 || !track ? 0 : Math.max(track.scrollWidth - window.innerWidth, 0);
+        return { el, shift };
+      });
+      sizes.forEach(({ el, shift }) => {
         el.style.setProperty("--shift", `${shift}px`);
-        el.style.height = shift ? `${shift + window.innerHeight}px` : "";
+        const height = shift ? `${shift + window.innerHeight}px` : "";
+        if (el.style.height !== height) el.style.height = height;
       });
     };
     // Section positions are measured once (and again when the page size changes), so scrolling only
@@ -124,66 +132,104 @@ export function Motion() {
         }
       });
     };
-    const ro = new ResizeObserver(() => {
-      vhNow.v = window.innerHeight;
-      remeasure();
-      update();
-    });
+    let layoutRaf = 0;
+    let disposed = false;
+    const scheduleLayout = () => {
+      if (disposed || layoutRaf) return;
+      layoutRaf = requestAnimationFrame(() => {
+        layoutRaf = 0;
+        vhNow.v = window.innerHeight;
+        measure();
+        lenis?.resize();
+        remeasure();
+        last.clear();
+        update();
+      });
+    };
+    const ro = new ResizeObserver(scheduleLayout);
     ro.observe(document.body);
 
     let raf = 0;
+    let dirty = true;
+    let lastY = -1;
     const loop = (time: number) => {
+      raf = 0;
       lenis?.raf(time);
-      raf = requestAnimationFrame(loop);
+      const y = lenis ? lenis.scroll : window.scrollY;
+      if (dirty || y !== lastY) { dirty = false; lastY = y; update(); }
+      if (lenis && !document.hidden) raf = requestAnimationFrame(loop);
+    };
+    const requestTick = () => {
+      dirty = true;
+      if (!raf && !document.hidden) raf = requestAnimationFrame(loop);
+    };
+    const visibility = () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      if (!document.hidden) { lenis?.resize(); requestTick(); }
     };
     measure();
     remeasure();
     update();
     raf = requestAnimationFrame(loop);
-    window.addEventListener("resize", measure);
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", scheduleLayout, { passive: true });
+    window.addEventListener("scroll", requestTick, { passive: true });
+    document.addEventListener("visibilitychange", visibility);
+    document.fonts.ready.then(scheduleLayout);
 
     // in-page links through Lenis
     const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="#"]');
       if (!a) return;
       a.closest("details")?.removeAttribute("open");
-      if (!lenis) return;
-      const t = document.querySelector(a.getAttribute("href")!);
+      const hash = a.getAttribute("href");
+      if (!hash || hash === "#") return;
+      let t: Element | null;
+      try { t = document.querySelector(hash); } catch { return; }
       if (!t) return;
       e.preventDefault();
-      lenis.scrollTo(t as HTMLElement, { offset: -70 });
+      if (lenis) lenis.scrollTo(t as HTMLElement, { offset: -70 });
+      else window.scrollTo({
+        top: Math.max(0, window.scrollY + t.getBoundingClientRect().top - 90),
+        behavior: still ? "instant" : "smooth",
+      });
     };
     document.addEventListener("click", onClick);
 
     return () => {
+      disposed = true;
+      cleanPageTransitions();
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(layoutRaf);
       io.disconnect();
       ro.disconnect();
-      window.removeEventListener("resize", measure);
-      window.removeEventListener("resize", update);
-      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", scheduleLayout);
+      window.removeEventListener("scroll", requestTick);
+      document.removeEventListener("visibilitychange", visibility);
       document.removeEventListener("click", onClick);
+      if ((window as Window & { lenis?: Lenis }).lenis === lenis) delete (window as Window & { lenis?: Lenis }).lenis;
       lenis?.destroy();
       root.classList.remove("fx");
     };
   }, []);
-  return null;
+  return <PageCurtain />;
 }
 
-/** Brief, CSS-only brand reveal. It does not wait for video, fonts, or WebGL. */
+/** A short brand opener while the hero warms up; slower assets never block entry. */
 export function Loader({ preload }: { preload: string[] }) {
   const [done, setDone] = useState(false);
+  const [revealing, setRevealing] = useState(false);
   const finished = useRef(false);
 
   const finish = () => {
     if (finished.current) return;
     finished.current = true;
     document.documentElement.classList.add("loaded");
+    document.documentElement.classList.remove("op-entering");
     setDone(true);
     try {
-      sessionStorage.setItem("tai-opener-v4", "1");
+      sessionStorage.setItem("tai-opener-v6", "1");
     } catch {}
   };
 
@@ -191,16 +237,39 @@ export function Loader({ preload }: { preload: string[] }) {
     const root = document.documentElement;
     let seen = false;
     try {
-      seen = sessionStorage.getItem("tai-opener-v4") === "1";
+      seen = sessionStorage.getItem("tai-opener-v6") === "1";
     } catch {}
-    if (seen || reduced()) {
+    if (seen || reduced() || root.classList.contains("arriving")) {
       finish();
       return;
     }
-    const reveal = window.setTimeout(() => root.classList.add("loaded"), 420);
-    const safety = window.setTimeout(finish, 1200);
+    let active = true;
+    let elapsed = false;
+    let revealed = false;
+    const stage = document.querySelector<HTMLElement>(".hx-stage");
+    const reveal = () => {
+      if (active && !revealed) {
+        revealed = true;
+        setRevealing(true);
+        root.classList.add("loaded", "op-entering");
+      }
+    };
+    const check = () => {
+      if (elapsed && (!stage || stage.dataset.ready || stage.dataset.mode === "fallback")) reveal();
+    };
+    const observer = new MutationObserver(check);
+    if (stage) observer.observe(stage, { attributes: true, attributeFilter: ["data-ready", "data-mode"] });
+    import("./models").then(({ preloadModel }) =>
+      Promise.allSettled(["drone", "robot"].map(preloadModel))
+    ).catch(() => { /* Product assets can finish after the opener. */ });
+    const minimum = window.setTimeout(() => { elapsed = true; check(); }, 650);
+    const deadline = window.setTimeout(reveal, 2200);
+    const safety = window.setTimeout(finish, 3000);
     return () => {
-      clearTimeout(reveal);
+      active = false;
+      observer.disconnect();
+      clearTimeout(minimum);
+      clearTimeout(deadline);
       clearTimeout(safety);
     };
   }, []);
@@ -211,12 +280,19 @@ export function Loader({ preload }: { preload: string[] }) {
 
   if (done) return null;
   return (
-    <div className="op" aria-hidden="true" onAnimationEnd={end}>
-      <span className="op-cover" />
-      <span className="op-aura" />
-      <span className="op-wave" />
+    <div className={revealing ? "op op-revealing" : "op"} aria-hidden="true" onAnimationEnd={end}>
       <div className="op-center">
-        <img className="op-logo" src={preload[0]} alt="" width="225" height="105" />
+        <div className="op-emblem">
+          <svg className="op-orbit" viewBox="0 0 240 240" fill="none">
+            <circle className="op-orbit-base" cx="120" cy="120" r="113" />
+            <circle className="op-orbit-trace" cx="120" cy="120" r="113" pathLength="100" />
+          </svg>
+          <span className="op-logo" style={{ ["--op-logo" as string]: `url("${preload[0]}")` }} />
+        </div>
+        <div className="op-status">
+          <span className="op-track" />
+          <span>Loading</span>
+        </div>
       </div>
     </div>
   );

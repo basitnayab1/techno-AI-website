@@ -418,6 +418,7 @@ function IntelligenceCore({ mobile, still, onAnchors }: { mobile: boolean; still
 
       {/* pedestal */}
       <group position-y={-2.3}>
+        <object3D position-y={0.17} ref={el => { anchors.current.dock = el; }} />
         <mesh>
           <cylinderGeometry args={[1.55, 1.68, 0.1, seg * 2]} />
           <meshStandardMaterial color="#0f1a1b" metalness={0.85} roughness={0.28} envMapIntensity={0.9} />
@@ -517,7 +518,7 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
 
   // Label dot positions (relative to the stage) are measured only now and then, not every frame:
   // reading layout each frame after the SVG writes forced a layout per frame.
-  const anchorCache = useRef<{ at: number; dots: Record<string, [number, number]> }>({ at: -1, dots: {} });
+  const anchorCache = useRef<{ at: number; dots: Record<string, [number, number]>; left: number; top: number }>({ at: -1, dots: {}, left: 0, top: 0 });
   const onAnchors = useMemo(
     () => (pts: Pts) => {
       const svg = svgRef.current;
@@ -525,14 +526,22 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
       if (!svg || !stage) return;
       const c = anchorCache.current;
       const now = performance.now();
-      if (now - c.at > 500) {
+      if (now - c.at > 500 && !document.documentElement.classList.contains("op-entering")) {
         // labels animate in / layout can change: refresh twice a second (cheap, no per-frame thrash)
         c.at = now;
         const sr = stage.getBoundingClientRect();
+        c.left = sr.left;
+        c.top = sr.top + window.scrollY;
         stage.querySelectorAll<HTMLElement>("[data-label]").forEach((el) => {
           const r = (el.querySelector<HTMLElement>(".hx-label-dot") || el).getBoundingClientRect();
           c.dots[el.dataset.label!] = [r.left + r.width / 2 - sr.left, r.top + r.height / 2 - sr.top];
         });
+      }
+      // Share the projected platform position with the existing flight canvas, without a layout read per frame.
+      if (pts.dock) {
+        (stage as HTMLElement & { __technoDroneDock?: { x: number; y: number } }).__technoDroneDock = {
+          x: c.left + pts.dock.x, y: c.top + pts.dock.y,
+        };
       }
       for (const k of Object.keys(c.dots)) {
         const p = pts[k];
@@ -553,7 +562,7 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
     <div ref={wrapRef} className="hx-canvas">
       <SceneBoundary onFail={onFail}>
         <Canvas
-          dpr={[1, env.mobile ? 1.25 : 1.5]}
+          dpr={[1, env.mobile ? 1 : 1.25]}
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
           camera={{ fov: 30, position: [0, 0.25, 8.7], near: 0.1, far: 100 }}
           frameloop={!compiled ? "never" : env.still ? "demand" : visible ? "always" : "never"}

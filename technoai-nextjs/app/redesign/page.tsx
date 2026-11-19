@@ -1,14 +1,23 @@
-import { DOMAINS, DRONE_FILM, INDUSTRIES, NAV, OFFICES, PARTNERS, SOCIAL, SOLUTIONS, UP } from "./data";
-import { Loader, Motion, Terminal } from "./fx";
+import { FOOTER, INDUSTRIES, NAV, OFFICES, PARTNERS, SOCIAL, SOLUTIONS, UP } from "./data";
+import { Loader, Motion } from "./fx";
 import Hero from "./hero";
+import HeroNav from "./hero-nav";
 import Capabilities from "./capabilities";
 import Flight from "./flight";
+import GlobalPresence from "./global-presence";
+import "./sector-presence.css";
 import FibreBackground from "./fibre-background";
 import InkSample from "./ink-sample"; // SAMPLE ONLY: ?ink=1
 import JourneyPeek from "./journey-peeks";
 import "./journey-scenes.css";
 import "./responsive.css";
-import { DroneFilm, GlobeScene, JourneyScene } from "./deferred-scenes";
+import { JourneyScene } from "./deferred-scenes";
+import "./section-robot.css";
+import JourneyFilms from "./journey-films";
+import "./cursor.css";
+import SplineCard from "./spline-card";
+import SplineStage from "./spline-stage";
+import "./imported-buttons.css";
 
 // New TechnoAi home page ("Mission Control"). Text and links come from the current technoai.ae
 // home page. Brand: Noto Sans, ink #0f1a1b + blue #146b8c (TechnoAi Brand Identity PDF).
@@ -23,18 +32,17 @@ const ICONS: Record<string, React.ReactNode> = {
   security: <><path d="M12 3l7.5 2.8v5.4c0 4.4-3 8-7.5 9.8-4.5-1.8-7.5-5.4-7.5-9.8V5.8z" /><path d="M9 12l2.2 2.2L15.5 10" /></>,
 };
 
-// The four uses named in the site's own "Drones & UAV Systems" text.
-const DRONE_USES = ["Inspection", "Mapping", "Surveillance", "Mission support"];
-
-const LOG = [
-  "$ technoai deploy --mission critical-site",
-  "› AI & Robotics ............... ready",
-  "› Satellite Communication ..... linked",
-  "› AI Hardware ................. online",
-  "› Drones & UAV Systems ........ ready",
-  "› Security & Monitoring ....... armed",
-  "✓ All systems integrated.",
+// Supporting imagery for the industries served below.
+const INDUSTRY_MEDIA = [
+  { src: "/redesign/industries/government.webp", alt: "Abu Dhabi skyline and UAE flag" },
+  { src: "/redesign/industries/security.webp", alt: "Surveillance and security monitoring" },
+  { src: "/redesign/industries/agriculture.webp", alt: "Agricultural drone flying over crop rows" },
+  { src: "/redesign/industries/energy.webp", alt: "Enterprise drone inspecting bridge infrastructure" },
+  { src: "/redesign/industries/logistics.webp", alt: "Logistics and mobility operations" },
+  { src: "/redesign/industries/research.webp", alt: "Research and technology development" },
 ];
+
+const ROBOT_USES = ["Service robotics", "Autonomous cleaning", "Delivery & logistics", "Industrial automation"];
 
 const num = (i: number) => String(i + 1).padStart(2, "0");
 
@@ -76,11 +84,16 @@ const JX: [string, string][] = [
 export default function Home() {
   return (
     <>
+      <link rel="preload" href="/redesign/spline/robot-13bd456a.splinecode" as="fetch" crossOrigin="anonymous" />
+      <link rel="preload" href="/redesign/spline/runtime-2.0.129/process.wasm" as="fetch" crossOrigin="anonymous" />
+      <link rel="preload" href="/redesign/spline/runtime-2.0.129/bevel.wasm" as="fetch" crossOrigin="anonymous" />
       {PRELOAD.map((href) => (
         <link key={href} rel="preload" href={href} as="fetch" crossOrigin="anonymous" />
       ))}
       <Loader preload={[`${UP}/2026/07/Logo.svg`]} />
       <Motion />
+      <SplineStage />
+      <HeroNav />
       <div className="glow" aria-hidden="true"><i /><i /></div>
 
       <a className="skip-link" href="#main">Skip to content</a>
@@ -105,6 +118,7 @@ export default function Home() {
                 <img key={slug} data-i={SOLUTIONS.findIndex((s) => s.slug === slug)} src={`/redesign/journey/${img}.webp`} srcSet={`/redesign/journey/${img}-sm.webp 960w, /redesign/journey/${img}.webp 1920w`} sizes="100vw" alt="" loading="lazy" decoding="async" />
               ))}
               <span className="jx-dust-floor" />
+              <JourneyFilms />
               <svg className="jx-ink-crescent" viewBox="0 0 1920 1080" preserveAspectRatio="none" focusable="false">
                 <path d="M0 0 H85 C-30 275 -25 625 150 1080 H0 Z" />
               </svg>
@@ -148,46 +162,17 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 5 ── Technology domains + live mission log (Cerebrium) */}
-        <section className="wrap sec domains">
-          <div className="domains-text">
-            <div data-reveal>
-              <Eyebrow>Technology Domains</Eyebrow>
-              <h2>Integrated Technologies for Advanced Projects</h2>
-              <p className="sub">
-                TechnoAi brings together hardware, software, communication systems, and field-ready
-                technologies to support complex operational requirements.
-              </p>
-            </div>
-            <ol className="rows">
-              {DOMAINS.map(([title, text], i) => (
-                <li key={title} data-reveal>
-                  <span className="n">{num(i)}</span>
-                  <div>
-                    <h3>{title}</h3>
-                    <p>{text}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-            <a className="btn btn-blue" href="/all-products/" data-reveal>View All Products <Arrow /></a>
-          </div>
-          <div className="domains-side" data-reveal>
-            <Terminal lines={LOG} />
-          </div>
-        </section>
-
-        {/* 3 ── Closer look: drone film plays with the scroll */}
-        <section id="drones" className="closer" data-progress data-steps={DRONE_USES.length}>
+        {/* 3 ── Robotics with the same interactive Spline model as Section 02 */}
+        <section id="robotics" className="closer closer-robot" data-progress data-steps={ROBOT_USES.length}>
           <div className="sticky">
             <div className="wrap closer-in">
               <div className="closer-text">
-                <Eyebrow>Beyond the ground</Eyebrow>
-                <h2>Drones &amp; UAV Systems</h2>
-                <p>Aerial platforms for inspection, mapping, monitoring, and mission support.</p>
-                <a className="btn btn-line" href="/aerial-drone-solutions/">Explore Drone Solutions <Arrow /></a>
+                <Eyebrow>Intelligence in motion</Eyebrow>
+                <h2>Robotics &amp; Automation</h2>
+                <p>Intelligent robots for service, cleaning, delivery, and industrial operations—built to support your teams and simplify everyday work.</p>
+                <a className="btn btn-line" href="/robotics/">Explore Robotics Solutions <Arrow /></a>
                 <ol className="uses">
-                  {DRONE_USES.map((u, i) => (
+                  {ROBOT_USES.map((u, i) => (
                     <li key={u} data-i={i}>
                       <span className="n">{num(i)}</span>
                       {u}
@@ -195,9 +180,8 @@ export default function Home() {
                   ))}
                 </ol>
               </div>
-              <div className="film-box">
-                <DroneFilm count={DRONE_FILM.frames} dir={DRONE_FILM.dir} poster={DRONE_FILM.poster} video={DRONE_FILM.video} />
-                <div className="film-bar"><i /></div>
+              <div className="section-robot">
+                <SplineCard />
               </div>
             </div>
           </div>
@@ -208,20 +192,18 @@ export default function Home() {
           <div className="sticky">
             <div className="wrap ind-head">
               <Eyebrow>Industries We Serve</Eyebrow>
-              <h2>Built for Sectors Where Reliability Matters</h2>
+              <h2>Technology that works in your world.</h2>
               <p className="sub">
-                TechnoAi supports organizations that need advanced technology for monitoring, security,
-                communication, automation, and field operations.
+                Purpose-built systems for the environments you operate in.
               </p>
             </div>
             <div className="h-track">
               {INDUSTRIES.map(([title, text, href], i) => (
                 <a className="ind" href={href} key={href}>
-                  <span className="n">{num(i)}</span>
-                  <span className="ind-big" aria-hidden="true">{num(i)}</span>
-                  <h3>{title}</h3>
+                  <div className="ind-photo"><img src={INDUSTRY_MEDIA[i].src} alt={INDUSTRY_MEDIA[i].alt} width="720" height="680" loading="lazy" decoding="async" /></div>
+                  <div className="ind-copy"><h3>{title}</h3>
                   <p>{text}</p>
-                  <span className="more">Learn More <Arrow /></span>
+                  <span className="more">Explore Industry</span></div>
                 </a>
               ))}
             </div>
@@ -229,27 +211,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 7 ── Where we are: globe with the three hubs */}
-        <section className="wrap sec where">
-          <div className="where-text" data-reveal>
-            <Eyebrow>Where We Are</Eyebrow>
-            <h2>One team across three hubs</h2>
-            <ul className="offices">
-              {OFFICES.map((o, i) => (
-                <li key={o.name}>
-                  <span className="n">{num(i)}</span>
-                  <div>
-                    <strong>{o.name}</strong>
-                    {o.place}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="where-globe" data-reveal>
-            <GlobeScene />
-          </div>
-        </section>
+        <GlobalPresence />
 
         {/* 8 ── Partners */}
         <section className="sec partners">
@@ -286,6 +248,19 @@ export default function Home() {
       </main>
 
       <footer className="ft">
+        <div className="ft-main">
+          <div className="ft-company">
+            <a className="ft-logo" href="/" aria-label="TechnoAI home"><img src={`${UP}/2025/01/Technoai-Logo-transaparent-1.png`} width="512" height="240" alt="TechnoAI" loading="lazy" /></a>
+            <ul className="ft-offices">
+              {OFFICES.map(office => <li key={office.city}><strong>{office.name}</strong><span>{office.place}</span></li>)}
+            </ul>
+          </div>
+          {FOOTER.map(([heading, links]) => <nav className="ft-links" key={heading} aria-label={heading}>
+            <h2>{heading}</h2>
+            <ul>{links.map(([label, href]) => <li key={href}><a href={href}>{label}</a></li>)}</ul>
+            {heading === "Company" && <a className="ft-badge" href="/" aria-label="TechnoAI home"><img src="/redesign/footer-brand-stacked.png" width="512" height="578" alt="" loading="lazy" /></a>}
+          </nav>)}
+        </div>
         <div className="ft-bottom">
           <span>© TechnoAi <span aria-hidden="true">·</span> <a href="https://technoai.ae/">technoai.ae</a></span>
           <nav aria-label="Social media">

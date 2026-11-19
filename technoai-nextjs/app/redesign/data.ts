@@ -52,9 +52,9 @@ export const PARTNERS = [
 
 /** lat / lon used by the globe. */
 export const OFFICES = [
-  { name: "Headquarter", place: "Abu Dhabi, United Arab Emirates", lat: 24.45, lon: 54.38 },
-  { name: "Europe Innovation Hub", place: "Prague - Czech Republic", lat: 50.08, lon: 14.44 },
-  { name: "Asia Innovation Hub", place: "Lahore - Pakistan", lat: 31.55, lon: 74.34 },
+  { name: "Headquarters", city: "Abu Dhabi", country: "United Arab Emirates", place: "Abu Dhabi, United Arab Emirates", lat: 24.45, lon: 54.38 },
+  { name: "Europe Innovation Hub", city: "Prague", country: "Czech Republic", place: "Prague - Czech Republic", lat: 50.08, lon: 14.44 },
+  { name: "Asia Innovation Hub", city: "Lahore", country: "Pakistan", place: "Lahore - Pakistan", lat: 31.55, lon: 74.34 },
 ];
 
 export const FOOTER = [

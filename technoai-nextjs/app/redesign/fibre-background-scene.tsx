@@ -1,9 +1,21 @@
 "use client";
 
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import CoreFibres from "./core-fibres";
+
+// Decorative fibres share the GPU with the hero/drone. Leave the foreground and scroll at full speed.
+function FibreFrames({ active }: { active: boolean }) {
+  const invalidate = useThree(state => state.invalidate);
+  useEffect(() => {
+    invalidate();
+    if (!active) return;
+    const timer = window.setInterval(() => { if (!document.hidden) invalidate(); }, 1000 / 30);
+    return () => clearInterval(timer);
+  }, [active, invalidate]);
+  return null;
+}
 
 function ScrollBundle({ mobile, still }: { mobile: boolean; still: boolean }) {
   const root = useRef<THREE.Group>(null);
@@ -31,7 +43,8 @@ function ScrollBundle({ mobile, still }: { mobile: boolean; still: boolean }) {
     const angle = still ? 0 : travel * .9 + clock.elapsedTime * .10;
     // Approach from the left and deep behind the text, then expand towards the viewer.
     group.position.x = THREE.MathUtils.lerp(group.position.x, (mobile ? -3.3 : -6.0) + p * 1.7, k);
-    group.position.y = THREE.MathUtils.lerp(group.position.y, .7 - p * 2.6 - (still ? 0 : Math.sin(travel * .8) * .5), k);
+    // Keep the strand tips just below the viewport centre as the bundle rotates.
+    group.position.y = THREE.MathUtils.lerp(group.position.y, .7 - p * .55 - (still ? 0 : Math.sin(travel * .8) * .15), k);
     group.position.z = THREE.MathUtils.lerp(group.position.z, -5 + p * 6, k);
     group.scale.setScalar(THREE.MathUtils.lerp(group.scale.x, .85 + p * .95, k));
     group.rotation.z = -.25 + p * .3;
@@ -54,7 +67,8 @@ function ScrollBundle({ mobile, still }: { mobile: boolean; still: boolean }) {
 export default function FibreScene({ visible }: { visible: boolean }) {
   const [mobile] = useState(() => window.innerWidth < 760);
   const [still] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
-  return <Canvas dpr={1} camera={{ position: [0, 0, 10], fov: 38 }} frameloop={visible && !still ? "always" : "demand"} gl={{ alpha: true, antialias: true }}>
+  return <Canvas dpr={1} camera={{ position: [0, 0, 10], fov: 38 }} frameloop="demand" gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}>
+    <FibreFrames active={visible && !still} />
     <hemisphereLight args={["#9fe7e7", "#0f1a1b", 1.5]} />
     <directionalLight position={[-4, 5, 6]} color="#9fe7e7" intensity={3} />
     <directionalLight position={[3, 0, 2]} color="#146b8c" intensity={4} />

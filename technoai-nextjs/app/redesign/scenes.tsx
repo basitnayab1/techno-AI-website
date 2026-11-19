@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { BLUE, INK, materials, modelFor, REAL_POSE, type Model } from "./models";
-import { OFFICES, SOLUTIONS } from "./data";
-import { buildJourneyParticles } from "./journey-particles";
+import { SOLUTIONS } from "./data";
 
 /* ============================== shared helpers ============================== */
 
@@ -422,7 +421,7 @@ export function JourneyScene() {
     const robotI = SOLUTIONS.findIndex((x) => x.slug === "robot");
     const droneI = SOLUTIONS.findIndex((x) => x.slug === "drone");
     const M = materials();
-    const models = SOLUTIONS.map((s) => modelFor(s.slug, M));
+    const models = SOLUTIONS.slice(0, Math.max(robotI, droneI) + 1).map((s) => modelFor(s.slug, M));
     const holders = models.map((m) => {
       const h = new THREE.Group();
       h.add(m.group);
@@ -449,8 +448,7 @@ export function JourneyScene() {
 
     // scene effects for the real robot (cleaning route + dust) and drone (flight route + scan of the roof)
     const robotFx = buildRobotFx();
-    const transitionParticles = buildJourneyParticles();
-    scene.add(robotFx.group, transitionParticles.points);
+    scene.add(robotFx.group);
     const cleanEl = section.querySelector<HTMLElement>('[data-jx="clean"]');
     const routeEl = section.querySelector<HTMLElement>('[data-jx="route"]');
     const stepsEl = section.querySelector<HTMLElement>(".jx-steps");
@@ -469,7 +467,6 @@ export function JourneyScene() {
     window.addEventListener("pointermove", onMove, { passive: true });
 
     const _ndc = new THREE.Vector3();
-    const droneAnchor = new THREE.Vector3();
     let shown = -1;
     let lastSp = "";
     let lastJp = "";
@@ -487,22 +484,33 @@ export function JourneyScene() {
       const jp = p.toFixed(3);
       if (sp !== lastSp) section.style.setProperty("--sp", (lastSp = sp)); // write only on change (no layout thrash)
       if (jp !== lastJp) section.style.setProperty("--jp", (lastJp = jp));
+      if (idx !== robotI && idx !== droneI) {
+        canvas.hidden = true;
+        return;
+      }
+      canvas.hidden = false;
 
       mouse.x = damp(mouse.x, mouse.tx, 0.05);
       mouse.y = damp(mouse.y, mouse.ty, 0.05);
       const wide = camera.aspect > 1.1;
       const sectionTop = sectionGeo(section).top - window.scrollY;
       const arrived = sectionTop <= 20;
-      section.dataset.arrived = arrived ? "true" : "false";
+      const arrivedValue = arrived ? "true" : "false";
+      if (section.dataset.arrived !== arrivedValue) section.dataset.arrived = arrivedValue;
 
       holders.forEach((h, i) => {
+        const showcase = i !== robotI && i !== droneI;
+        if (showcase && i !== idx) {
+          h.visible = false;
+          return;
+        }
         // The drone flying in from Section 2 is the sole 3D drone in this station.
         const target = i === idx && i !== droneI ? 1 : 0;
         // real products on a scene photo sit a little smaller on desktop so they clear the rail and the card
         const k = wide
           ? (models[i].real && i === robotI ? 0.78 : 1)
           : (i === droneI ? 0.42 : i === robotI ? 0.52 : 0.62);
-        const s = i === droneI ? target : damp(h.scale.x / k, target, i === idx ? 0.12 : 0.28);
+        const s = showcase || i === droneI ? target : damp(h.scale.x / k, target, i === idx ? 0.12 : 0.28);
         h.scale.setScalar(s < 0.03 ? 0.001 : Math.max(s * k, 0.001));
         h.visible = s > 0.03;
         if (!h.visible) return;
@@ -514,6 +522,9 @@ export function JourneyScene() {
         const pose = models[i].real ? REAL_POSE[SOLUTIONS[i].slug] : undefined;
         const floorY = pose === "ground" && wide ? -1.75 - (models[i].base ?? 0) * h.scale.x : null; // stand on the rings
         h.position.set(wide ? 1.7 : 0, floorY ?? (wide ? 0 : pose === "ground" ? 0.8 : 1.25) + (pose === "ground" ? 0 : Math.sin(t * 1.1) * (pose ? 0.05 : 0.08)), 0);
+        if (showcase && models[i].real) {
+          h.position.set(wide ? 1.8 : 0, wide ? 0 : .85, 0);
+        }
         if (models[i].real && wide && i === robotI) {
           // drive slowly along the cleaning route (face stays to the camera)
           const off = robotFx.offsetAt(local);
@@ -535,6 +546,12 @@ export function JourneyScene() {
         } else if (pose) {
           // real products: small turn only, so the robot face / drone camera stay in view
           h.rotation.y = -0.55 + local * 0.7 + mouse.x * 0.25 + (1 - s) * 0.8;
+          if (showcase) {
+            const slug = SOLUTIONS[i].slug;
+            // The imported kiosk and solar arrays have their presentation face along X.
+            if (slug === "financial" || slug === "satellite") h.rotation.y -= Math.PI / 2;
+            if (slug === "industry") h.rotation.y += .85;
+          }
           h.rotation.x = (pose === "ground" ? 0.04 : 0.1) + mouse.y * 0.06;
         } else {
           h.rotation.y = local * Math.PI * 0.9 - 0.45 + mouse.x * 0.4 + (1 - s) * 1.6;
@@ -546,9 +563,6 @@ export function JourneyScene() {
       ringMats.forEach((m, i) => (m.opacity = ringBase[i] * ringFade));
       const cx = wide ? 1.7 : 0;
       robotFx.update(t, wide && models[robotI].real && idx === robotI ? holders[robotI].scale.x : 0, cx, holders[robotI].position, idx === robotI ? local : 0);
-      // Screen-aligned apex under the flying drone; the inspection area remains in the journey scene.
-      droneAnchor.set(cx, 0, 0);
-      transitionParticles.update(t, f, droneAnchor, cx);
       if (idx === robotI) {
         const c = Math.round(local * 100) + "%";
         if (c !== lastClean && cleanEl) cleanEl.textContent = lastClean = c;
@@ -575,12 +589,10 @@ export function JourneyScene() {
     if (reduced()) {
       section.dataset.active = "0";
       frame(2);
-      transitionParticles.points.visible = false;
     } else stop = runWhileVisible(section, frame);
     return () => {
       stop();
       window.removeEventListener("pointermove", onMove);
-      transitionParticles.dispose();
       stage.dispose();
     };
   });
@@ -590,115 +602,7 @@ export function JourneyScene() {
 
 /* ============================== globe ============================== */
 
-function latLon(lat: number, lon: number, r: number) {
-  const phi = ((90 - lat) * Math.PI) / 180;
-  const th = ((lon + 180) * Math.PI) / 180;
-  return new THREE.Vector3(-r * Math.sin(phi) * Math.cos(th), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(th));
-}
-
-/** Dotted globe with the three TechnoAi hubs and animated links between them. */
-export function GlobeScene() {
-  const ref = useRef<HTMLCanvasElement>(null);
-
-  useNearEffect(ref, () => {
-    const canvas = ref.current;
-    if (!canvas) return;
-    let stage: ReturnType<typeof createStage>;
-    try {
-      stage = createStage(canvas, 30, 9.6);
-    } catch {
-      return;
-    }
-    const { scene, camera, renderer } = stage;
-    const R = 2;
-    const globe = new THREE.Group();
-    scene.add(globe);
-
-    const N = 2600;
-    const pts = new Float32Array(N * 3);
-    for (let i = 0; i < N; i++) {
-      const y = 1 - (i / (N - 1)) * 2;
-      const rr = Math.sqrt(1 - y * y);
-      const th = Math.PI * (3 - Math.sqrt(5)) * i;
-      pts[i * 3] = Math.cos(th) * rr * R;
-      pts[i * 3 + 1] = y * R;
-      pts[i * 3 + 2] = Math.sin(th) * rr * R;
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(pts, 3));
-    globe.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffffff, size: 0.028, transparent: true, opacity: 0.45 })));
-    globe.add(new THREE.Mesh(new THREE.SphereGeometry(R * 0.985, 48, 32), new THREE.MeshBasicMaterial({ color: INK, toneMapped: false })));
-
-    const markers = OFFICES.map((o, i) => {
-      const v = latLon(o.lat, o.lon, R);
-      const dot = new THREE.Mesh(new THREE.SphereGeometry(i === 0 ? 0.07 : 0.05, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-      dot.position.copy(v);
-      globe.add(dot);
-      const halo = new THREE.Mesh(new THREE.RingGeometry(0.08, 0.1, 32), new THREE.MeshBasicMaterial({ color: BLUE, transparent: true, side: THREE.DoubleSide }));
-      halo.position.copy(v.clone().multiplyScalar(1.002));
-      halo.lookAt(v.clone().multiplyScalar(2));
-      globe.add(halo);
-      return { v, halo };
-    });
-    const arcs = [
-      [0, 1],
-      [0, 2],
-      [2, 1],
-    ].map(([a, b]) => {
-      const A = markers[a].v;
-      const B = markers[b].v;
-      const mid = A.clone().add(B).multiplyScalar(0.5).normalize().multiplyScalar(R * 1.35);
-      const curve = new THREE.QuadraticBezierCurve3(A, mid, B);
-      const line = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints(curve.getPoints(64)),
-        new THREE.LineBasicMaterial({ color: BLUE, transparent: true, opacity: 0.9 }),
-      );
-      globe.add(line);
-      const runner = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-      globe.add(runner);
-      return { curve, runner };
-    });
-
-    // face the hubs (lon ~ 45E) towards the camera
-    globe.rotation.y = -((45 + 90) * Math.PI) / 180;
-    globe.rotation.x = 0.35;
-    const base = globe.rotation.y;
-    const drag = { on: false, x: 0, v: 0, off: 0 };
-    const dn = (e: PointerEvent) => ((drag.on = true), (drag.x = e.clientX));
-    const mv = (e: PointerEvent) => {
-      if (!drag.on) return;
-      drag.v = (e.clientX - drag.x) * 0.006;
-      drag.x = e.clientX;
-      drag.off += drag.v;
-    };
-    const upH = () => (drag.on = false);
-    canvas.addEventListener("pointerdown", dn);
-    window.addEventListener("pointermove", mv);
-    window.addEventListener("pointerup", upH);
-
-    renderer.compileAsync(scene, camera).catch(() => {}); // shaders compile in the background before it scrolls in
-    const frame = (t: number) => {
-      if (!drag.on) drag.off = damp(drag.off, Math.sin(t * 0.15) * 0.35, 0.01);
-      globe.rotation.y = base + drag.off;
-      markers.forEach((m, i) => m.halo.scale.setScalar(1 + ((t * 0.8 + i * 0.33) % 1) * 2.2));
-      markers.forEach((m, i) => ((m.halo.material as THREE.MeshBasicMaterial).opacity = 1 - ((t * 0.8 + i * 0.33) % 1)));
-      arcs.forEach((a, i) => a.runner.position.copy(a.curve.getPoint((t * 0.25 + i * 0.3) % 1)));
-      renderer.render(scene, camera);
-    };
-    let stop = () => {};
-    if (reduced()) frame(1);
-    else stop = runWhileVisible(canvas, frame);
-    return () => {
-      stop();
-      canvas.removeEventListener("pointerdown", dn);
-      window.removeEventListener("pointermove", mv);
-      window.removeEventListener("pointerup", upH);
-      stage.dispose();
-    };
-  });
-
-  return <canvas ref={ref} className="globe-gl" aria-label="Globe showing TechnoAi hubs in Abu Dhabi, Prague and Lahore" role="img" />;
-}
+export { default as GlobeScene } from "./presence-globe";
 
 /* ============================== drone film (closer look) ============================== */
 

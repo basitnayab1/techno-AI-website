@@ -1,17 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import type { ComponentType } from "react";
+import { Component, useEffect, useRef, useState, type ReactNode } from "react";
+import Spline from "@splinetool/react-spline";
 
 // Same crop/scale as the owner's snippet: the scene is laid out at 1440x900, 15 % cropped, scaled to the frame width.
 const BASE_WIDTH = 1440;
 const BASE_HEIGHT = 900;
 const CROP_PERCENT = 15;
 const SIZE_MULTIPLIER = 0.85;
-const SCENE = "https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode";
+const SCENE = "/redesign/spline/robot-13bd456a.splinecode";
 
-type SplineApp = { play?: () => void; stop?: () => void };
-type SplineProps = { scene: string; onLoad?: (app: SplineApp) => void };
+type SplineApp = { play?: () => void; stop?: () => void; requestRender?: () => void };
+// Contain a failed WebGL context without interrupting the rest of the site.
+class RobotBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? null : this.props.children; }
+}
 
 export default function Frame() {
   const outerRef = useRef<HTMLDivElement>(null);
@@ -20,27 +25,33 @@ export default function Frame() {
   // ?fit=card → small card view: zoom on the robot's upper body, centred (Section 02 "Robotics" card)
   const [card, setCard] = useState(false); // read after mount (no server/client mismatch)
   const [box, setBox] = useState({ w: 300, h: 250 });
-  const [Spline, setSpline] = useState<ComponentType<SplineProps> | null>(null);
+  const readyFrame = useRef(0);
+  const loaded = useRef(false);
 
   useEffect(() => {
     setCard(new URLSearchParams(window.location.search).get("fit") === "card");
   }, []);
 
   useEffect(() => {
-    let alive = true;
-    import("@splinetool/react-spline").then((mod) => {
-      if (alive) setSpline(() => mod.default as unknown as ComponentType<SplineProps>);
-    });
     // the parent page pauses/resumes the scene when its section leaves/enters the screen
     const onMsg = (e: MessageEvent) => {
       if (e.origin !== window.location.origin) return;
       if (e.data === "spline:stop") appRef.current?.stop?.();
       if (e.data === "spline:play") appRef.current?.play?.();
+      if (e.data === "spline:status" && loaded.current) window.parent.postMessage("spline:ready", location.origin);
     };
     window.addEventListener("message", onMsg);
+    // This embedded scene must not swallow the page's wheel gestures.
+    const onWheel = (event: WheelEvent) => {
+      if (window.parent === window || event.ctrlKey) return;
+      event.preventDefault();
+      window.parent.postMessage({ type: "spline:wheel", deltaY: event.deltaY, deltaMode: event.deltaMode }, window.location.origin);
+    };
+    window.addEventListener("wheel", onWheel, { passive: false, capture: true });
     return () => {
-      alive = false;
+      cancelAnimationFrame(readyFrame.current);
       window.removeEventListener("message", onMsg);
+      window.removeEventListener("wheel", onWheel, true);
     };
   }, []);
 
@@ -58,30 +69,36 @@ export default function Frame() {
   }, []);
 
   const cropHeight = BASE_HEIGHT * (1 - CROP_PERCENT / 100);
-  const spline = Spline && (
-    <Spline
-      scene={SCENE}
-      onLoad={(app) => {
-        appRef.current = app;
-        window.parent?.postMessage("spline:ready", window.location.origin);
-      }}
-    />
+  const spline = (
+    <RobotBoundary>
+      <Spline
+        scene={SCENE}
+        wasmPath="/redesign/spline/runtime-2.0.129"
+        onLoad={(app) => {
+          appRef.current = app;
+          app.play?.();
+          app.requestRender?.();
+          // Let the first canvas frame paint before the parent fades out the poster.
+          readyFrame.current = requestAnimationFrame(() => {
+            app.requestRender?.();
+            readyFrame.current = requestAnimationFrame(() => {
+              loaded.current = true;
+              window.parent?.postMessage("spline:ready", window.location.origin);
+            });
+          });
+        }}
+      />
+    </RobotBoundary>
   );
-  if (card) {
-    // scene point (720, 560) = the robot's chest, kept in the middle of the card
-    const s = (box.h / BASE_HEIGHT) * 1.05;
-    return (
-      <div ref={outerRef} style={{ width: "100%", height: "100vh", overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", left: box.w / 2 - 720 * s, top: box.h / 2 - 560 * s, width: BASE_WIDTH, height: BASE_HEIGHT, transform: `scale(${s})`, transformOrigin: "0 0" }}>
-          {spline}
-        </div>
-      </div>
-    );
-  }
+  // Keep one component tree when the card crop is applied: remounting Spline loaded the scene twice.
+  const s = (box.h / BASE_HEIGHT) * 1.05;
   return (
     <div ref={outerRef} style={{ width: "100%", height: "100vh", overflow: "hidden", position: "relative" }}>
       <div
-        style={{
+        style={card ? {
+          position: "absolute", left: box.w / 2 - 720 * s, top: box.h / 2 - 560 * s,
+          width: BASE_WIDTH, height: BASE_HEIGHT, transform: `scale(${s})`, transformOrigin: "0 0",
+        } : {
           position: "absolute",
           bottom: 0,
           left: "50%",
@@ -92,7 +109,7 @@ export default function Frame() {
           transformOrigin: "bottom center",
         }}
       >
-        <div style={{ width: BASE_WIDTH, height: BASE_HEIGHT, transform: `translateY(-${CROP_PERCENT / 2}%)` }}>
+        <div style={{ width: BASE_WIDTH, height: BASE_HEIGHT, transform: card ? undefined : `translateY(-${CROP_PERCENT / 2}%)` }}>
           {spline}
         </div>
       </div>

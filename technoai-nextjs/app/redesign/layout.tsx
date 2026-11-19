@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { THEME_BOOT_SCRIPT } from "../theme-preference";
 import { Noto_Sans } from "next/font/google";
 import "./redesign.css";
 import "./mission-white.css";
@@ -22,6 +23,10 @@ export const metadata: Metadata = {
 export default function RedesignLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" data-theme="dark" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: "try{if(sessionStorage.getItem('tai-px')==='1')document.documentElement.classList.add('arriving')}catch(e){}" }} />
+      </head>
       {/* browser extensions (e.g. Grammarly) add attributes to <body> before React loads: not a real mismatch */}
       <body className={noto.className} suppressHydrationWarning>{children}</body>
     </html>

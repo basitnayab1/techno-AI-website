@@ -339,3 +339,20 @@ html.fx:not(.loaded) .hx-scroll, html.fx:not(.loaded) .hx-stage { animation-play
   .hx-nav .hx-mobile details a:hover { color: var(--hx-blue); }
   .hx-nav .hx-mobile .hx-btn { margin-top: 12px; }
 }
+
+/* Hero actions: flat brand-blue primary and transparent outline secondary. */
+html body .hx-hero .hx-actions .hx-btn {
+  height: 68px; min-width: 220px; padding-inline: 34px; border-width: 1px;
+  font-size: 1rem; font-weight: 600; box-shadow: none; transform: none;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html body .hx-hero .hx-actions .hx-btn-primary { background: #146b8c; color: #fff; border-color: #146b8c; }
+html body .hx-hero .hx-actions .hx-btn-primary:hover { background: #195f7b; border-color: #195f7b; }
+html body .hx-hero .hx-actions .hx-btn-primary svg { stroke: #fff; }
+html body .hx-hero .hx-actions .hx-btn-ghost { background: transparent; color: #0f1a1b; border-color: rgba(15,26,27,.3); }
+html body .hx-hero .hx-actions .hx-btn-ghost:hover { border-color: #146b8c; background: rgba(20,107,140,.06); }
+html[data-theme="dark"] body .hx-hero .hx-actions .hx-btn-ghost { color: #fff; border-color: rgba(255,255,255,.24); background: transparent; }
+html[data-theme="dark"] body .hx-hero .hx-actions .hx-btn-ghost:hover { border-color: rgba(255,255,255,.55); background: rgba(255,255,255,.04); }
+@media (max-width: 760px) {
+  html body .hx-hero .hx-actions .hx-btn { height: 54px; min-width: 0; width: 100%; padding-inline: 24px; }
+}

@@ -30,8 +30,7 @@
 .jx-peek-product :is(img, svg) { display: block; width: 100%; height: 100%; object-fit: contain; }
 .jx-title-wrap[data-peek="drone"] .jx-peek-product { width: 126px; right: -35px; top: -62px; }
 .jx-title-wrap[data-peek="drone"] .jx-peek-product { transform: translateY(-23px) rotate(7deg) scale(.82); filter: drop-shadow(0 0 2px #fff) drop-shadow(0 7px 8px rgba(15,26,27,.42)); }
-/* The live aerial scene already contains the drone; avoid a second product image by its heading. */
-.journey[data-active="0"] .jx-title-wrap[data-peek="drone"] .jx-peek-product { display: none; }
+/* Keep the small drone visible above its title, independently of the flying 3D scene. */
 .jx-title-wrap[data-peek="industry"] .jx-peek-product { width: 96px; right: -15px; }
 .jx-title-wrap[data-peek="satellite"] .jx-peek-product { width: 95px; right: -18px; }
 .jx-title-wrap[data-peek="security"] .jx-peek-product { width: 100px; right: -22px; }
@@ -136,3 +135,10 @@
 
 /* keep the copy readable on the scene photos */
 .journey:is([data-active="0"], [data-active="1"]) .station p { text-shadow: 0 0 14px #fff, 0 0 2px #fff; }
+
+.jx-films { position: absolute; inset: 0; pointer-events: none; }
+.jx-films video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.journey-gl[hidden] { display: none; }
+@media (max-width: 760px) {
+  .jx-films video { object-position: 70% center; }
+}

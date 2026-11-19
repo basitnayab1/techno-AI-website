@@ -1,132 +1,82 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MENU_ICONS, MENU_LINKS } from "./menu-data";
+import { NAV, MENU_NAV, SOLUTION_LINKS, OFFICES, SOCIAL } from "../chrome";
+import { MENU_ICONS } from "./menu-data";
 import ThemeToggle from "./theme-toggle";
+import "./landing-menu.css";
+import "../shared-header.css";
 
-type Item = { label: string; href: string; links: [string, string][] };
-
-/**
- * Fullscreen menu, same as the live technoai.ae header menu (Elementor popup 6860): left panel on the
- * circuit "AI" image slides in from the right with big white links rising one by one, a blue strip on the
- * right with the six solution icons, white X top-right. Opens animated, closes instantly (like the live site).
- */
-function FullMenu({ onClose }: { onClose: () => void }) {
-  const [shown, setShown] = useState(false);
-  useEffect(() => {
-    const r = requestAnimationFrame(() => setShown(true));
-    const lenis = (window as unknown as { lenis?: { stop: () => void; start: () => void } }).lenis;
-    lenis?.stop();
-    const prev = document.documentElement.style.overflow;
-    document.documentElement.style.overflow = "hidden";
-    return () => {
-      cancelAnimationFrame(r);
-      lenis?.start();
-      document.documentElement.style.overflow = prev;
-    };
-  }, []);
-  return (
-    <div className={`tm${shown ? " is-open" : ""}`} role="dialog" aria-modal="true" aria-label="Menu" onClick={(e) => (e.target as HTMLElement).closest("a") && onClose()}>
-      <div className="tm-left">
-        <nav className="tm-links" aria-label="Main menu">
-          {MENU_LINKS.map(([label, href], i) => (
-            <a key={href} className="tm-item" href={href} style={{ ["--i" as string]: i }}>
-              {label}
-            </a>
-          ))}
-        </nav>
-      </div>
-      <div className="tm-right">
-        {MENU_ICONS.map((ic) => (
-          <a key={ic.href} className="tm-ico" href={ic.href} aria-label={ic.label} title={ic.label} dangerouslySetInnerHTML={{ __html: ic.svg }} />
-        ))}
-      </div>
-      <button className="tm-close" aria-label="Close menu" onClick={onClose}>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" /></svg>
-      </button>
-    </div>
-  );
-}
-
-/** Floating glass navbar of the home hero. Desktop: hover/focus dropdowns. Mobile: slide-down panel. */
-export default function HeroNav({ items }: { items: Item[] }) {
-  const [scrolled, setScrolled] = useState(false);
+/** Imported site's navigation, isolated from the landing page's hero styles. */
+export default function HeroNav() {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLElement>(null);
-
+  const [scrolled, setScrolled] = useState(false);
+  const dialog = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    // Lenis already tracks the scroll position; reading window.scrollY on every scroll event forced a
-    // full-page layout each time (a big part of the scroll stutter)
-    const on = () => {
-      const lenis = (window as unknown as { lenis?: { scroll: number } }).lenis;
-      setScrolled((lenis ? lenis.scroll : window.scrollY) > 12);
-    };
-    on();
-    window.addEventListener("scroll", on, { passive: true });
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    window.addEventListener("keydown", esc);
-    return () => {
-      window.removeEventListener("scroll", on);
-      window.removeEventListener("keydown", esc);
-    };
+    const scroll = () => setScrolled(window.scrollY > 12);
+    scroll();
+    window.addEventListener("scroll", scroll, { passive: true });
+    return () => window.removeEventListener("scroll", scroll);
   }, []);
+  useEffect(() => {
+    if (!open) return;
+    const root = document.documentElement;
+    const previousOverflow = root.style.overflow;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const lenis = (window as Window & { lenis?: { stop: () => void; start: () => void } }).lenis;
+    root.style.overflow = "hidden";
+    lenis?.stop();
+    const raf = requestAnimationFrame(() => dialog.current?.querySelector<HTMLAnchorElement>("nav a")?.focus());
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); setOpen(false); }
+      if (event.key !== "Tab") return;
+      const targets = Array.from(dialog.current?.querySelectorAll<HTMLElement>('a[href],button') ?? []).filter(el => el.getClientRects().length);
+      const first = targets[0], last = targets[targets.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener("keydown", keydown);
+    return () => {
+      cancelAnimationFrame(raf);
+      root.style.overflow = previousOverflow;
+      lenis?.start();
+      document.removeEventListener("keydown", keydown);
+      previousFocus?.focus({ preventScroll: true });
+    };
+  }, [open]);
 
-  return (
-    <>
-    <header ref={ref} className={`hx-nav${scrolled ? " is-scrolled" : ""}${open ? " is-open" : ""}`}>
-      <div className="hx-nav-bar">
-        <a className="hx-brand" href="/" aria-label="Techno AI home">
-          <span className="hx-logo" aria-hidden="true" />
-          <span className="hx-brand-sep" aria-hidden="true" />
-          <span className="hx-brand-name">Techno AI</span>
+  return <>
+    <header className={`tai-header${scrolled ? " is-scrolled" : ""}`} inert={open}>
+      <div className="tai-header-bar">
+        <a className="tai-brand" href="/" aria-label="Techno AI home">
+          <span className="tai-logo" aria-hidden="true" />
         </a>
-
-        <nav className="hx-menu" aria-label="Main">
-          {items.map((it) => (
-            <div className="hx-menu-item" key={it.label}>
-              <a href={it.href} className="hx-menu-link">
-                {it.label}
-                <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" /></svg>
-              </a>
-              <div className="hx-drop">
-                {it.links.map(([l, h]) => (
-                  <a key={h + l} href={h}>{l}</a>
-                ))}
-              </div>
-            </div>
-          ))}
+        <nav className="tai-links tai-direct-links" aria-label="Main">
+          {NAV.map(([label, href]) => <a className="tai-link" key={href} href={href}><span className="tai-link-label"><span data-t={label}>{label}</span></span></a>)}
         </nav>
-
-        <a className="hx-btn hx-btn-primary hx-nav-cta hx-gloss" href="/request-a-quote/" data-stringy>
-          Start a Project
-          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12M11 5l5 5-5 5" /></svg>
-        </a>
-
-        {/* same menu icon as the live technoai.ae header: dark glass box, two long lines + a short one */}
         <ThemeToggle />
-        <button className="hx-burger" aria-expanded={open} aria-label={open ? "Close menu" : "Open menu"} onClick={() => setOpen((o) => !o)}>
-          {open ? (
-            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" /></svg>
-          ) : (
-            <svg viewBox="0 0 20 20" aria-hidden="true"><path fillRule="evenodd" clipRule="evenodd" fill="currentColor" d="m9 15c0-.5523.44772-1 1-1h6c.5523 0 1 .4477 1 1s-.4477 1-1 1h-6c-.55228 0-1-.4477-1-1zm-6-10c0-.55229.44771-1 1-1h12c.5523 0 1 .44771 1 1 0 .55228-.4477 1-1 1h-12c-.55229 0-1-.44772-1-1zm0 5c0-.55228.44771-1 1-1h12c.5523 0 1 .44772 1 1 0 .5523-.4477 1-1 1h-12c-.55229 0-1-.4477-1-1z" /></svg>
-          )}
+        <button ref={trigger} className="tai-burger" type="button" aria-label="Open menu" aria-expanded={open} aria-controls="landing-site-menu" onClick={() => setOpen(true)}>
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path fillRule="evenodd" clipRule="evenodd" fill="currentColor" d="m9 15c0-.5523.44772-1 1-1h6c.5523 0 1 .4477 1 1s-.4477 1-1 1h-6c-.55228 0-1-.4477-1-1zm-6-10c0-.55229.44771-1 1-1h12c.5523 0 1 .44771 1 1 0 .55228-.4477 1-1 1h-12c-.55229 0-1-.44772-1-1zm0 5c0-.55228.44771-1 1-1h12c.5523 0 1 .44772 1 1 0 .5523-.4477 1-1 1h-12c-.55229 0-1-.4477-1-1z" /></svg>
         </button>
       </div>
-
-      <div className="hx-mobile" hidden onClick={(e) => (e.target as HTMLElement).closest("a") && setOpen(false)}>
-        {items.map((it) => (
-          <details key={it.label}>
-            <summary>{it.label}</summary>
-            {it.links.map(([l, h]) => (
-              <a key={h + l} href={h}>{l}</a>
-            ))}
-          </details>
-        ))}
-        <a className="hx-btn hx-btn-primary" href="/request-a-quote/">Start a Project</a>
-      </div>
     </header>
-    {/* outside the header: the header has a transform, which would trap a fixed overlay inside it */}
-    {open && <FullMenu onClose={() => setOpen(false)} />}
-    </>
-  );
+    {open && <div ref={dialog} className="im-overlay" id="landing-site-menu" role="dialog" aria-modal="true" aria-label="Site menu">
+      <div className="im-overlay-head"><a className="im-logo" href="/" aria-label="TechnoAI home"><img src="/wp-content/uploads/2026/07/Logo.svg" width="92" height="44" alt="TechnoAI" /></a>
+        <button className="im-toggle im-close" aria-label="Close menu" onClick={() => setOpen(false)}><span>Close</span><span className="im-toggle-icon" aria-hidden="true"><i /><i /></span></button>
+      </div>
+      <div className="im-menu-in">
+        <nav className="im-menu-nav" aria-label="Menu"><p className="im-kicker">Explore TechnoAI</p>{MENU_NAV.map(([label, href], i) => <a key={href} href={href} onClick={() => setOpen(false)} style={{ ["--d" as string]: i }}>
+          <span className="im-number">{String(i + 1).padStart(2, "0")}</span><span className="im-menu-text">{label}</span>
+        </a>)}</nav>
+        <div className="im-side">
+          <div className="im-solutions"><h2>Solutions</h2>{SOLUTION_LINKS.map(([label, href]) => <a key={href} href={href} onClick={() => setOpen(false)}>
+            <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: MENU_ICONS.find(icon => icon.href === href)?.svg ?? "" }} /><span>{label}</span>
+          </a>)}</div>
+          <div className="im-offices"><h2>Offices</h2>{OFFICES.map(([name, place]) => <p key={name}><strong>{name}</strong>{place}</p>)}<span className="im-stacked"><img src="/brand/techno-ai-stacked.png" alt="TechnoAI" width="794" height="890" /></span></div>
+          <nav className="im-social" aria-label="Social media">{SOCIAL.map(([label, href]) => <a key={label} href={href} target="_blank" rel="noopener noreferrer">{label}</a>)}</nav>
+        </div>
+      </div>
+    </div>}
+  </>;
 }

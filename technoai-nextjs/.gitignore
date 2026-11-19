@@ -9,3 +9,5 @@ clone.log
 submissions/
 
 .next-verify/
+
+.next-interior-check/
