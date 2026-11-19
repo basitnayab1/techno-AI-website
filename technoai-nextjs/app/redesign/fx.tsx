@@ -228,18 +228,12 @@ export function Loader({ preload }: { preload: string[] }) {
     document.documentElement.classList.add("loaded");
     document.documentElement.classList.remove("op-entering");
     setDone(true);
-    try {
-      sessionStorage.setItem("tai-opener-v6", "1");
-    } catch {}
   };
 
   useEffect(() => {
     const root = document.documentElement;
-    let seen = false;
-    try {
-      seen = sessionStorage.getItem("tai-opener-v6") === "1";
-    } catch {}
-    if (seen || reduced() || root.classList.contains("arriving")) {
+    // A normal refresh repeats the horizontal reveal. In-site navigation uses the shared curtain.
+    if (reduced() || root.classList.contains("arriving")) {
       finish();
       return;
     }
@@ -264,15 +258,20 @@ export function Loader({ preload }: { preload: string[] }) {
     ).catch(() => { /* Product assets can finish after the opener. */ });
     const minimum = window.setTimeout(() => { elapsed = true; check(); }, 650);
     const deadline = window.setTimeout(reveal, 2200);
-    const safety = window.setTimeout(finish, 3000);
     return () => {
       active = false;
       observer.disconnect();
       clearTimeout(minimum);
       clearTimeout(deadline);
-      clearTimeout(safety);
     };
   }, []);
+
+  useEffect(() => {
+    if (!revealing) return;
+    // Start the fallback after React paints the reveal, so a busy main thread cannot skip it.
+    const safety = window.setTimeout(finish, 1100);
+    return () => clearTimeout(safety);
+  }, [revealing]);
 
   const end = (e: React.AnimationEvent) => {
     if (e.target === e.currentTarget && e.animationName === "opExit") finish();
