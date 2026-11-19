@@ -3,6 +3,7 @@ import { Loader, Motion, Terminal } from "./fx";
 import Hero from "./hero";
 import Capabilities from "./capabilities";
 import Flight from "./flight";
+import FibreBackground from "./fibre-background";
 import InkSample from "./ink-sample"; // SAMPLE ONLY: ?ink=1
 import JourneyPeek from "./journey-peeks";
 import "./journey-scenes.css";
@@ -88,6 +89,7 @@ export default function Home() {
         {/* 1 ── Hero: glass navbar + 3D Intelligence Core (hero.tsx) */}
         <InkSample />
         <Hero />
+        <FibreBackground />
         {/* Phase 2: the drone flies with the scroll from the hero to the journey (flight-scene.tsx) */}
         <Flight />
 

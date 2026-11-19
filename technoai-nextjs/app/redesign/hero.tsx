@@ -3,7 +3,6 @@ import "./menu.css";
 import { INDUSTRIES, SOLUTIONS } from "./data";
 import CoreStage from "./core-stage";
 import HeroNav from "./hero-nav";
-import Stringy from "./stringy";
 import HeroBackground from "./hero-background";
 
 // Home hero: floating glass navbar + headline + 3D "Intelligence Core".
@@ -48,7 +47,6 @@ export default function Hero() {
   return (
     <>
       <HeroNav items={NAV_ITEMS} />
-      <Stringy />
       <section className="hx-hero" aria-labelledby="hx-title">
         <div className="hx-bg" aria-hidden="true">
           <HeroBackground />

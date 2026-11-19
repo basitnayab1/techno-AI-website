@@ -15,7 +15,7 @@ if (typeof window !== "undefined") {
   window.addEventListener(
     "pointermove",
     (e) => {
-      if (e.pointerType !== "mouse") return;
+      if (e.pointerType !== "mouse" || !Number.isFinite(e.clientX) || !Number.isFinite(e.clientY)) return;
       ptr.x = (e.clientX / window.innerWidth) * 2 - 1;
       ptr.y = -((e.clientY / window.innerHeight) * 2 - 1);
       ptr.has = true;
@@ -30,6 +30,9 @@ class Spring {
   v = 0;
   constructor(private k = 38, private c = 9) {}
   step(target: number, dt: number) {
+    if (!Number.isFinite(this.x) || !Number.isFinite(this.v)) { this.x = 0; this.v = 0; }
+    if (!Number.isFinite(target)) target = 0;
+    dt = Number.isFinite(dt) ? Math.min(.05, Math.max(0, dt)) : .016;
     const a = this.k * (target - this.x) - this.c * this.v;
     this.v += a * dt;
     this.x += this.v * dt;
@@ -72,6 +75,7 @@ function eyeMesh(w: number, h: number) {
  * @param unit  rough size of the model in the parent's units (scales the position offsets)
  */
 export function makeAlive(kind: "robot" | "drone", inner: THREE.Object3D, unit = 1): Alive {
+  unit = Number.isFinite(unit) && unit > 0 ? unit : 1;
   const group = new THREE.Group();
   group.add(inner);
   const yaw = new Spring(30, 8);
@@ -108,9 +112,10 @@ export function makeAlive(kind: "robot" | "drone", inner: THREE.Object3D, unit =
   let blinkT = -1;
 
   const update = (t: number, screen = { x: 0, y: 0 }, camPos?: THREE.Vector3) => {
+    if (!Number.isFinite(t)) return;
     const dt = lastT < 0 ? 0.016 : Math.min(0.05, Math.max(0, t - lastT));
     lastT = t;
-    const active = ptr.has && performance.now() - ptr.last < 6000; // idle after 6 s without the mouse
+    const active = ptr.has && Number.isFinite(screen.x) && Number.isFinite(screen.y) && performance.now() - ptr.last < 6000;
     const dx = active ? ptr.x - screen.x : 0;
     const dy = active ? ptr.y - screen.y : 0;
     const dist = Math.hypot(dx, dy * 0.8);

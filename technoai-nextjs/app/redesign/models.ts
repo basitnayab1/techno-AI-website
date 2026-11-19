@@ -371,6 +371,11 @@ export function modelFor(slug: string, M: Mats): Model {
       // Each scene owns its transforms and animation helpers; keep the cached source untouched.
       const real = gltf.scene.clone(true);
       real.traverse((o) => {
+        const mesh = o as THREE.Mesh;
+        if (mesh.isMesh) {
+          mesh.geometry = mesh.geometry.clone();
+          mesh.material = Array.isArray(mesh.material) ? mesh.material.map(m => m.clone()) : mesh.material.clone();
+        }
         const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
         if (m && "envMapIntensity" in m) {
           m.envMapIntensity = 0.9;
@@ -385,7 +390,13 @@ export function modelFor(slug: string, M: Mats): Model {
       const phBox = new THREE.Box3().setFromObject(ph.group);
       const size = phBox.getSize(new THREE.Vector3()).length();
       const box = new THREE.Box3().setFromObject(real);
-      const k = size / box.getSize(new THREE.Vector3()).length();
+      const realSize = box.getSize(new THREE.Vector3());
+      const realLength = realSize.length();
+      if (box.isEmpty() || !Number.isFinite(realLength) || realLength <= 0 || !Number.isFinite(size)) {
+        console.error(`[redesign] Invalid bounds for ${url}, keeping placeholder`);
+        return;
+      }
+      const k = size / realLength;
       real.position.sub(box.getCenter(new THREE.Vector3()));
       const wrap = new THREE.Group();
       // "alive" motion (springs, mouse look/push, blink…) wraps the model inside the scaled group

@@ -12,7 +12,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 const INK = new THREE.Color("#0f1a1b");
 const BLUE = new THREE.Color("#146b8c");
 const TEAL = new THREE.Color("#146b8c"); // 3-colour theme: teal retired, uses brand blue
-const AQUA_LINE = new THREE.Color("#9fe7e7"); // flat aqua (3-colour theme)
+const AQUA_LINE = new THREE.Color("#146b8c"); // selected Brand Blue core accents
 const AQUA = new THREE.Color("#9fe7e7");
 
 /** Points on the glass surface the floating labels point at (local to the floating group). */
@@ -56,7 +56,7 @@ const CORE_FRAG = /* glsl */ `
     float fres = pow(1. - max(dot(vN, vV), 0.), 2.2);
     float c = trace(vUv, 18., uTime) + trace(vUv + .37, 34., uTime * 1.3) * .6;
     vec3 base = mix(uInk * 1.2, uBlue, .55 + .45 * (1. - fres));
-    gl_FragColor = vec4(base + uTeal * c * .9 + uAqua * fres * 1.15, 1.);
+    gl_FragColor = vec4(base + uTeal * c * .9 + mix(uBlue, uAqua, .16) * fres * 1.15, 1.);
   }`;
 
 // Fine circuit lines on a transparent shell (normal blending, reads on a white page).
@@ -181,11 +181,11 @@ function Band({ r, h, seg }: { r: number; h: number; seg: number }) {
     <group>
       <mesh>
         <cylinderGeometry args={[r, r, h, seg * 2, 1, true]} />
-        <meshStandardMaterial color="#e9eef1" metalness={1} roughness={0.16} side={THREE.DoubleSide} envMapIntensity={1.35} />
+        <meshStandardMaterial color="#0f1a1b" metalness={0.85} roughness={0.24} side={THREE.DoubleSide} envMapIntensity={1.35} />
       </mesh>
       <mesh>
         <cylinderGeometry args={[r - 0.012, r - 0.012, h * 0.96, seg * 2, 1, true]} />
-        <meshStandardMaterial color="#9aa7ad" metalness={1} roughness={0.22} side={THREE.DoubleSide} />
+        <meshStandardMaterial color="#146b8c" metalness={0.9} roughness={0.28} side={THREE.DoubleSide} />
       </mesh>
       <mesh rotation-x={Math.PI / 2} position-y={h / 2}>
         <torusGeometry args={[r, 0.004, 6, seg * 2]} />
@@ -278,8 +278,8 @@ function IntelligenceCore({ mobile, still, onAnchors }: { mobile: boolean; still
   const coreUniforms = useMemo(() => ({ uTime: time, uInk: { value: INK }, uBlue: { value: BLUE }, uTeal: { value: TEAL }, uAqua: { value: AQUA } }), [time]);
   const shellA = useMemo(() => ({ uTime: time, uColor: { value: BLUE }, uOpacity: { value: 0.55 } }), [time]);
   const shellB = useMemo(() => ({ uTime: time, uColor: { value: TEAL }, uOpacity: { value: 0.32 } }), [time]);
-  const glassUniforms = useMemo(() => ({ uRim: { value: new THREE.Color("#cfe7ee") }, uTint: { value: new THREE.Color("#ffffff") } }), []);
-  const beamUniforms = useMemo(() => ({ uColor: { value: AQUA_LINE } }), []);
+  const glassUniforms = useMemo(() => ({ uRim: { value: new THREE.Color("#146b8c") }, uTint: { value: new THREE.Color("#0f1a1b") } }), []);
+  const beamUniforms = useMemo(() => ({ uColor: { value: BLUE } }), []);
 
   const root = useRef<THREE.Group>(null);
   const float = useRef<THREE.Group>(null);
@@ -382,7 +382,7 @@ function IntelligenceCore({ mobile, still, onAnchors }: { mobile: boolean; still
         </mesh>
         <mesh>
           <sphereGeometry args={[1.43, seg, seg / 2]} />
-          <meshPhysicalMaterial color="#ffffff" metalness={0} roughness={0.04} clearcoat={1} clearcoatRoughness={0.03} transparent opacity={0.16} envMapIntensity={1.6} depthWrite={false} />
+          <meshPhysicalMaterial color="#146b8c" metalness={0} roughness={0.04} clearcoat={1} clearcoatRoughness={0.03} transparent opacity={0.08} envMapIntensity={0.8} depthWrite={false} />
         </mesh>
 
         {/* metallic orbital bands, each turning at its own speed */}
@@ -420,15 +420,15 @@ function IntelligenceCore({ mobile, still, onAnchors }: { mobile: boolean; still
       <group position-y={-2.3}>
         <mesh>
           <cylinderGeometry args={[1.55, 1.68, 0.1, seg * 2]} />
-          <meshStandardMaterial color="#c3ced3" metalness={0.92} roughness={0.2} envMapIntensity={1.25} />
+          <meshStandardMaterial color="#0f1a1b" metalness={0.85} roughness={0.28} envMapIntensity={0.9} />
         </mesh>
         <mesh position-y={0.1}>
           <cylinderGeometry args={[1.18, 1.3, 0.12, seg * 2]} />
-          <meshStandardMaterial color="#c3ced3" metalness={0.92} roughness={0.2} envMapIntensity={1.25} />
+          <meshStandardMaterial color="#0f1a1b" metalness={0.85} roughness={0.28} envMapIntensity={0.9} />
         </mesh>
         <mesh ref={glowRing} rotation-x={Math.PI / 2} position-y={0.165}>
           <torusGeometry args={[1.08, 0.011, 8, seg * 2]} />
-          <meshBasicMaterial color={AQUA} toneMapped={false} />
+          <meshBasicMaterial color={BLUE} toneMapped={false} />
         </mesh>
         <mesh position-y={0.65}>
           <cylinderGeometry args={[0.55, 1.05, 1, 64, 1, true]} />

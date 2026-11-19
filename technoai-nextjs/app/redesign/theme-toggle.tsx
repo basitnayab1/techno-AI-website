@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import "./theme.css";
 
 export default function ThemeToggle() {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(true);
   useEffect(() => {
-    document.documentElement.dataset.theme = "light";
+    document.documentElement.dataset.theme = "dark";
   }, []);
 
   const toggle = () => {

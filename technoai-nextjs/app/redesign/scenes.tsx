@@ -462,6 +462,7 @@ export function JourneyScene() {
 
     const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
     const onMove = (e: PointerEvent) => {
+      if (!Number.isFinite(e.clientX) || !Number.isFinite(e.clientY)) return;
       mouse.tx = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.ty = (e.clientY / window.innerHeight) * 2 - 1;
     };

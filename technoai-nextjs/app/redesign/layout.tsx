@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 
 export default function RedesignLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
       {/* browser extensions (e.g. Grammarly) add attributes to <body> before React loads: not a real mismatch */}
       <body className={noto.className} suppressHydrationWarning>{children}</body>
     </html>
