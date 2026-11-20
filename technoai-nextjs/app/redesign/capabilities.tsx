@@ -1,5 +1,7 @@
 "use client";
 
+import { useOpeningReady } from "./opening-ready";
+
 import "./capabilities.css";
 import DotField from "./dot-field";
 import SplineCard from "./spline-card";
@@ -55,7 +57,9 @@ export default function Capabilities() {
   const [show, setShow] = useState(false);
 
   // load three.js models only when the section is getting close
+  const openingReady = useOpeningReady();
   useEffect(() => {
+    if (!openingReady) return;
     const el = ref.current!;
     // start well before the section arrives, but in an idle moment, so the hero's own start-up isn't slowed
     let idle = 0;
@@ -72,7 +76,7 @@ export default function Capabilities() {
       if (w.cancelIdleCallback) w.cancelIdleCallback(idle);
       clearTimeout(idle);
     };
-  }, []);
+  }, [openingReady]);
 
   return (
     <section ref={ref} className="cx" id="solutions" aria-labelledby="cx-title">

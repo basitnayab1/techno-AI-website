@@ -273,7 +273,7 @@ const loader = new GLTFLoader();
 const isBrowser = typeof window !== "undefined";
 if (isBrowser) {
   // Models are Draco-compressed (Blender export) with WebP textures: ~0.5 MB each instead of ~2 MB.
-  const draco = new DRACOLoader().setDecoderPath("/redesign/draco/").setDecoderConfig({ type: "wasm" });
+  const draco = new DRACOLoader().setWorkerLimit(2).setDecoderPath("/redesign/draco/").setDecoderConfig({ type: "wasm" });
   draco.preload(); // fetch + compile the decoder right away, not when the first model arrives
   loader.setDRACOLoader(draco);
 }

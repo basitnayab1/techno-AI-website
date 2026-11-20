@@ -164,11 +164,11 @@
 .journey[data-active="3"] .jx-film[data-i="3"],
 .journey[data-active="4"] .jx-film[data-i="4"],
 .journey[data-active="5"] .jx-film[data-i="5"] { opacity: 1; visibility: visible; transition-delay: 0s; }
-.jx-film-media { position: absolute; inset: 0; transform: translate3d(0,var(--jx-pan,2%),0) scale(var(--jx-zoom,1.09)); transition: transform .16s linear; }
+.jx-film-media { position: absolute; inset: 0; transform: translate3d(0,var(--jx-pan,1%),0) scale(var(--jx-zoom,1.05)); transition: none; }
 .jx-film-media :is(img,video) { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
 .jx-film-media img { opacity: 1; transition: none; }
 @media (prefers-reduced-motion: no-preference) {
-  .journey .station:is([data-i="2"],[data-i="3"],[data-i="4"],[data-i="5"]) { translate: 0 var(--jx-copy-y,18px); transition: opacity .6s var(--ease), transform .8s var(--ease), translate .16s linear, visibility 0s .6s; }
+  .journey .station:is([data-i="2"],[data-i="3"],[data-i="4"],[data-i="5"]) { translate: 0 var(--jx-copy-y,6px); transition: opacity .6s var(--ease), transform .8s var(--ease),  visibility 0s .6s; }
   .journey .station[aria-hidden="false"] { transition-delay: 0s; }
 }
 .journey-gl[hidden] { display: none; }
@@ -180,4 +180,15 @@
 @media (prefers-reduced-motion: reduce) {
   .jx-films { display: none; }
   .jx-film, .jx-film-media { transition: none; transform: none; }
+}
+
+/* Keep pinned-section geometry fixed: translating its ancestor moves the sticky frame. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) and (min-width: 761px) {
+    section.journey { animation-name: journeyOpen; translate: none; }
+  }
+}
+@keyframes journeyOpen {
+  from { clip-path: inset(0 5% 0 5% round 48px); }
+  to { clip-path: inset(0 0 0 0 round 0); }
 }

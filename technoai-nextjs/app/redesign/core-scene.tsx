@@ -311,6 +311,7 @@ function IntelligenceCore({ mobile, still, onAnchors }: { mobile: boolean; still
   const v = useMemo(() => new THREE.Vector3(), []);
   useFrame(({ clock, camera, size }) => {
     const t = still ? 2.5 : clock.elapsedTime;
+    const orbitTime = t;
     // R3F preserves its own uniform objects; update the mounted materials,
     // rather than the input uniform object copied when they were created.
     for (const shader of [coreShader.current, shellAShader.current, shellBShader.current]) {
@@ -320,23 +321,23 @@ function IntelligenceCore({ mobile, still, onAnchors }: { mobile: boolean; still
     m.x += (m.tx - m.x) * 0.05;
     m.y += (m.ty - m.y) * 0.05;
 
-    const intro = still ? 1 : 1 - Math.pow(1 - Math.min(Math.max((t - 0.2) / 1.8, 0), 1), 3);
+    const intro = still ? 1 : 1 - Math.pow(1 - Math.min(Math.max(t / 0.45, 0), 1), 3);
     root.current!.scale.setScalar(0.82 + intro * 0.18);
     root.current!.rotation.y = (1 - intro) * -0.5;
 
     const f = float.current!;
     f.position.y = 0.2 + Math.sin(t * 0.8) * 0.07;
     f.rotation.set(m.y * 0.16, m.x * 0.26, 0);
-    spin.current!.rotation.set(Math.sin(t * 0.21) * 0.08, t * 0.16, 0);
-    shellBRef.current!.rotation.y = -t * 0.1;
+    spin.current!.rotation.set(Math.sin(orbitTime * 0.21) * 0.08, orbitTime * 0.16, 0);
+    shellBRef.current!.rotation.y = -orbitTime * 0.1;
     logo.current!.lookAt(camera.position);
     inner.current!.position.copy(f.position);
     inner.current!.intensity = 16 + Math.sin(t * 2.1) * 3;
 
-    rings.current.forEach((r, i) => r && (r.rotation.y = t * RINGS[i].speed));
+    rings.current.forEach((r, i) => r && (r.rotation.y = orbitTime * RINGS[i].speed));
     nodes.current.forEach((n, i) => {
       if (!n) return;
-      const a = t * (0.35 - i * 0.12) + i * 2;
+      const a = orbitTime * (0.35 - i * 0.12) + i * 2;
       n.position.set(Math.cos(a) * ORBITS[i].r, Math.sin(a) * ORBITS[i].r, 0);
     });
     glowRing.current!.scale.setScalar(1 + Math.sin(t * 2) * 0.01);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
+import { useOpeningReady } from "./opening-ready";
 import type Lenis from "lenis";
 import "./spline-stage.css";
 
@@ -15,6 +16,7 @@ export function registerRobotSlot(slot: HTMLElement) {
 
 /** One browsing context, model decode and GPU scene shared between the two robot placements. */
 export default function SplineStage() {
+  const openingReady = useOpeningReady();
   const host = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLIFrameElement>(null);
   useLayoutEffect(() => {
@@ -150,7 +152,7 @@ export default function SplineStage() {
     };
   }, []);
   return <div ref={host} className="robot-stage" data-visible="false" data-ready="false" inert>
-    <iframe ref={frame} src="/redesign/spline-frame/?fit=card&renderer=webgl" title="Interactive 3D robot" loading="eager"
+    <iframe ref={frame} src={openingReady ? "/redesign/spline-frame/?fit=card&renderer=webgl" : undefined} title="Interactive 3D robot" loading="eager"
       onLoad={() => frame.current?.contentWindow?.postMessage("spline:status", location.origin)} />
   </div>;
 }

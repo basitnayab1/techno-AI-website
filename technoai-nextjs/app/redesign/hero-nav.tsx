@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { NAV, MENU_NAV, SOLUTION_LINKS, OFFICES, SOCIAL } from "../chrome";
 import { MENU_ICONS } from "./menu-data";
-import ThemeToggle from "./theme-toggle";
+import "./theme.css";
 import "./landing-menu.css";
 import "../shared-header.css";
 
@@ -55,7 +55,6 @@ export default function HeroNav() {
         <nav className="tai-links tai-direct-links" aria-label="Main">
           {NAV.map(([label, href]) => <a className="tai-link" key={href} href={href}><span className="tai-link-label"><span data-t={label}>{label}</span></span></a>)}
         </nav>
-        <ThemeToggle />
         <button ref={trigger} className="tai-burger" type="button" aria-label="Open menu" aria-expanded={open} aria-controls="landing-site-menu" onClick={() => setOpen(true)}>
           <svg viewBox="0 0 20 20" aria-hidden="true"><path fillRule="evenodd" clipRule="evenodd" fill="currentColor" d="m9 15c0-.5523.44772-1 1-1h6c.5523 0 1 .4477 1 1s-.4477 1-1 1h-6c-.55228 0-1-.4477-1-1zm-6-10c0-.55229.44771-1 1-1h12c.5523 0 1 .44771 1 1 0 .55228-.4477 1-1 1h-12c-.55229 0-1-.44772-1-1zm0 5c0-.55228.44771-1 1-1h12c.5523 0 1 .44772 1 1 0 .5523-.4477 1-1 1h-12c-.55229 0-1-.4477-1-1z" /></svg>
         </button>

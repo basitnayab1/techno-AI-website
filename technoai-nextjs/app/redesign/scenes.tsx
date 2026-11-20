@@ -78,16 +78,25 @@ function runWhileVisible(watch: Element, frame: (t: number, dt: number) => void)
     frame(clock.elapsedTime, dt);
     if (on) raf = requestAnimationFrame(tick);
   };
-  const io = new IntersectionObserver(([e]) => {
+  let inView = false;
+  const sync = () => {
     cancelAnimationFrame(raf);
-    on = e.isIntersecting;
+    on = inView && !document.hidden;
+    // Reset the delta after a hidden tab so springs do not jump on return.
+    clock.getDelta();
     if (on) raf = requestAnimationFrame(tick);
+  };
+  const io = new IntersectionObserver(([e]) => {
+    inView = e.isIntersecting;
+    sync();
   });
   io.observe(watch);
+  document.addEventListener("visibilitychange", sync);
   return () => {
     on = false;
     cancelAnimationFrame(raf);
     io.disconnect();
+    document.removeEventListener("visibilitychange", sync);
   };
 }
 
@@ -508,7 +517,7 @@ export function JourneyScene() {
       const local = f - idx; // 0..1 inside a station
       if (idx !== shown) {
         shown = idx;
-        section.dataset.active = String(idx);
+        // JourneyFilms owns station selection, including boundary hysteresis.
       }
       const sp = local.toFixed(3);
       const jp = p.toFixed(3);

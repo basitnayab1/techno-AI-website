@@ -414,3 +414,6 @@ html.menu-open .hx-menu:hover .hx-menu-i i:last-child { transform: rotate(-45deg
   .fo-mobile-links a { min-height: 40px; padding: 7px 0; line-height: 1.5; }
   .fo-mobile-links .fo-company-logo { margin-top: 20px; }
 }
+
+.fo-bottom > div a { display: inline-flex; align-items: center; gap: 8px; }
+.fo-bottom .social-icon { display: block; flex: none; }

@@ -110,6 +110,9 @@ export default function Frame() {
         scene={SCENE}
         wasmPath="/redesign/spline/runtime-2.0.129"
         onLoad={(app) => {
+          // Clear the scene background completely so the parent surface shows through.
+          // Matching hex colours is unreliable across the canvas post-processing pipeline.
+          app.setBackgroundColor("rgba(0, 0, 0, 0)");
           appRef.current = app;
           app.play?.();
           app.requestRender?.();

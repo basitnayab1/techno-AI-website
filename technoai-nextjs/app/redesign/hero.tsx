@@ -58,10 +58,6 @@ export default function Hero() {
             <span className="hx-uae-mark hx-rise" role="img" aria-label="Proud of UAE" style={{ ["--d" as string]: "0.05s" }}>
               <img src="/redesign/hero/proud-of-uae.png" width="269" height="300" alt="" loading="eager" decoding="async" />
             </span>
-            <p className="hx-eyebrow hx-rise" style={{ ["--d" as string]: "0.05s" }}>
-              <span className="hx-chip" aria-hidden="true">//:</span>
-              AI <i>/</i> Robotics <i>/</i> Hardware
-            </p>
             <h1 id="hx-title" className="hx-title">
               <span className="hx-line">{words("Intelligence, built", 0)}</span>
               <span className="hx-line hx-blue">{words("for the real world.", 2)}</span>

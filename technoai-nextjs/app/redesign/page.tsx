@@ -1,3 +1,4 @@
+import { socialIconHtml } from "../social-icons";
 import { FOOTER, INDUSTRIES, NAV, OFFICES, PARTNERS, SOCIAL, SOLUTIONS, UP } from "./data";
 import { Loader, Motion } from "./fx";
 import Hero from "./hero";
@@ -261,14 +262,13 @@ export default function Home() {
           {FOOTER.map(([heading, links]) => <nav className="ft-links" key={heading} aria-label={heading}>
             <h2>{heading}</h2>
             <ul>{links.map(([label, href]) => <li key={href}><a href={href}>{label}</a></li>)}</ul>
-            {heading === "Company" && <a className="ft-badge" href="/" aria-label="TechnoAI home"><img src="/redesign/footer-brand-stacked.png" width="512" height="578" alt="" loading="lazy" /></a>}
           </nav>)}
         </div>
         <div className="ft-bottom">
           <span>© TechnoAi <span aria-hidden="true">·</span> <a href="https://technoai.ae/">technoai.ae</a></span>
           <nav aria-label="Social media">
             {SOCIAL.map(([label, href]) => (
-              <a key={label} href={href} target="_blank" rel="noopener noreferrer">{label}</a>
+              <a key={label} href={href} target="_blank" rel="noopener noreferrer"><span className="social-mark" dangerouslySetInnerHTML={{ __html: socialIconHtml(label) }} />{label}</a>
             ))}
           </nav>
         </div>

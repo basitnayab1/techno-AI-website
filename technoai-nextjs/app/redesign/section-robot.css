@@ -1,7 +1,6 @@
 .closer.closer-robot { background: #0b1213; }
 
 html[data-theme="dark"] .sec.partners { position: relative; }
-html[data-theme="dark"] .closer-robot > .sticky::before,
 html[data-theme="dark"] .sec.partners::before {
   content: "";
   position: absolute;
@@ -26,4 +25,19 @@ html[data-theme="dark"] .sec.partners::before {
   .closer-robot .sticky { position: relative; height: auto; min-height: 100svh; }
   .closer-robot .closer-in { grid-template-columns: 1fr; padding-top: 100px; padding-bottom: 40px; gap: 28px; }
   .closer-robot .section-robot { height: clamp(320px, 50svh, 520px); }
+}
+
+/* One opaque surface throughout the robot section; no tinted overlay or masked edge. */
+html[data-theme="dark"] body .closer.closer-robot,
+html[data-theme="dark"] body .closer-robot > .sticky,
+html[data-theme="dark"] body .closer-robot .closer-in,
+html[data-theme="dark"] body .closer-robot .section-robot,
+html[data-theme="dark"] body .closer-robot .cx-spline {
+  background: #0b1213;
+}
+html[data-theme="dark"] .closer-robot > .sticky::before { content: none; }
+html body .closer-robot .cx-spline,
+html body .robot-stage[data-placement="section"] {
+  mask-image: none;
+  -webkit-mask-image: none;
 }

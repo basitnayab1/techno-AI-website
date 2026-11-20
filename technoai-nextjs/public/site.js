@@ -21,23 +21,6 @@
   // ---- header + menu
   const header = document.querySelector("[data-shared-header], .hx");
   const menuBtn = document.querySelector("[data-site-menu-toggle], .hx-menu");
-  const themeBtn = document.querySelector("[data-site-theme-toggle]");
-  if (themeBtn) {
-    const setTheme = (dark, persist = false) => {
-      root.dataset.theme = dark ? "dark" : "light";
-      root.style.colorScheme = dark ? "dark" : "light";
-      document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#030505" : "#f6fafb");
-      if (persist) { try { localStorage.setItem("technoai-theme", dark ? "dark" : "light"); } catch {} }
-      themeBtn.setAttribute("aria-pressed", String(dark));
-      themeBtn.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
-      const icon = themeBtn.querySelector("svg");
-      if (icon) icon.innerHTML = dark
-        ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.4 1.4m11.2 11.2L19 19M5 19l1.4-1.4M17.6 6.4 19 5"/>'
-        : '<path d="M20.5 14A8.5 8.5 0 0 1 10 3.5 8.5 8.5 0 1 0 20.5 14Z"/>';
-    };
-    setTheme(root.dataset.theme !== "light");
-    themeBtn.addEventListener("click", () => setTheme(root.dataset.theme !== "dark", true));
-  }
   const menu = document.getElementById("menu");
   const setMenu = (open) => {
     root.classList.toggle("menu-open", open);

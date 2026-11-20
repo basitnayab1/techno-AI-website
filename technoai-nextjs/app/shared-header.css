@@ -39,3 +39,5 @@ html[data-theme="light"] .tai-header .theme-toggle { color: #146b8c; background:
 @media (max-width: 1060px) { .tai-links { display: none; } .tai-header .theme-toggle { margin-left: auto; } .tai-header-bar { height: 70px; padding: 0 12px 0 24px; } }
 @media (max-width: 760px) { .tai-header { top: 10px; width: calc(100% - 20px); border-radius: 18px; } .tai-header-bar { height: 64px; padding: 0 10px 0 18px; gap: 12px; } .tai-header .tai-burger { margin-left: 0; } .tai-logo { width: 72px; } }
 @media (prefers-reduced-motion: reduce) { .tai-link-label > span { transition: none; } }
+
+@media (max-width: 1060px) { .tai-header .tai-burger { margin-left: auto; } }

@@ -13,6 +13,12 @@ const nextConfig = {
   poweredByHeader: false,
   async headers() {
     return [
+      // Cache static media on repeat visits; keep page HTML under Next.js cache control.
+      ...["landing", "hero", "industries", "journey", "models", "draco", "capabilities", "globe", "solutions"].map(directory => ({
+        source: `/redesign/${directory}/:path*`,
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
+      })),
+      { source: "/wp-content/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }] },
       { source: "/redesign/spline/robot-13bd456a.splinecode", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
       { source: "/redesign/spline/runtime-2.0.129/:file*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
     ];

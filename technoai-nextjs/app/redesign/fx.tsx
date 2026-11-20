@@ -215,6 +215,8 @@ export function Loader({ preload }: { preload: string[] }) {
     document.documentElement.classList.add("loaded");
     document.documentElement.classList.remove("op-entering");
     setDone(true);
+    document.documentElement.dataset.openingReady = "true";
+    window.dispatchEvent(new Event("technoai:opening-ready"));
   };
 
   useEffect(() => {
@@ -225,38 +227,26 @@ export function Loader({ preload }: { preload: string[] }) {
       return;
     }
     let active = true;
-    let elapsed = false;
-    let revealed = false;
-    const stage = document.querySelector<HTMLElement>(".hx-stage");
-    const reveal = () => {
-      if (active && !revealed) {
-        revealed = true;
+    let frame = 0;
+    // A fixed short beat avoids waiting unpredictably for shader compilation.
+    const timer = window.setTimeout(() => {
+      frame = requestAnimationFrame(() => {
+        if (!active) return;
         setRevealing(true);
         root.classList.add("loaded", "op-entering");
-      }
-    };
-    const check = () => {
-      if (elapsed && (!stage || stage.dataset.ready || stage.dataset.mode === "fallback")) reveal();
-    };
-    const observer = new MutationObserver(check);
-    if (stage) observer.observe(stage, { attributes: true, attributeFilter: ["data-ready", "data-mode"] });
-    import("./models").then(({ preloadModel }) =>
-      Promise.allSettled(["drone", "robot"].map(preloadModel))
-    ).catch(() => { /* Product assets can finish after the opener. */ });
-    const minimum = window.setTimeout(() => { elapsed = true; check(); }, 650);
-    const deadline = window.setTimeout(reveal, 2200);
+      });
+    }, 240);
     return () => {
       active = false;
-      observer.disconnect();
-      clearTimeout(minimum);
-      clearTimeout(deadline);
+      clearTimeout(timer);
+      cancelAnimationFrame(frame);
     };
   }, []);
 
   useEffect(() => {
     if (!revealing) return;
     // Start the fallback after React paints the reveal, so a busy main thread cannot skip it.
-    const safety = window.setTimeout(finish, 1100);
+    const safety = window.setTimeout(finish, 650);
     return () => clearTimeout(safety);
   }, [revealing]);
 

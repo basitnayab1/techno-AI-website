@@ -107,3 +107,7 @@ html body .ft .ft-word { color: transparent; background: linear-gradient(180deg,
   html body .ft-bottom { padding-top: 25px; }
 }
 @media (max-width: 420px) { .ft-offices { grid-template-columns: 1fr; } }
+
+.ft-bottom nav a { display: inline-flex; align-items: center; gap: 8px; }
+.social-mark { display: inline-flex; flex: none; }
+.social-icon { display: block; flex: none; }

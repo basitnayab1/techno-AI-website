@@ -358,7 +358,7 @@ export function pageTransitions(root: HTMLElement) {
   let navigationTimer = 0;
   if (root.classList.contains("arriving")) {
     arrivalFrame = requestAnimationFrame(() => { arrivalFrame = requestAnimationFrame(() => root.classList.add("arrived")); });
-    arrivalTimer = window.setTimeout(() => root.classList.remove("arriving", "arrived"), 700);
+    arrivalTimer = window.setTimeout(() => root.classList.remove("arriving", "arrived"), 420);
   }
   try {
     sessionStorage.removeItem("tai-px");
@@ -379,7 +379,7 @@ export function pageTransitions(root: HTMLElement) {
       sessionStorage.setItem("tai-px", "1");
     } catch {}
     if (navigationTimer) return;
-    navigationTimer = window.setTimeout(() => location.assign(url.href), 480);
+    navigationTimer = window.setTimeout(() => location.assign(url.href), 280);
   };
   // back/forward cache restores the page with the curtain still up
   const onShow = (e: PageTransitionEvent) => e.persisted && root.classList.remove("leaving", "arriving", "arrived");

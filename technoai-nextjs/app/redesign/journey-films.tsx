@@ -42,26 +42,41 @@ export default function JourneyFilms() {
       current, previous: current ? old.current : "",
     });
     let top = 0, height = 0, visible = false, frame = 0;
+    let easedProgress: number | null = null;
+    let lastTime = 0;
+    let activeIndex = -1;
     const update = () => {
       frame = 0;
       if (motion.matches) { syncAccess(0); selectFilm(""); return; }
       if (!visible || document.hidden) { selectFilm(""); return; }
-      const progress = Math.max(0, (window.scrollY - top) / Math.max(1, height - innerHeight));
+      const target = Math.max(0, Math.min(1, (window.scrollY - top) / Math.max(1, height - innerHeight)));
+      const now = performance.now();
+      const dt = Math.min(64, now - (lastTime || now - 16));
+      lastTime = now;
+      easedProgress = easedProgress === null ? target : easedProgress + (target - easedProgress) * (1 - Math.exp(-dt / 90));
+      if (Math.abs(target - easedProgress) < .00005) easedProgress = target;
+      const progress = easedProgress;
       const count = phone.matches ? 2 : SOLUTIONS.length;
-      const index = Math.min(count - 1, Math.floor(progress * count));
+      // A small dead band prevents trackpad noise from flipping two stations repeatedly.
+      const position = progress * count;
+      if (activeIndex < 0) activeIndex = Math.min(count - 1, Math.floor(position));
+      else if (position > activeIndex + 1.025 || position < activeIndex - .025)
+        activeIndex = Math.max(0, Math.min(count - 1, Math.floor(position)));
+      const index = activeIndex;
       const slug = SOLUTIONS[index].slug;
       // Only composited transforms change during scroll; geometry is cached by measure().
       for (const layer of layers) {
         const i = Number(layer.dataset.i);
         const local = Math.max(0, Math.min(1, progress * count - i));
-        layer.style.setProperty("--jx-pan", `${(2 - local * 4).toFixed(3)}%`);
-        layer.style.setProperty("--jx-zoom", (1.09 - local * .04).toFixed(4));
-        stations[i]?.style.setProperty("--jx-copy-y", `${(18 - local * 36).toFixed(2)}px`);
+        layer.style.setProperty("--jx-pan", `${(1 - local * 2).toFixed(3)}%`);
+        layer.style.setProperty("--jx-zoom", (1.05 - local * .02).toFixed(4));
+        stations[i]?.style.setProperty("--jx-copy-y", `${(6 - local * 12).toFixed(2)}px`);
       }
       // Keep station navigation working even on devices without WebGL.
       if (section.dataset.active !== String(index)) section.dataset.active = String(index);
       syncAccess(index);
       selectFilm(hasJourneyFilm(slug) ? slug : "");
+      if (easedProgress !== target) frame = requestAnimationFrame(update);
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
     const measure = () => {
@@ -94,6 +109,8 @@ export default function JourneyFilms() {
       <div className="jx-film-media">
         <img src={`/redesign/journey/films/${slug}.webp`} alt="" loading="lazy" decoding="async" />
         {(films.current === slug || films.previous === slug) && <video data-slug={slug} muted playsInline loop autoPlay disablePictureInPicture
+          preload="metadata" style={{ opacity: 0, transition: "opacity .25s ease" }}
+          onPlaying={event => { event.currentTarget.style.opacity = "1"; }}
           poster={`/redesign/journey/films/${slug}.webp`} src={`/redesign/journey/films/${slug}-1080.mp4`} />}
       </div>
     </div>)}

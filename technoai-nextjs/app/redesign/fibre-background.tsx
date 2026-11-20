@@ -1,5 +1,7 @@
 "use client";
 
+import { useOpeningReady } from "./opening-ready";
+
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import "./fibre-background.css";
@@ -10,7 +12,9 @@ export default function FibreBackground() {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [started, setStarted] = useState(false);
+  const openingReady = useOpeningReady();
   useEffect(() => {
+    if (!openingReady) return;
     const main = document.querySelector("main");
     if (!main) return;
     let inView = false;
@@ -23,6 +27,6 @@ export default function FibreBackground() {
     observer.observe(main);
     document.addEventListener("visibilitychange", update);
     return () => { observer.disconnect(); document.removeEventListener("visibilitychange", update); };
-  }, []);
+  }, [openingReady]);
   return <div ref={ref} className="hero-fibres" style={{ visibility: visible ? "visible" : "hidden" }} aria-hidden="true">{started && <Scene visible={visible} />}</div>;
 }

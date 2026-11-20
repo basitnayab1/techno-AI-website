@@ -12,9 +12,9 @@ html[data-theme="light"] .px.site-page-transition { background: var(--bg,#fff); 
   -webkit-mask: url('/wp-content/uploads/2026/07/Logo.svg') center / contain no-repeat;
   opacity: 0; transform: translateY(20px);
 }
-html.leaving .px.site-page-transition { transform: translate3d(0,0,0); pointer-events: auto; transition: transform .45s cubic-bezier(.65,0,.35,1); }
-html.leaving .site-page-transition .px-mark { opacity: 1; transform: none; transition: opacity .2s .08s,transform .3s .08s; }
+html.leaving .px.site-page-transition { transform: translate3d(0,0,0); pointer-events: auto; transition: transform .25s cubic-bezier(.65,0,.35,1); }
+html.leaving .site-page-transition .px-mark { opacity: 1; transform: none; transition: opacity .15s .04s,transform .18s .04s; }
 html.arriving .px.site-page-transition { transform: translate3d(0,0,0); }
 html.arriving .site-page-transition .px-mark { opacity: 1; transform: none; }
-html.arriving.arrived .px.site-page-transition { transform: translate3d(0,-100%,0); transition: transform .55s cubic-bezier(.65,0,.35,1) .02s; }
+html.arriving.arrived .px.site-page-transition { transform: translate3d(0,-100%,0); transition: transform .32s cubic-bezier(.65,0,.35,1) .02s; }
 @media (prefers-reduced-motion: reduce) { .px.site-page-transition { display: none; } }
