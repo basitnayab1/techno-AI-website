@@ -77,11 +77,13 @@ export function Motion() {
     let lastFlow = "";
     const prog = Array.from(document.querySelectorAll<HTMLElement>("[data-progress]"));
     const hs = Array.from(document.querySelectorAll<HTMLElement>("[data-hscroll]"));
+    const industries = document.getElementById("industries");
+    const nativeTrack = CSS.supports("animation-timeline", "view()");
 
     const measure = () => {
       const sizes = hs.map((el) => {
         const track = el.querySelector<HTMLElement>(".h-track");
-        const shift = window.innerWidth < 760 || !track ? 0 : Math.max(track.scrollWidth - window.innerWidth, 0);
+        const shift = window.innerWidth <= 760 || !track ? 0 : Math.max(track.scrollWidth - window.innerWidth, 0);
         return { el, shift };
       });
       sizes.forEach(({ el, shift }) => {
@@ -124,6 +126,7 @@ export function Motion() {
         }
       }
       prog.forEach((el) => {
+        if (el === industries && nativeTrack && !motion.matches) return;
         const g = geo.get(el);
         if (!g) return;
         const top = g.top - y;

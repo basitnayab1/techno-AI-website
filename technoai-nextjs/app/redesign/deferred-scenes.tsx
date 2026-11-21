@@ -3,27 +3,33 @@
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "./reduced-motion";
+import { afterScroll } from "./after-scroll";
 
 // Keep the three.js journey, globe, and frame player out of the first-page bundle.
 const Journey = dynamic(() => import("./scenes").then((m) => m.JourneyScene), { ssr: false });
 const Globe = dynamic(() => import("./presence-globe"), { ssr: false });
 const Film = dynamic(() => import("./scenes").then((m) => m.DroneFilm), { ssr: false });
 
-function useNear(margin = "500px 0px") {
+function useNear(waitForScroll = false) {
   const ref = useRef<HTMLDivElement>(null);
   const [near, setNear] = useState(false);
   useEffect(() => {
     const target = ref.current;
     if (!target) return;
+    let cancel = () => {};
+    const ready = () => {
+      setNear(true);
+      observer.disconnect();
+    };
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setNear(true);
-        observer.disconnect();
-      }
-    }, { rootMargin: margin });
+      cancel();
+      if (!entry.isIntersecting) return;
+      if (waitForScroll) cancel = afterScroll(ready);
+      else ready();
+    }, { rootMargin: "500px 0px" });
     observer.observe(target);
-    return () => observer.disconnect();
-  }, [margin]);
+    return () => { cancel(); observer.disconnect(); };
+  }, [waitForScroll]);
   return { ref, near };
 }
 
@@ -34,8 +40,8 @@ export function JourneyScene() {
 }
 
 export function GlobeScene({ active = 0, onSelect }: { active?: number; onSelect?: (index: number) => void }) {
-  const { ref, near } = useNear();
   const still = useReducedMotion();
+  const { ref, near } = useNear(!still);
   return <div ref={ref} style={{ width: "100%", height: "100%" }}>
     {near && (still
       ? <img src="/redesign/globe/presence-still.webp" width="632" height="632" loading="lazy" alt="Globe showing TechnoAi hubs in Abu Dhabi, Prague and Lahore" />
