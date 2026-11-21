@@ -1,6 +1,6 @@
 "use client";
 
-import { useFrame, type ThreeEvent } from "@react-three/fiber";
+import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
 import * as T from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -116,6 +116,8 @@ function Eyes({head,look,blink,motion}:{head:T.Group;look:React.RefObject<{x:num
 }
 
 export default function HeroReferenceModel({paused,walking,jumpToken,talkToken,locomotion,onReady,onError}:MotionControls&{locomotion:React.RefObject<{gait:number;stride:number}>;onReady:()=>void;onError:()=>void}) {
+  const {gl,scene,camera,invalidate}=useThree();
+  const [compiled,setCompiled]=useState(false);
   const root=useRef<T.Group>(null),blink=useRef(1),look=useRef({x:0,y:0}),drag=useRef({active:false,last:0,yaw:0,distance:0});
   const [data,setData]=useState<ModelData|null>(null);
   const {pose,jump}=useCompanionMotion({paused,walking,jumpToken,talkToken},!!data);
@@ -130,10 +132,21 @@ export default function HeroReferenceModel({paused,walking,jumpToken,talkToken,l
       }),
     ]).then(([g,edges])=>{
       if(!active){g.scene.traverse(o=>{if((o as T.Mesh).isMesh)(o as T.Mesh).geometry.dispose()});return}
-      loaded=prepare(g.scene,edges);setData(loaded);readyRef.current();
+      loaded=prepare(g.scene,edges);setData(loaded);
     }).catch(()=>{if(active)errorRef.current()});
     return()=>{active=false;if(loaded){const geometries=new Set<T.BufferGeometry>();loaded.scene.traverse(o=>{if((o as T.Mesh).isMesh||(o as T.LineSegments).isLineSegments)geometries.add((o as T.Mesh).geometry)});geometries.forEach(g=>g.dispose());loaded.materials.forEach(m=>m.dispose())}};
   },[]);
+  useEffect(()=>{
+    if(!data)return;
+    let active=true;
+    const compileCamera=camera.clone();
+    compileCamera.layers.enableAll();
+    gl.compileAsync(scene,compileCamera).then(()=>{
+      if(!active)return;
+      setCompiled(true);readyRef.current();invalidate();
+    }).catch(()=>{if(active)errorRef.current()});
+    return()=>{active=false};
+  },[data,gl,scene,camera,invalidate]);
   useEffect(()=>{
     const move=(e:PointerEvent)=>{if(drag.current.active){drag.current.yaw+=(e.clientX-drag.current.last)*.007;drag.current.distance+=Math.abs(e.clientX-drag.current.last)}drag.current.last=e.clientX};
     const up=()=>{drag.current.active=false};window.addEventListener("pointermove",move,{passive:true});window.addEventListener("pointerup",up);return()=>{window.removeEventListener("pointermove",move);window.removeEventListener("pointerup",up)};
@@ -161,7 +174,7 @@ export default function HeroReferenceModel({paused,walking,jumpToken,talkToken,l
   });
   const down=(e:ThreeEvent<PointerEvent>)=>{e.stopPropagation();drag.current.active=true;drag.current.distance=0;drag.current.last=e.clientX};
   if(!data)return null;
-  return <group ref={root} scale={4} position-y={.07} rotation-y={-Math.PI/2} onPointerDown={down} onClick={()=>{if(drag.current.distance<6)jump()}}>
+  return <group ref={root} visible={compiled} scale={4} position-y={.07} rotation-y={-Math.PI/2} onPointerDown={down} onClick={()=>{if(drag.current.distance<6)jump()}}>
     <primitive object={data.scene}/><Eyes head={data.head} look={look} blink={blink} motion={pose}/>
     <group position={[.16,-.068,-.015]} rotation-y={Math.PI/2}><mesh><torusGeometry args={[.032,.0015,6,64]}/><meshBasicMaterial color={neon} toneMapped={false}/></mesh><mesh><torusGeometry args={[.025,.001,6,64]}/><meshBasicMaterial color={neon} toneMapped={false}/></mesh><mesh position-z={.002}><circleGeometry args={[.017,40]}/><meshBasicMaterial color={new T.Color(.65,1.8,1.9)} toneMapped={false}/></mesh></group>
   </group>;

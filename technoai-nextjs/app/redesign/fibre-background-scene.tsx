@@ -1,9 +1,10 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import CoreFibres from "./core-fibres";
+import { Warmup } from "./core-scene";
 
 // Decorative fibres share the GPU with the hero/drone. Leave the foreground and scroll at full speed.
 function FibreFrames({ active }: { active: boolean }) {
@@ -73,10 +74,13 @@ function ScrollBundle({ mobile, still }: { mobile: boolean; still: boolean }) {
 }
 
 export default function FibreScene({ visible }: { visible: boolean }) {
+  const [compiled,setCompiled]=useState(false);
+  const ready=useCallback(()=>setCompiled(true),[]);
   const [mobile] = useState(() => window.innerWidth < 760);
   const [still] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
-  return <Canvas dpr={1} camera={{ position: [0, 0, 10], fov: 38 }} frameloop="demand" gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}>
-    <FibreFrames active={visible && !still} />
+  return <Canvas dpr={1} camera={{ position: [0, 0, 10], fov: 38 }} frameloop={compiled ? "demand" : "never"} gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}>
+    <Warmup onReady={ready} />
+    {compiled && <FibreFrames active={visible && !still} />}
     <hemisphereLight args={["#9fe7e7", "#0f1a1b", 1.5]} />
     <directionalLight position={[-4, 5, 6]} color="#9fe7e7" intensity={3} />
     <directionalLight position={[3, 0, 2]} color="#146b8c" intensity={4} />
