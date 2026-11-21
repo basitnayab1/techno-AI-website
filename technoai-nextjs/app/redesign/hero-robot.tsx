@@ -47,7 +47,9 @@ export default function HeroRobot({ active, still }: { active: boolean; still: b
       stage.dataset.robotGreeting = String(active && !still && phase === "hello");
     }
   }, -3);
-  return <group ref={group} position={[0, -1.6525, .72]} scale={.25}>
+  // The pedestal inherits IntelligenceCore's +0.22 world-height offset.
+  // Include it here so the reference model's soles meet the top disc.
+  return <group ref={group} position={[0, -1.4325, .88]} scale={.25}>
     <HeroReferenceModel paused={!active || still} walking={walking}
       jumpToken={jumpToken} talkToken={talkToken} onReady={onReady} onError={onError} />
   </group>;
