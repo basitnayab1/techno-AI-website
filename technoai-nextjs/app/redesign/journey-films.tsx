@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { SOLUTIONS } from "./data";
+import "./solution-zoom.css";
 
 export function hasJourneyFilm(slug: string) {
   return ["industry", "satellite", "security", "financial"].includes(slug);
@@ -68,6 +69,7 @@ export default function JourneyFilms() {
       for (const layer of layers) {
         const i = Number(layer.dataset.i);
         const local = Math.max(0, Math.min(1, progress * count - i));
+        layer.style.setProperty("--solution-zoom", (1 + local * .2).toFixed(4));
         layer.style.setProperty("--jx-pan", `${(1 - local * 2).toFixed(3)}%`);
         layer.style.setProperty("--jx-zoom", (1.05 - local * .02).toFixed(4));
         stations[i]?.style.setProperty("--jx-copy-y", `${(6 - local * 12).toFixed(2)}px`);

@@ -1,0 +1,24 @@
+/* Scroll adds up to 20% to each scene's existing crop; copy stays stationary. */
+@media (min-width: 761px) and (prefers-reduced-motion: no-preference) {
+  .journey .jx-film-media { scale: var(--solution-zoom, 1); }
+}
+
+@keyframes solutionScrollZoom {
+  from { scale: 1; }
+  to { scale: 1.2; }
+}
+
+@media (max-width: 760px) and (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .mobile-journey .mj-panel {
+      view-timeline-name: --solution-panel;
+      view-timeline-axis: block;
+    }
+    .mobile-journey .mj-media {
+      animation: solutionScrollZoom linear both;
+      animation-timeline: --solution-panel;
+      animation-range: entry 0% exit 100%;
+      transform-origin: center;
+    }
+  }
+}
