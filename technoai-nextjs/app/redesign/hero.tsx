@@ -56,8 +56,11 @@ export default function Hero() {
         <div className="hx-inner">
           <div className="hx-copy">
             <span className="hx-uae-mark hx-rise" role="img" aria-label="Proud of UAE" style={{ ["--d" as string]: "0.05s" }}>
-              <img src="/redesign/hero/proud-of-uae.png" width="269" height="300" alt="" loading="eager" decoding="async" />
+              <img src="/redesign/hero/proud-of-uae-v2.png" width="600" height="600" alt="" loading="eager" decoding="async" />
             </span>
+            <p className="hx-brand-caption hx-rise" style={{ ["--d" as string]: "0.15s" }}>
+              TECHNOAI ADVANCE SOLUTION
+            </p>
             <h1 id="hx-title" className="hx-title">
               <span className="hx-line">{words("Intelligence, built", 0)}</span>
               <span className="hx-line hx-blue">{words("for the real world.", 2)}</span>

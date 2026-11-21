@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SOLUTIONS } from "./data";
 import "./solution-zoom.css";
+import { journeyFilmPoster, journeyFilmVideo } from "./journey-film-assets";
 
 export function hasJourneyFilm(slug: string) {
   return ["industry", "satellite", "security", "financial"].includes(slug);
@@ -107,13 +108,13 @@ export default function JourneyFilms() {
     };
   }, []);
   return <div className="jx-films" ref={root} aria-hidden="true">
-    {SOLUTIONS.map(({ slug }, i) => hasJourneyFilm(slug) && <div className="jx-film" data-i={i} key={slug}>
+    {SOLUTIONS.map(({ slug }, i) => hasJourneyFilm(slug) && <div className="jx-film" data-i={i} data-slug={slug} key={slug}>
       <div className="jx-film-media">
-        <img src={`/redesign/journey/films/${slug}.webp`} alt="" loading="lazy" decoding="async" />
+        <img src={journeyFilmPoster(slug)} alt="" loading="lazy" decoding="async" />
         {(films.current === slug || films.previous === slug) && <video data-slug={slug} muted playsInline loop autoPlay disablePictureInPicture
           preload="metadata" style={{ opacity: 0, transition: "opacity .25s ease" }}
           onPlaying={event => { event.currentTarget.style.opacity = "1"; }}
-          poster={`/redesign/journey/films/${slug}.webp`} src={`/redesign/journey/films/${slug}-1080.mp4`} />}
+          poster={journeyFilmPoster(slug)} src={journeyFilmVideo(slug)} />}
       </div>
     </div>)}
   </div>;

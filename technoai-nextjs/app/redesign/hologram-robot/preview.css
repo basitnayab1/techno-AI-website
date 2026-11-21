@@ -1,0 +1,23 @@
+.hr-preview { position: relative; isolation: isolate; min-height: 100svh; overflow: hidden; color: #f3ffff; background: radial-gradient(ellipse at 50% 42%,#102c37 0%,#07161c 38%,#030a0e 78%); }
+.hr-header { position: absolute; z-index: 2; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 24px 38px; }
+.hr-header > a:first-child { font-size: 34px; font-weight: 500; letter-spacing: -4px; color: white; text-decoration: none; }
+.hr-header > span { display: flex; align-items: center; gap: 14px; font-size: 10px; letter-spacing: .2em; color: #8ba6ae; }
+.hr-header i { width: 24px; height: 1px; background: #487582; }
+.hr-back { color: #a4c1ca; text-decoration: none; font-size: 12px; }
+.hr-stage { position: absolute; inset: 70px 0 150px; touch-action: pan-y; }
+.hr-stage canvas { display: block; }
+.hr-reference { background: radial-gradient(ellipse at 50% 55%,#063052 0%,#03172b 38%,#010b17 78%); }
+.hr-loading { position: absolute; inset: 0; display: grid; place-items: center; font-size: 12px; letter-spacing: .1em; color: #9fe7e7; }
+.hr-copy { position: absolute; z-index: 1; pointer-events: none; left: 0; right: 0; bottom: 102px; text-align: center; }
+.hr-eyebrow { font-size: 9px; letter-spacing: .26em; color: #75b2c2; margin: 0 0 10px; }
+.hr-copy h1 { font-size: clamp(23px,3vw,36px); font-weight: 400; letter-spacing: -.035em; margin: 0 16px 6px; }
+.hr-copy > p:last-child { font-size: 12px; color: #829da7; margin: 0; }
+.hr-controls { position: absolute; bottom: 0; left: 0; right: 0; min-height: 76px; padding: 16px 36px; border-top: 1px solid #9fe7e715; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.hr-controls > span { display: flex; align-items: center; gap: 8px; color: #7097a3; font-size: 9px; letter-spacing: .12em; }
+.hr-controls i { width: 5px; height: 5px; background: #9fe7e7; border-radius: 50%; box-shadow: 0 0 10px #9fe7e7; }
+.hr-controls > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.hr-controls button { cursor: pointer; padding: 9px 14px; background: #10232b; border: 1px solid #9fe7e72a; border-radius: 30px; color: #c3e6ec; font: inherit; font-size: 11px; }
+.hr-controls button:hover,.hr-controls button:focus-visible { background: #193d48; border-color: #9fe7e7; }
+.hr-controls small { color: #64808c; font-size: 10px; }
+@media(max-width:700px) { .hr-header { padding: 17px 20px; } .hr-header > span { display: none; } .hr-stage { inset: 60px 0 200px; } .hr-copy { bottom: 139px; } .hr-controls { padding: 14px 18px; min-height: 113px; flex-wrap: wrap; justify-content: center; gap: 10px; } .hr-controls > span { width: 100%; justify-content: center; } .hr-controls small { display: none; } }
+@media(max-width:700px) { .hr-controls button { padding: 8px 11px; font-size: 10px; } .hr-controls > div { max-width: 100%; gap: 6px; } }

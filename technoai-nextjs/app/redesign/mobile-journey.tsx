@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SOLUTIONS } from "./data";
 import JourneyPeek from "./journey-peeks";
+import { journeyFilmPoster, journeyFilmVideo } from "./journey-film-assets";
 
 function Film({ slug }: { slug: string }) {
   const ref = useRef<HTMLVideoElement>(null);
@@ -51,8 +52,8 @@ function Film({ slug }: { slug: string }) {
     onCanPlay={() => {
       if (visible && !document.hidden) ref.current?.play().catch(() => {});
     }}
-    poster={near ? `/redesign/journey/films/${slug}.webp` : undefined}
-    src={started ? `/redesign/journey/films/${slug}-1080.mp4` : undefined} />;
+    poster={near ? journeyFilmPoster(slug, true) : undefined}
+    src={started ? journeyFilmVideo(slug, true) : undefined} />;
 }
 
 /** Full-height mobile scenes use the same background-and-copy composition as the robot. */

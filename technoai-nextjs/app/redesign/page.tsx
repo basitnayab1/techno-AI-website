@@ -4,6 +4,7 @@ import { Loader, Motion } from "./fx";
 import Hero from "./hero";
 import HeroNav from "./hero-nav";
 import Capabilities from "./capabilities";
+import DotField from "./dot-field";
 import GlobalPresence from "./global-presence";
 import "./sector-presence.css";
 import FibreBackground from "./fibre-background";
@@ -158,9 +159,9 @@ export default function Home() {
 
         <MobileJourney />
 
-        {/* 3 ── Robotics with the same interactive Spline model as Section 02 */}
         <section id="robotics" className="closer closer-robot" data-progress data-steps={ROBOTICS_STEPS.length} data-step="0" aria-labelledby="robotics-title">
           <div className="sticky">
+            <DotField />
             <div className="wrap closer-in">
               <div className="closer-text">
                 <Eyebrow>Intelligence in motion</Eyebrow>

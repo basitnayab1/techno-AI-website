@@ -23,12 +23,8 @@ export default function JourneyPeek({ slug }: { slug: string }) {
       <path d="M60 18V9" stroke="#34494f" strokeWidth="2" /><circle cx="60" cy="8" r="3" fill="#289fb7" />
     </>,
     security: <>
-      <path d="M20 37 75 25l24 17-55 14z" fill="#dce8eb" stroke="#34494f" strokeWidth="2.5" />
-      <path d="M20 37v19l24 15V56m0 15 55-16V42" fill="#a8bac1" stroke="#34494f" strokeWidth="2.5" />
-      <path d="M56 70v13H33" fill="none" stroke="#34494f" strokeWidth="5" strokeLinecap="round" />
-      <circle cx="84" cy="49" r="12" fill="#1b2c32" stroke="#617980" strokeWidth="3" />
-      <circle cx="84" cy="49" r="5" fill="#289fb7" /><circle cx="84" cy="49" r="2" fill="#9fe7e7" />
-      <circle cx="31" cy="52" r="2.5" fill="#9fe7e7" />
+      <path d="M60 15c11 8 24 12 36 13v19c0 23-14 37-36 45-22-8-36-22-36-45V28c12-1 25-5 36-13Z" fill="#146b8c" stroke="#9fe7e7" strokeWidth="3" />
+      <path d="m45 55 10 10 21-23" fill="none" stroke="#dce8eb" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
     </>,
     financial: <>
       <path d="M31 12h53l9 62-14 11H34L22 74z" fill="#c4d1d5" stroke="#34494f" strokeWidth="2.5" />

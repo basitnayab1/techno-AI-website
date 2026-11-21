@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Robot", robots: { index: false, foll
 export default function SplineFrame() {
   return (
     <>
-      <style>{`html,body{color-scheme:normal!important;background:#0b1213!important;margin:0;overflow:hidden;height:100%}canvas{background:transparent!important}`}</style>
+      <style>{`html,body{color-scheme:normal!important;background:transparent!important;margin:0;overflow:hidden;height:100%}canvas{background:transparent!important}`}</style>
       <Frame />
     </>
   );

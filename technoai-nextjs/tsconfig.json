@@ -27,11 +27,11 @@
     "**/*.ts",
     "**/*.tsx",
     ".next-performance/types/**/*.ts",
+    ".next-polish/types/**/*.ts",
     ".next-smooth/types/**/*.ts",
     ".next-verify/types/**/*.ts",
     ".next/types/**/*.ts",
-    "next-env.d.ts",
-    ".next-polish/types/**/*.ts"
+    "next-env.d.ts"
   ],
   "exclude": [
     "node_modules",
