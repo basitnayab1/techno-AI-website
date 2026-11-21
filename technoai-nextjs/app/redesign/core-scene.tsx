@@ -502,20 +502,25 @@ export function Warmup({ onReady }: { onReady: () => void }) {
   return null;
 }
 
-function CoreFrames({ active, ready }: { active: boolean; ready: boolean }) {
+function CoreFrames({ visible, ready, still }: { visible: boolean; ready: boolean; still: boolean }) {
   const invalidate = useThree(state => state.invalidate);
   const setFrameloop = useThree(state => state.setFrameloop);
-  // Start the clock in the canvas lifecycle after shader warmup. Changing only
-  // the outer Canvas prop can render demand frames with its initial clock stopped.
+  const clock = useThree(state => state.clock);
+  const elapsed = useRef(0);
   useEffect(() => {
-    setFrameloop(ready ? "demand" : "never");
-  }, [ready, setFrameloop]);
-  useEffect(() => {
+    if (!ready || !visible) {
+      setFrameloop("never");
+      return;
+    }
+    setFrameloop("demand");
+    clock.elapsedTime = elapsed.current;
     invalidate();
-    if (!active) return;
-    const timer = window.setInterval(() => { if (!document.hidden) invalidate(); }, 1000 / 30);
-    return () => clearInterval(timer);
-  }, [active, invalidate, ready]);
+    const timer = still ? undefined : window.setInterval(invalidate, 1000 / 30);
+    return () => {
+      elapsed.current = clock.elapsedTime;
+      clearInterval(timer);
+    };
+  }, [visible, ready, still, clock, invalidate, setFrameloop]);
   return null;
 }
 
@@ -536,7 +541,7 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
     still: typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     mobile: typeof window !== "undefined" && window.innerWidth < 760,
   }));
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(false);
   const [compiled, setCompiled] = useState(false);
   const ready = useCallback(() => setCompiled(true), []);
 
@@ -544,12 +549,19 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => setVisible(e.isIntersecting));
+    let inView = false;
+    const sync = () => setVisible(inView && !document.hidden);
+    const io = new IntersectionObserver(([e]) => {
+      inView = e.isIntersecting;
+      sync();
+    });
     io.observe(el);
+    document.addEventListener("visibilitychange", sync);
     const stage = el.parentElement!;
     stage.classList.add("hx-ready");
     return () => {
       io.disconnect();
+      document.removeEventListener("visibilitychange", sync);
       stage.classList.remove("hx-ready");
     };
   }, []);
@@ -617,7 +629,7 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
           <directionalLight position={[-3, 5, 6]} intensity={2.2} />
           <IntelligenceCore mobile={env.mobile} still={env.still} onAnchors={onAnchors} onCompiled={ready} />
           {compiled && <FirstCoreFrame onReady={onReady} />}
-          <CoreFrames active={compiled && visible && !env.still} ready={compiled} />
+          <CoreFrames visible={visible} ready={compiled} still={env.still} />
           {compiled && <Suspense fallback={null}><HeroRobot active={visible} still={env.still} /></Suspense>}
         </Canvas>
       </SceneBoundary>
