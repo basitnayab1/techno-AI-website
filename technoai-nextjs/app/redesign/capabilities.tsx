@@ -110,14 +110,14 @@ export default function Capabilities() {
         </div>
 
         <div className="cx-grid">
-          {CARDS.map((c, i) => (
-            <div className="cx-cell" data-reveal key={c.n} style={{ transitionDelay: `${0.12 + i * 0.14}s` }}>
+          {CARDS.map((c) => (
+            <div className="cx-cell" data-reveal="capability" key={c.n}>
               <Card c={c} show={show} />
             </div>
           ))}
         </div>
 
-        <a className="cx-next" href="#technology" data-reveal>
+        <a className="cx-next" href="#technology">
           <span className="cx-next-icon" aria-hidden="true">
             <svg viewBox="0 0 20 20"><path d="M10 4v12M5 11l5 5 5-5" /></svg>
           </span>

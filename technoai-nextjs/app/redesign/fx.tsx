@@ -22,16 +22,15 @@ export function Motion() {
     const cleanPageTransitions = pageTransitions(root);
 
     root.classList.add("fx");
-    const io = new IntersectionObserver(
-      (es) =>
-        es.forEach((e) => {
-          if (e.isIntersecting) {
-            e.target.classList.add("in");
-            io.unobserve(e.target);
-          }
-        }),
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.06 },
-    );
+    const reveal: IntersectionObserverCallback = (entries, observer) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add("in");
+        observer.unobserve(entry.target);
+      }
+    };
+    const io = new IntersectionObserver(reveal, { rootMargin: "0px 0px -8% 0px", threshold: 0.06 });
+    const earlyReveal = new IntersectionObserver(reveal, { rootMargin: "0px 0px 300px 0px" });
     // more things rise in as you scroll: list items, cards, footer columns (staggered per group)
     const AUTO: [string, string?][] = [
       [".offices li"],
@@ -54,7 +53,9 @@ export function Motion() {
       });
     });
     document.querySelectorAll<HTMLElement>(".rows li[data-reveal]").forEach((el, i) => el.style.setProperty("--rd", `${(i % 6) * 0.07}s`));
-    document.querySelectorAll("[data-reveal]").forEach((el) => io.observe(el));
+    document.querySelectorAll("[data-reveal]").forEach((el) => {
+      (el.matches('[data-reveal="capability"]') ? earlyReveal : io).observe(el);
+    });
 
     const header = document.querySelector(".hd");
     const hero = document.querySelector<HTMLElement>(".hx-hero");
@@ -192,6 +193,7 @@ export function Motion() {
       cancelAnimationFrame(raf);
       cancelAnimationFrame(layoutRaf);
       io.disconnect();
+      earlyReveal.disconnect();
       ro.disconnect();
       window.removeEventListener("resize", scheduleLayout);
       window.removeEventListener("scroll", requestTick);
