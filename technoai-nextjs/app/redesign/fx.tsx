@@ -7,6 +7,19 @@ import "./opening.css";
 
 const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+function prepareHardwareVideo() {
+  const video = document.querySelector<HTMLVideoElement>("#ai-hardware video");
+  if (!video || reduced()) return;
+  const observer = new IntersectionObserver(([entry]) => {
+    if (!entry.isIntersecting) return;
+    // Read metadata before the in-view playback request, without starting playback.
+    video.preload = "metadata";
+    observer.disconnect();
+  }, { rootMargin: "400px 0px" });
+  observer.observe(video);
+  return () => observer.disconnect();
+}
+
 /**
  * Page-wide motion:
  * - Native compositor scrolling with smooth anchor navigation
@@ -20,6 +33,7 @@ export function Motion() {
     const root = document.documentElement;
     const still = reduced();
     const cleanPageTransitions = pageTransitions(root);
+    const cleanHardwareVideo = prepareHardwareVideo();
 
     root.classList.add("fx");
     const reveal: IntersectionObserverCallback = (entries, observer) => {
@@ -190,6 +204,7 @@ export function Motion() {
     return () => {
       disposed = true;
       cleanPageTransitions();
+      cleanHardwareVideo?.();
       cancelAnimationFrame(raf);
       cancelAnimationFrame(layoutRaf);
       io.disconnect();
