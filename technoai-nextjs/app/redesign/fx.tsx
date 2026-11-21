@@ -48,7 +48,6 @@ export function Motion() {
     // more things rise in as you scroll: list items, cards, footer columns (staggered per group)
     const AUTO: [string, string?][] = [
       [".offices li"],
-      [".ind", "right"],
       [".ft-grid > *"],
       [".ft-bottom"],
       [".ft-word", "zoom"],

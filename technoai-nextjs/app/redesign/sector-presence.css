@@ -3,6 +3,29 @@ html body .industries .sticky { gap: clamp(20px, 3.5vh, 38px); }
 html body .industries .ind-head h2 { font-size: clamp(1.9rem, 3.1vw, 3.4rem); max-width: 1100px; }
 html body .industries .ind-head .sub { margin-top: 14px; max-width: 800px; }
 html body .industries .h-track { gap: 18px; padding-block: 8px; }
+
+@keyframes industryTrackTravel {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-1 * var(--shift, 0px))); }
+}
+@keyframes industryProgress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@media (min-width: 761px) and (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .industries {
+      view-timeline-name: --industries;
+      view-timeline-inset: 0px;
+    }
+    .industries .h-track, .industries .h-bar i::after {
+      animation: industryTrackTravel linear both;
+      animation-timeline: --industries;
+      animation-range: contain;
+    }
+    .industries .h-bar i::after { animation-name: industryProgress; }
+  }
+}
 html body .industries .ind {
   width: clamp(260px, calc((100vw - 2 * var(--gut) - 54px) / 4), 390px); height: clamp(350px, 55vh, 540px); padding: 0;
   flex-shrink: 0; border-radius: 20px; isolation: isolate; background: #f5fafa;
@@ -74,7 +97,7 @@ html[data-theme="dark"] body .presence-locate { color: #9fe7e7; }
 }
 @media (max-width: 760px) {
   html body .industries .sticky { padding-block: 64px; gap: 24px; }
-  html body .industries .h-track { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; gap: 14px; }
+  html body .industries .h-track { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; gap: 14px; will-change: auto; }
   html body .industries .ind { width: 100%; height: auto; min-height: 330px; }
   html body .industries .ind-photo { height: 155px; }
   html body .industries .ind-copy { padding: 18px 16px; }
@@ -94,7 +117,7 @@ html[data-theme="dark"] body .presence-locate { color: #9fe7e7; }
 }
 @media (prefers-reduced-motion: reduce) {
   html body .industries { height: auto !important; }
-  html body .industries .h-track { width: 100%; max-width: 100%; overflow-x: auto; transform: none; scroll-snap-type: x mandatory; }
+  html body .industries .h-track { width: 100%; max-width: 100%; overflow-x: auto; transform: none; will-change: auto; scroll-snap-type: x mandatory; }
   html body .industries .ind { scroll-snap-align: start; }
   html body .industries .ind, html body .industries .ind img, html body .presence-offices button { transition: none; }
   html body .industries .ind:hover, html body .industries .ind:hover img { transform: none; }
