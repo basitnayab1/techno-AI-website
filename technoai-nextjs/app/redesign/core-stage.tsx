@@ -4,23 +4,11 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import "./hero-robot.css";
 
-/** CSS-only version of the core, shown while three.js loads and when WebGL is not available. */
-function CoreFallback() {
-  return (
-    <div className="hx-fallback" aria-hidden="true">
-      <div className="hx-fb-orb">
-        <span className="hx-fb-core" />
-        <span className="hx-fb-ring" />
-        <span className="hx-fb-ring hx-fb-ring2" />
-      </div>
-      <div className="hx-fb-base" />
-    </div>
-  );
-}
-
-// Let Next include scene dependency preloads in the HTML. The entry renders
-// nothing until the existing browser visibility/WebGL check enables the scene.
-const CoreScene = dynamic(() => import("./core-scene").then(module => module.CoreSceneEntry), { loading: () => null });
+const CoreScene = dynamic(() => import("./core-scene"), {
+  ssr: false,
+  // The server-rendered poster also covers this loading state.
+  loading: () => null,
+});
 
 function hasWebGL() {
   // Cheap check only: creating a test WebGL context cost ~0.9 s on the first load. If the real
@@ -49,13 +37,16 @@ export default function CoreStage() {
     return () => observer.disconnect();
   }, []);
   const fail = useCallback(() => setMode("fallback"), []);
-  const [ready, setReady] = useState(false); // 3D shaders compiled → swap the CSS orb for the real core
+  const [ready, setReady] = useState(false);
   const onReady = useCallback(() => setReady(true), []);
 
   return (
-    <div ref={stageRef} className="hx-stage" data-mode={mode} data-ready={ready || undefined}>
-      <CoreScene enabled={mode === "gl"} onFail={fail} onReady={onReady} />
-      {(mode !== "gl" || !ready) && <CoreFallback />}
+    <div ref={stageRef} className="hx-stage" data-mode={mode} data-ready={(mode === "gl" && ready) || undefined}>
+      <picture className="hx-core-poster" aria-hidden="true">
+        <source media="(max-width: 760px)" srcSet="/redesign/hero/core-mobile.webp" width="390" height="421" />
+        <img src="/redesign/hero/core-desktop.webp" width="736" height="684" alt="" fetchPriority="high" />
+      </picture>
+      {mode === "gl" && <CoreScene onFail={fail} onReady={onReady} />}
       <span className="hx-robot-greeting" aria-hidden="true">Hello!</span>
       {LABELS.map(([k, text]) => (
         <p className={`hx-label hx-label-${k}`} data-label={k} key={k}>

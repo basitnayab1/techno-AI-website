@@ -43,6 +43,6 @@ html.arriving .op { display: none; }
 @keyframes opLogoOut { to { opacity: 0; transform: translateY(-14px); } }
 @keyframes opExit { from { transform: translate3d(0,0,0); } to { transform: translate3d(-100%,0,0); } }
 /* Animate the visible hero instead of rasterizing the entire long page as one layer. */
-html.op-entering :is(.hx-hero,.tai-header) { will-change: transform; animation: opPageIn .42s cubic-bezier(.22,.61,.36,1) both; }
+html.op-entering .hx-hero { will-change: transform; animation: opPageIn .42s cubic-bezier(.22,.61,.36,1) both; }
 @keyframes opPageIn { from { transform: translate3d(100vw,0,0); } to { transform: translate3d(0,0,0); } }
 @media (prefers-reduced-motion: reduce) { .op { display: none; } .op * { animation: none; } }

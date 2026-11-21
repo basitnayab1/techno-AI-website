@@ -94,7 +94,7 @@ const BEAM_FRAG = /* glsl */ `uniform vec3 uColor; varying float vY; void main()
 function useLogoTexture() {
   // Created in an effect (not a memo) so React's dev double-mount cannot dispose the texture in use;
   // returned only once the SVG has been drawn, so the material is built with the map present.
-  const [tex, setTex] = useState<THREE.CanvasTexture | null>(null);
+  const [tex, setTex] = useState<THREE.CanvasTexture | null>();
   useEffect(() => {
     let alive = true;
     const c = document.createElement("canvas");
@@ -123,6 +123,7 @@ function useLogoTexture() {
       t.needsUpdate = true;
       setTex(t);
     };
+    img.onerror = () => { if (alive) setTex(null); };
     img.src = "/wp-content/uploads/2026/07/Logo.svg";
     return () => {
       alive = false;
@@ -273,7 +274,7 @@ function Particles({ count }: { count: number }) {
 }
 
 /** The object itself. Reports the screen position of the label anchors after every frame. */
-function IntelligenceCore({ mobile, still, onAnchors }: { mobile: boolean; still: boolean; onAnchors: (p: Pts) => void }) {
+function IntelligenceCore({ mobile, still, onAnchors, onCompiled }: { mobile: boolean; still: boolean; onAnchors: (p: Pts) => void; onCompiled: () => void }) {
   const seg = mobile ? 40 : 64;
   const logoMap = useLogoTexture();
   const time = useMemo(() => ({ value: 0 }), []);
@@ -459,6 +460,7 @@ function IntelligenceCore({ mobile, still, onAnchors }: { mobile: boolean; still
       {CUBES.map(([x, y, z, s], i) => (
         <Cube key={i} at={[x, y, z]} size={s} phase={i * 1.3} />
       ))}
+      {logoMap !== undefined && <Warmup onReady={onCompiled} />}
     </group>
   );
 }
@@ -517,9 +519,14 @@ function CoreFrames({ active, ready }: { active: boolean; ready: boolean }) {
   return null;
 }
 
-// Server-renderable entry for dependency preloading; WebGL stays browser-only.
-export function CoreSceneEntry({ enabled, ...props }: { enabled: boolean; onFail: () => void; onReady?: () => void }) {
-  return enabled ? <CoreScene {...props} /> : null;
+function FirstCoreFrame({ onReady }: { onReady?: () => void }) {
+  const frame = useRef(0);
+  useFrame(() => {
+    // R3F draws after its frame callbacks. Keep the poster until that draw has happened.
+    if (!frame.current) frame.current = requestAnimationFrame(() => onReady?.());
+  });
+  useEffect(() => () => cancelAnimationFrame(frame.current), []);
+  return null;
 }
 
 export default function CoreScene({ onFail, onReady }: { onFail: () => void; onReady?: () => void }) {
@@ -531,10 +538,7 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
   }));
   const [visible, setVisible] = useState(true);
   const [compiled, setCompiled] = useState(false);
-  const ready = useCallback(() => {
-    setCompiled(true);
-    onReady?.();
-  }, [onReady]);
+  const ready = useCallback(() => setCompiled(true), []);
 
   // pause rendering while the hero is off screen
   useEffect(() => {
@@ -611,8 +615,8 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
           <ResponsiveCamera />
           <hemisphereLight args={["#ffffff", "#dbe6ea", 1.4]} />
           <directionalLight position={[-3, 5, 6]} intensity={2.2} />
-          <IntelligenceCore mobile={env.mobile} still={env.still} onAnchors={onAnchors} />
-          <Warmup onReady={ready} />
+          <IntelligenceCore mobile={env.mobile} still={env.still} onAnchors={onAnchors} onCompiled={ready} />
+          {compiled && <FirstCoreFrame onReady={onReady} />}
           <CoreFrames active={compiled && visible && !env.still} ready={compiled} />
           {compiled && <Suspense fallback={null}><HeroRobot active={visible} still={env.still} /></Suspense>}
         </Canvas>
