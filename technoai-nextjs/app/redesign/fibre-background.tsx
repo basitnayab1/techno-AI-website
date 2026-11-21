@@ -1,6 +1,7 @@
 "use client";
 
 import { useOpeningReady } from "./opening-ready";
+import { useReducedMotion } from "./reduced-motion";
 
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
@@ -13,8 +14,9 @@ export default function FibreBackground() {
   const [visible, setVisible] = useState(false);
   const [started, setStarted] = useState(false);
   const openingReady = useOpeningReady();
+  const still = useReducedMotion();
   useEffect(() => {
-    if (!openingReady) return;
+    if (!openingReady || still) return;
     const main = document.querySelector("main");
     if (!main) return;
     let inView = false;
@@ -39,6 +41,6 @@ export default function FibreBackground() {
       cover.disconnect();
       document.removeEventListener("visibilitychange", update);
     };
-  }, [openingReady]);
-  return <div ref={ref} className="hero-fibres" style={{ visibility: visible ? "visible" : "hidden" }} aria-hidden="true">{started && <Scene visible={visible} />}</div>;
+  }, [openingReady, still]);
+  return <div ref={ref} className="hero-fibres" style={{ visibility: visible ? "visible" : "hidden" }} aria-hidden="true">{!still && started && <Scene visible={visible} />}</div>;
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useOpeningReady } from "./opening-ready";
+import { useReducedMotion } from "./reduced-motion";
 import type Lenis from "lenis";
 import "./spline-stage.css";
 
@@ -17,11 +18,13 @@ export function registerRobotSlot(slot: HTMLElement) {
 /** One browsing context, model decode and GPU scene shared between the two robot placements. */
 export default function SplineStage() {
   const openingReady = useOpeningReady();
+  const still = useReducedMotion();
   const [near, setNear] = useState(false);
+  const live = near && !still;
   const host = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLIFrameElement>(null);
   useEffect(() => {
-    if (!openingReady || near) return;
+    if (!openingReady || still || near) return;
     const observer = new IntersectionObserver(entries => {
       if (!entries.some(entry => entry.isIntersecting)) return;
       observer.disconnect();
@@ -37,11 +40,11 @@ export default function SplineStage() {
       observer.disconnect();
       window.removeEventListener(SLOT_EVENT, watchSlots);
     };
-  }, [openingReady, near]);
+  }, [openingReady, near, still]);
 
   useLayoutEffect(() => {
     const el = host.current;
-    if (!near || !el) return;
+    if (!live || !el) return;
     const home = el.parentElement;
     const homeNext = el.nextSibling;
     let attachedSlot: HTMLElement | null = null;
@@ -167,12 +170,16 @@ export default function SplineStage() {
       document.removeEventListener("visibilitychange", schedule);
       window.removeEventListener("pointermove", onPointer);
       attachedSlot?.removeAttribute("data-live-robot");
+      el.dataset.visible = "false";
+      el.dataset.ready = "false";
+      delete el.dataset.attached;
+      el.inert = true;
       // Restore React's host parent before it removes this component's DOM node.
       if (home && el.parentElement !== home) (home as StableContainer).moveBefore?.(el, homeNext?.parentNode === home ? homeNext : null);
     };
-  }, [near]);
+  }, [live]);
   return <div ref={host} className="robot-stage" data-visible="false" data-ready="false" inert>
-    <iframe ref={frame} src={near ? "/redesign/spline-frame/?fit=card&renderer=webgl" : undefined} title="Interactive 3D robot"
+    <iframe ref={frame} src={live ? "/redesign/spline-frame/?fit=card&renderer=webgl" : undefined} title="Interactive 3D robot"
       onLoad={() => frame.current?.contentWindow?.postMessage("spline:status", location.origin)} />
   </div>;
 }

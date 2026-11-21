@@ -31,7 +31,7 @@ function prepareHardwareVideo() {
 export function Motion() {
   useEffect(() => {
     const root = document.documentElement;
-    const still = reduced();
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const cleanPageTransitions = pageTransitions(root);
     const cleanHardwareVideo = prepareHardwareVideo();
 
@@ -113,7 +113,7 @@ export function Motion() {
         const sc = y > 10;
         if (header.classList.contains("scrolled") !== sc) header.classList.toggle("scrolled", sc);
       }
-      if (flow && heroGeo && y < heroGeo.top + heroGeo.h + vh) {
+      if (!motion.matches && flow && heroGeo && y < heroGeo.top + heroGeo.h + vh) {
         const p = Math.min(Math.max((y - heroGeo.top) / Math.max(heroGeo.h, 1), 0), 1).toFixed(3);
         if (p !== lastFlow) {
           lastFlow = p;
@@ -195,7 +195,7 @@ export function Motion() {
       e.preventDefault();
       window.scrollTo({
         top: Math.max(0, window.scrollY + t.getBoundingClientRect().top - 90),
-        behavior: still ? "instant" : "smooth",
+        behavior: motion.matches ? "instant" : "smooth",
       });
     };
     document.addEventListener("click", onClick);

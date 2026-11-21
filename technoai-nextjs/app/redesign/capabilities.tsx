@@ -1,6 +1,7 @@
 "use client";
 
 import { useOpeningReady } from "./opening-ready";
+import { useReducedMotion } from "./reduced-motion";
 
 import "./capabilities.css";
 import DotField from "./dot-field";
@@ -36,8 +37,9 @@ function Card({ c }: { c: (typeof CARDS)[number] }) {
   const [hover, setHover] = useState(false);
   const [show, setShow] = useState(false);
   const openingReady = useOpeningReady();
+  const still = useReducedMotion();
   useEffect(() => {
-    if (!openingReady || !model.current) return;
+    if (!openingReady || still || !model.current) return;
     const observer = new IntersectionObserver(([entry]) => {
       if (!entry.isIntersecting) return;
       setShow(true);
@@ -45,7 +47,7 @@ function Card({ c }: { c: (typeof CARDS)[number] }) {
     }, { rootMargin: "400px 0px" });
     observer.observe(model.current);
     return () => observer.disconnect();
-  }, [openingReady]);
+  }, [openingReady, still]);
   return (
     <a className="cx-card" href={c.href} onPointerEnter={() => setHover(true)} onPointerLeave={() => setHover(false)} onFocus={() => setHover(true)} onBlur={() => setHover(false)}>
       <span className="cx-glow" aria-hidden="true" />
@@ -54,7 +56,7 @@ function Card({ c }: { c: (typeof CARDS)[number] }) {
         <span className="cx-rule" aria-hidden="true" />
       </div>
       {/* Robotics card: the owner's Spline robot (iframe); the other cards keep their small 3D models */}
-      <div className="cx-model" ref={model}>{show && (c.kind === "robotics" ? <SplineCard /> : <CapabilityModel kind={c.kind} hovered={hover} />)}</div>
+      <div className="cx-model" ref={model} data-model={c.kind}>{!still && show && (c.kind === "robotics" ? <SplineCard /> : <CapabilityModel kind={c.kind} hovered={hover} />)}</div>
       <h3>{c.title}</h3>
       <p>{c.text}</p>
       <span className="cx-link">

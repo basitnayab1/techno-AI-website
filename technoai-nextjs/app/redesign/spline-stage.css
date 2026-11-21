@@ -7,3 +7,7 @@
 @media (hover: none), (pointer: coarse) { .robot-stage, .robot-stage[data-visible="true"] { pointer-events: none; } }
 
 .robot-stage { background: #0b1213; }
+
+@media (prefers-reduced-motion: reduce) {
+  .section-robot .cx-spline { opacity: 1; background: url("/redesign/section-robot.png") center / contain no-repeat; pointer-events: none; }
+}
