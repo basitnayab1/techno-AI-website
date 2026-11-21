@@ -17,8 +17,14 @@ function CoreFallback() {
   );
 }
 
-// Load the hero scene as soon as React hydrates; the opener covers shader warmup.
-const CoreScene = dynamic(() => import("./core-scene"), { ssr: false, loading: () => <CoreFallback /> });
+// Fetch the first-screen scene while the page hydrates, rather than waiting for
+// the visibility observer. Keep GPU initialization gated by visibility below.
+const loadCoreScene = () => import("./core-scene");
+const earlyCoreScene = typeof window !== "undefined" ? loadCoreScene() : undefined;
+// The rendered dynamic component still handles failures; avoid an unhandled
+// rejection if the early request fails before the component mounts.
+earlyCoreScene?.catch(() => {});
+const CoreScene = dynamic(() => earlyCoreScene ?? loadCoreScene(), { ssr: false, loading: () => <CoreFallback /> });
 
 function hasWebGL() {
   // Cheap check only: creating a test WebGL context cost ~0.9 s on the first load. If the real
