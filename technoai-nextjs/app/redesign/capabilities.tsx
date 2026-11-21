@@ -42,16 +42,30 @@ function Card({ c }: { c: (typeof CARDS)[number] }) {
   useEffect(() => {
     if (!openingReady || still || show || !model.current) return;
     let cancel = () => {};
-    const observer = new IntersectionObserver(([entry]) => {
+    let inView = false;
+    let heroVisible = true;
+    const schedule = () => {
       cancel();
-      if (!entry.isIntersecting) return;
+      if (!inView || heroVisible) return;
       cancel = afterScroll(() => {
         setShow(true);
         observer.disconnect();
+        heroObserver.disconnect();
       });
-    }, { rootMargin: "400px 0px" });
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
+      schedule();
+    });
+    const heroObserver = new IntersectionObserver(([entry]) => {
+      heroVisible = entry.isIntersecting;
+      schedule();
+    });
+    const hero = document.querySelector(".hx-hero");
+    if (hero) heroObserver.observe(hero);
+    else heroVisible = false;
     observer.observe(model.current);
-    return () => { cancel(); observer.disconnect(); };
+    return () => { cancel(); observer.disconnect(); heroObserver.disconnect(); };
   }, [openingReady, still, show]);
   const poster = c.kind === "robotics" ? "/redesign/section-robot.png" : `/redesign/capabilities/${c.kind}-still.webp`;
   return (
