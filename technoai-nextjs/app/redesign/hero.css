@@ -176,9 +176,7 @@ html.fx:not(.loaded) .hx-scroll, html.fx:not(.loaded) .hx-stage { animation-play
 .hx-stage[data-mode="gl"] .hx-fallback { opacity: .6; }
 
 /* ---------------- scroll indicator ---------------- */
-.hx-scroll { position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--hx-ink); text-decoration: none; animation: hxScrollFade .6s ease-out both 1.3s; }
-/* Preserve horizontal centering throughout the page-load fade/rise. */
-@keyframes hxScrollFade { from { opacity: 0; transform: translate(-50%, 18px); } to { opacity: 1; transform: translate(-50%, 0); } }
+.hx-scroll { position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--hx-ink); text-decoration: none; animation: hxFade 1s var(--hx-ease) both 1.3s; }
 .hx-mouse { position: relative; width: 22px; height: 34px; border-radius: 12px; border: 1.5px solid var(--hx-ink); }
 .hx-mouse i { position: absolute; left: 50%; top: 7px; width: 3px; height: 7px; margin-left: -1.5px; border-radius: 2px; background: var(--hx-teal); box-shadow: 0 0 6px var(--hx-aqua); animation: hxWheel 1.8s var(--hx-ease) infinite; }
 .hx-scroll-text { position: relative; font-size: .74rem; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; }
