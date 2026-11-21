@@ -18,6 +18,12 @@ export const metadata: Metadata = {
   title: "TechnoAi Technology, AI and Procurement Company in UAE - TechnoAi",
   description:
     "AI, robotics, and computing hardware for real-world operations. Explore integrated systems, edge AI, automation, and deployment support.",
+  icons: {
+    icon: [
+      { url: "/wp-content/uploads/2026/02/icon-logo-512px-100x100.png", type: "image/png", sizes: "100x100" },
+      { url: "/wp-content/uploads/2026/02/icon-logo-512px-300x300.png", type: "image/png", sizes: "300x300" },
+    ],
+  },
 };
 
 export default function RedesignLayout({ children }: { children: React.ReactNode }) {
