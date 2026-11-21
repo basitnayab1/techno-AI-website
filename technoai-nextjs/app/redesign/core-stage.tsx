@@ -17,14 +17,9 @@ function CoreFallback() {
   );
 }
 
-// Fetch the first-screen scene while the page hydrates, rather than waiting for
-// the visibility observer. Keep GPU initialization gated by visibility below.
-const loadCoreScene = () => import("./core-scene");
-const earlyCoreScene = typeof window !== "undefined" ? loadCoreScene() : undefined;
-// The rendered dynamic component still handles failures; avoid an unhandled
-// rejection if the early request fails before the component mounts.
-earlyCoreScene?.catch(() => {});
-const CoreScene = dynamic(() => earlyCoreScene ?? loadCoreScene(), { ssr: false, loading: () => <CoreFallback /> });
+// Let Next include scene dependency preloads in the HTML. The entry renders
+// nothing until the existing browser visibility/WebGL check enables the scene.
+const CoreScene = dynamic(() => import("./core-scene").then(module => module.CoreSceneEntry), { loading: () => null });
 
 function hasWebGL() {
   // Cheap check only: creating a test WebGL context cost ~0.9 s on the first load. If the real
@@ -58,7 +53,7 @@ export default function CoreStage() {
 
   return (
     <div ref={stageRef} className="hx-stage" data-mode={mode} data-ready={ready || undefined}>
-      {mode === "gl" && <CoreScene onFail={fail} onReady={onReady} />}
+      <CoreScene enabled={mode === "gl"} onFail={fail} onReady={onReady} />
       {(mode !== "gl" || !ready) && <CoreFallback />}
       {LABELS.map(([k, text]) => (
         <p className={`hx-label hx-label-${k}`} data-label={k} key={k}>

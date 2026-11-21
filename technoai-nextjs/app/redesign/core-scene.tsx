@@ -515,6 +515,11 @@ function CoreFrames({ active, ready }: { active: boolean; ready: boolean }) {
   return null;
 }
 
+// Server-renderable entry for dependency preloading; WebGL stays browser-only.
+export function CoreSceneEntry({ enabled, ...props }: { enabled: boolean; onFail: () => void; onReady?: () => void }) {
+  return enabled ? <CoreScene {...props} /> : null;
+}
+
 export default function CoreScene({ onFail, onReady }: { onFail: () => void; onReady?: () => void }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
