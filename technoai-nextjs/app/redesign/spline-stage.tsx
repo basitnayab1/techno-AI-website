@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useOpeningReady } from "./opening-ready";
 import type Lenis from "lenis";
 import "./spline-stage.css";
@@ -17,11 +17,31 @@ export function registerRobotSlot(slot: HTMLElement) {
 /** One browsing context, model decode and GPU scene shared between the two robot placements. */
 export default function SplineStage() {
   const openingReady = useOpeningReady();
+  const [near, setNear] = useState(false);
   const host = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLIFrameElement>(null);
+  useEffect(() => {
+    if (!openingReady || near) return;
+    const observer = new IntersectionObserver(entries => {
+      if (!entries.some(entry => entry.isIntersecting)) return;
+      observer.disconnect();
+      setNear(true);
+    }, { rootMargin: "400px 0px" });
+    const watchSlots = () => {
+      observer.disconnect();
+      for (const slot of slots) observer.observe(slot);
+    };
+    window.addEventListener(SLOT_EVENT, watchSlots);
+    watchSlots();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener(SLOT_EVENT, watchSlots);
+    };
+  }, [openingReady, near]);
+
   useLayoutEffect(() => {
     const el = host.current;
-    if (!el) return;
+    if (!near || !el) return;
     const home = el.parentElement;
     const homeNext = el.nextSibling;
     let attachedSlot: HTMLElement | null = null;
@@ -150,9 +170,9 @@ export default function SplineStage() {
       // Restore React's host parent before it removes this component's DOM node.
       if (home && el.parentElement !== home) (home as StableContainer).moveBefore?.(el, homeNext?.parentNode === home ? homeNext : null);
     };
-  }, []);
+  }, [near]);
   return <div ref={host} className="robot-stage" data-visible="false" data-ready="false" inert>
-    <iframe ref={frame} src={openingReady ? "/redesign/spline-frame/?fit=card&renderer=webgl" : undefined} title="Interactive 3D robot" loading="eager"
+    <iframe ref={frame} src={near ? "/redesign/spline-frame/?fit=card&renderer=webgl" : undefined} title="Interactive 3D robot"
       onLoad={() => frame.current?.contentWindow?.postMessage("spline:status", location.origin)} />
   </div>;
 }

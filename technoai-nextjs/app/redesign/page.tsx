@@ -72,10 +72,6 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Download the 3D models + Draco decoder with the HTML (network only, no main-thread work); the
-// journey scene picks them up from the cache when it starts.
-const PRELOAD = ["/redesign/models/robot.glb", "/redesign/models/drone.glb", "/redesign/draco/draco_wasm_wrapper.js", "/redesign/draco/draco_decoder.wasm"];
-
 /** Stations that show a real 3D product get a scene photo behind them: [slot, image name]. */
 const JX: [string, string][] = [
   ["robot", "lobby"],
@@ -85,12 +81,6 @@ const JX: [string, string][] = [
 export default function Home() {
   return (
     <>
-      <link rel="preload" href="/redesign/spline/robot-13bd456a.splinecode" as="fetch" crossOrigin="anonymous" />
-      <link rel="preload" href="/redesign/spline/runtime-2.0.129/process.wasm" as="fetch" crossOrigin="anonymous" />
-      <link rel="preload" href="/redesign/spline/runtime-2.0.129/bevel.wasm" as="fetch" crossOrigin="anonymous" />
-      {PRELOAD.map((href) => (
-        <link key={href} rel="preload" href={href} as="fetch" crossOrigin="anonymous" />
-      ))}
       <Loader preload={[`${UP}/2026/07/Logo.svg`]} />
       <Motion />
       <SplineStage />
@@ -114,7 +104,7 @@ export default function Home() {
             {/* scene photos behind the real robot / drone stations (fade in with data-active) */}
             <div className="jx-bg" aria-hidden="true">
               {JX.map(([slug, img]) => (
-                <img key={slug} data-i={SOLUTIONS.findIndex((s) => s.slug === slug)} src={`/redesign/journey/${img}.webp`} srcSet={`/redesign/journey/${img}-sm.webp 960w, /redesign/journey/${img}.webp 1920w`} sizes="100vw" alt="" loading="lazy" decoding="async" />
+                <img key={slug} data-i={SOLUTIONS.findIndex((s) => s.slug === slug)} src={`/redesign/journey/${img}.webp`} srcSet={`/redesign/journey/${img}-sm.webp 960w, /redesign/journey/${img}.webp 1920w`} sizes="100vw" width="1920" height="1086" alt="" loading="lazy" decoding="async" />
               ))}
               <span className="jx-dust-floor" />
               <JourneyFilms />

@@ -31,8 +31,21 @@ function Arrow() {
   );
 }
 
-function Card({ c, show }: { c: (typeof CARDS)[number]; show: boolean }) {
+function Card({ c }: { c: (typeof CARDS)[number] }) {
+  const model = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState(false);
+  const [show, setShow] = useState(false);
+  const openingReady = useOpeningReady();
+  useEffect(() => {
+    if (!openingReady || !model.current) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      setShow(true);
+      observer.disconnect();
+    }, { rootMargin: "400px 0px" });
+    observer.observe(model.current);
+    return () => observer.disconnect();
+  }, [openingReady]);
   return (
     <a className="cx-card" href={c.href} onPointerEnter={() => setHover(true)} onPointerLeave={() => setHover(false)} onFocus={() => setHover(true)} onBlur={() => setHover(false)}>
       <span className="cx-glow" aria-hidden="true" />
@@ -41,7 +54,7 @@ function Card({ c, show }: { c: (typeof CARDS)[number]; show: boolean }) {
         <span className="cx-rule" aria-hidden="true" />
       </div>
       {/* Robotics card: the owner's Spline robot (iframe); the other cards keep their small 3D models */}
-      <div className="cx-model">{show && (c.kind === "robotics" ? <SplineCard /> : <CapabilityModel kind={c.kind} hovered={hover} />)}</div>
+      <div className="cx-model" ref={model}>{show && (c.kind === "robotics" ? <SplineCard /> : <CapabilityModel kind={c.kind} hovered={hover} />)}</div>
       <h3>{c.title}</h3>
       <p>{c.text}</p>
       <span className="cx-link">
@@ -53,33 +66,8 @@ function Card({ c, show }: { c: (typeof CARDS)[number]; show: boolean }) {
 }
 
 export default function Capabilities() {
-  const ref = useRef<HTMLElement>(null);
-  const [show, setShow] = useState(false);
-
-  // load three.js models only when the section is getting close
-  const openingReady = useOpeningReady();
-  useEffect(() => {
-    if (!openingReady) return;
-    const el = ref.current!;
-    // start well before the section arrives, but in an idle moment, so the hero's own start-up isn't slowed
-    let idle = 0;
-    const go = () => {
-      const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
-      if (w.requestIdleCallback) idle = w.requestIdleCallback(() => setShow(true), { timeout: 1500 });
-      else idle = window.setTimeout(() => setShow(true), 300);
-    };
-    const io = new IntersectionObserver(([e]) => e.isIntersecting && (go(), io.disconnect()), { rootMargin: "150% 0px" });
-    io.observe(el);
-    return () => {
-      io.disconnect();
-      const w = window as Window & { cancelIdleCallback?: (id: number) => void };
-      if (w.cancelIdleCallback) w.cancelIdleCallback(idle);
-      clearTimeout(idle);
-    };
-  }, [openingReady]);
-
   return (
-    <section ref={ref} className="cx" id="solutions" aria-labelledby="cx-title">
+    <section className="cx" id="solutions" aria-labelledby="cx-title">
       <DotField />
       {/* particles drifting on from the hero */}
       <div className="cx-particles" aria-hidden="true">
@@ -88,7 +76,7 @@ export default function Capabilities() {
         ))}
       </div>
       <div className="cx-art" aria-hidden="true">
-        <img src="/redesign/capabilities/robot-hand.jpg" alt="" loading="lazy" />
+        <img src="/redesign/capabilities/robot-hand.jpg" width="1400" height="828" alt="" loading="lazy" decoding="async" />
       </div>
 
       <div className="cx-inner">
@@ -112,7 +100,7 @@ export default function Capabilities() {
         <div className="cx-grid">
           {CARDS.map((c) => (
             <div className="cx-cell" data-reveal="capability" key={c.n}>
-              <Card c={c} show={show} />
+              <Card c={c} />
             </div>
           ))}
         </div>

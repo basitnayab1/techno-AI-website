@@ -6,6 +6,7 @@ import JourneyPeek from "./journey-peeks";
 
 function Film({ slug }: { slug: string }) {
   const ref = useRef<HTMLVideoElement>(null);
+  const [near, setNear] = useState(false);
   const [started, setStarted] = useState(false);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -13,6 +14,12 @@ function Film({ slug }: { slug: string }) {
     if (!video) return;
     const phone = matchMedia("(max-width: 760px)");
     const still = matchMedia("(prefers-reduced-motion: reduce)");
+    const prepare = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting || !phone.matches) return;
+      setNear(true);
+      prepare.disconnect();
+    }, { rootMargin: "400px 0px" });
+    prepare.observe(video);
     const observer = new IntersectionObserver(([entry]) => {
       const on = entry.isIntersecting && phone.matches && !still.matches;
       setVisible(on);
@@ -26,7 +33,7 @@ function Film({ slug }: { slug: string }) {
     sync();
     phone.addEventListener("change", sync);
     still.addEventListener("change", sync);
-    return () => { observer.disconnect(); phone.removeEventListener("change", sync); still.removeEventListener("change", sync); };
+    return () => { prepare.disconnect(); observer.disconnect(); phone.removeEventListener("change", sync); still.removeEventListener("change", sync); };
   }, []);
   useEffect(() => {
     const video = ref.current;
@@ -40,11 +47,11 @@ function Film({ slug }: { slug: string }) {
     document.addEventListener("pointerdown", sync, { passive: true });
     return () => { video.pause(); document.removeEventListener("visibilitychange", sync); document.removeEventListener("pointerdown", sync); };
   }, [started, visible]);
-  return <video ref={ref} autoPlay={visible} muted playsInline loop preload="none" disablePictureInPicture
+  return <video ref={ref} autoPlay={visible} muted playsInline loop preload="metadata" disablePictureInPicture
     onCanPlay={() => {
       if (visible && !document.hidden) ref.current?.play().catch(() => {});
     }}
-    poster={`/redesign/journey/films/${slug}.webp`}
+    poster={near ? `/redesign/journey/films/${slug}.webp` : undefined}
     src={started ? `/redesign/journey/films/${slug}-1080.mp4` : undefined} />;
 }
 

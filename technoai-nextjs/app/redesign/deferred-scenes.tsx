@@ -27,8 +27,7 @@ function useNear(margin = "500px 0px") {
 }
 
 export function JourneyScene() {
-  // phones too (they show the robot/drone); start ~2 screens early so the models are ready on arrival
-  const { ref, near } = useNear("200% 0px");
+  const { ref, near } = useNear();
   return <div ref={ref} style={{ position: "absolute", inset: 0 }} aria-hidden="true">{near && <Journey />}</div>;
 }
 
