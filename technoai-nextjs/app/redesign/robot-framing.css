@@ -1,0 +1,14 @@
+/* Keep the complete source model visible, including its lower legs. */
+html body .robot-stage[data-placement="section"] { mask-image: none; -webkit-mask-image: none; }
+
+@media (min-width: 901px) and (min-height: 641px) and (prefers-reduced-motion: no-preference) {
+  html body .closer.closer-robot { height: 700svh; }
+}
+
+@media (max-width: 900px), (max-height: 640px) {
+  @media (prefers-reduced-motion: no-preference) {
+    html body .closer-robot, html body .closer-robot > .sticky { overflow: visible; }
+    .robotics-robot-scroll { height: calc(300svh + clamp(320px, 50svh, 520px)); }
+    html body .closer-robot .section-robot { position: sticky; top: 88px; }
+  }
+}

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import PageCurtain from "../page-curtain";
 import { pageTransitions } from "../interior-kit/motion";
 import "./opening.css";
+import "./robot-framing.css";
 
 const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -137,7 +138,8 @@ export function Motion() {
         el.style.setProperty("--p", p);
         const steps = Number(el.dataset.steps || 0);
         if (steps) {
-          const step = String(Math.min(steps - 1, Math.floor(+p * steps)));
+          const pinnedRobot = el.id === "robotics" && window.matchMedia("(min-width: 901px) and (min-height: 641px) and (prefers-reduced-motion: no-preference)").matches;
+          const step = String(Math.min(steps - 1, Math.max(0, Math.floor(pinnedRobot ? -top / vh - 2 : +p * steps))));
           if (el.dataset.step !== step) el.dataset.step = step;
         }
       });

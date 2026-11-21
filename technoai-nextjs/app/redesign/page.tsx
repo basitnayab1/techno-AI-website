@@ -43,7 +43,12 @@ const INDUSTRY_MEDIA = [
   { src: "/redesign/industries/research.webp", alt: "Research and technology development" },
 ];
 
-const ROBOT_USES = ["Service robotics", "Autonomous cleaning", "Delivery & logistics", "Industrial automation"];
+const ROBOTICS_PRODUCTS = [
+  { name: "NVIDIA Jetson Thor", image: "jetson-feature.webp", alt: "NVIDIA Jetson Thor edge AI hardware" },
+  { name: "Seeed Studio XIAO", image: "xiao-feature.webp", alt: "Seeed Studio XIAO development boards" },
+  { name: "Raspberry Pi", image: "pi-feature.webp", alt: "Raspberry Pi single-board computers and compute modules" },
+];
+const ROBOTICS_STEPS = ["Robot showcase", ...ROBOTICS_PRODUCTS.map(({ name }) => name)];
 
 const num = (i: number) => String(i + 1).padStart(2, "0");
 
@@ -154,25 +159,37 @@ export default function Home() {
         <MobileJourney />
 
         {/* 3 ── Robotics with the same interactive Spline model as Section 02 */}
-        <section id="robotics" className="closer closer-robot" data-progress data-steps={ROBOT_USES.length}>
+        <section id="robotics" className="closer closer-robot" data-progress data-steps={ROBOTICS_STEPS.length} data-step="0" aria-labelledby="robotics-title">
           <div className="sticky">
             <div className="wrap closer-in">
               <div className="closer-text">
                 <Eyebrow>Intelligence in motion</Eyebrow>
-                <h2>Robotics &amp; Automation</h2>
+                <h2 id="robotics-title">Robotics &amp; Automation</h2>
                 <p>Intelligent robots for service, cleaning, delivery, and industrial operations—built to support your teams and simplify everyday work.</p>
                 <a className="btn btn-line" href="/robotics/">Explore Robotics Solutions <Arrow /></a>
                 <ol className="uses">
-                  {ROBOT_USES.map((u, i) => (
-                    <li key={u} data-i={i}>
-                      <span className="n">{num(i)}</span>
-                      {u}
+                  {ROBOTICS_STEPS.map((name, i) => (
+                    <li key={name} data-i={i}>
+                      <span className="n" aria-hidden="true">{num(i)}</span>
+                      {name}
                     </li>
                   ))}
                 </ol>
               </div>
-              <div className="section-robot">
-                <SplineCard />
+              <div className="robotics-showcase">
+                <div className="robotics-robot-scroll">
+                <div className="section-robot">
+                  <SplineCard />
+                </div>
+                </div>
+                <div className="robotics-products">
+                  {ROBOTICS_PRODUCTS.map(({ name, image, alt }, i) => (
+                    <figure key={name} data-i={i + 1}>
+                      <img src={`/redesign/hardware/${image}`} alt={alt} width={1440} height={810} loading="lazy" decoding="async" />
+                      <figcaption>{name}</figcaption>
+                    </figure>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

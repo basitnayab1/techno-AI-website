@@ -60,9 +60,12 @@ export default function SplineStage() {
     if (!live || !el) return;
     const home = el.parentElement;
     const homeNext = el.nextSibling;
+    const robotics = document.getElementById("robotics");
+    const pinnedRobotics = window.matchMedia("(min-width: 901px) and (min-height: 641px) and (prefers-reduced-motion: no-preference)");
     let attachedSlot: HTMLElement | null = null;
     let raf = 0;
     let ready = false;
+    let sentPlacement = "";
     let playing = false;
     let paintedSize = { width: 0, height: 0 };
     let lastPointer: { x: number; y: number } | null = null;
@@ -79,8 +82,10 @@ export default function SplineStage() {
     const update = () => {
       raf = 0;
       let best: { slot: HTMLElement; rect: DOMRect; area: number } | null = null;
+      const showSectionRobot = !pinnedRobotics.matches || robotics?.dataset.step === "0";
       // Read all geometry before writing styles. No work runs while the page is idle.
       for (const slot of slots) {
+        if (!showSectionRobot && robotics?.contains(slot)) continue;
         const rect = slot.getBoundingClientRect();
         const area = Math.max(0, Math.min(rect.bottom, innerHeight) - Math.max(rect.top, 0))
           * Math.max(0, Math.min(rect.right, innerWidth) - Math.max(rect.left, 0));
@@ -114,6 +119,10 @@ export default function SplineStage() {
         }
         const placement = best.slot.closest(".section-robot") ? "section" : "card";
         if (el.dataset.placement !== placement) el.dataset.placement = placement;
+        if (ready && sentPlacement !== placement) {
+          send(`spline:placement:${placement}`);
+          sentPlacement = placement;
+        }
       }
       if (el.dataset.visible !== String(show)) el.dataset.visible = String(show);
       if (el.inert !== !show) el.inert = !show;
@@ -148,6 +157,7 @@ export default function SplineStage() {
         schedule();
       } else if (event.data === "spline:ready") {
         ready = true;
+        sentPlacement = "";
         el.dataset.ready = "true";
         playing = true; // the child's first rendered frame is live; pause if no placement is visible
         schedule();
@@ -160,6 +170,9 @@ export default function SplineStage() {
       }
     };
     const resize = new ResizeObserver(schedule);
+    const stepObserver = new MutationObserver(schedule);
+    if (robotics) stepObserver.observe(robotics, { attributeFilter: ["data-step"] });
+    pinnedRobotics.addEventListener("change", schedule);
     const useNativePointer = () => { pointer.active = false; pointer.dirty = false; lastPointer = null; };
     const iframe = frame.current;
     iframe?.addEventListener("pointerenter", useNativePointer);
@@ -175,6 +188,8 @@ export default function SplineStage() {
     return () => {
       cancelAnimationFrame(raf);
       resize.disconnect();
+      stepObserver.disconnect();
+      pinnedRobotics.removeEventListener("change", schedule);
       iframe?.removeEventListener("pointerenter", useNativePointer);
       window.removeEventListener("message", onMessage);
       window.removeEventListener("scroll", schedule);

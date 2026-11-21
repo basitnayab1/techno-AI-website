@@ -1,4 +1,11 @@
 .closer.closer-robot { background: #0b1213; }
+.closer-robot > .sticky > .dot-field {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
 
 html[data-theme="dark"] .sec.partners { position: relative; }
 html[data-theme="dark"] .sec.partners::before {
@@ -20,24 +27,78 @@ html[data-theme="dark"] .sec.partners::before {
 }
 .closer-robot .section-robot { position: relative; min-width: 0; width: 100%; height: min(75svh, 760px); }
 .closer-robot .section-robot .cx-spline { position: absolute; inset: 0; width: 100%; height: 100%; }
-@media (max-width: 900px) {
+.closer-robot .closer-text h2 {
+  font-size: clamp(2rem, 3.35vw, 3.6rem);
+  line-height: 1.1;
+  text-wrap: balance;
+}
+.robotics-showcase { position: relative; min-width: 0; }
+.robotics-products { display: grid; gap: 20px; }
+.robotics-products figure { margin: 0; }
+.robotics-products img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+}
+.robotics-products figcaption { margin-top: 10px; color: var(--t2); font-weight: 500; }
+.closer-robot .uses { display: none; }
+
+@media (min-width: 901px) and (min-height: 641px) and (prefers-reduced-motion: no-preference) {
+  .closer-robot .uses { display: block; }
+  .closer-robot .uses li {
+    padding-inline: 14px;
+    transition: color .25s ease, background-color .25s ease, box-shadow .25s ease;
+  }
+  .closer-robot[data-step] .uses li[data-i] { padding-left: 14px; }
+  .closer-robot[data-step="0"] .uses [data-i="0"],
+  .closer-robot[data-step="1"] .uses [data-i="1"],
+  .closer-robot[data-step="2"] .uses [data-i="2"],
+  .closer-robot[data-step="3"] .uses [data-i="3"] { background-color: #146b8c24; }
+
+  .robotics-products { position: absolute; inset: 0; pointer-events: none; }
+  .robotics-products figure {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .35s ease, visibility 0s linear .35s;
+  }
+  .robotics-products figcaption { display: none; }
+  .closer-robot[data-step="1"] .robotics-products [data-i="1"],
+  .closer-robot[data-step="2"] .robotics-products [data-i="2"],
+  .closer-robot[data-step="3"] .robotics-products [data-i="3"] {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s;
+  }
+  .closer-robot:not([data-step="0"]) .section-robot { visibility: hidden; }
+}
+
+@media (max-width: 900px), (max-height: 640px), (prefers-reduced-motion: reduce) {
   .closer.closer-robot { height: auto; }
-  .closer-robot .sticky { position: relative; height: auto; min-height: 100svh; }
-  .closer-robot .closer-in { grid-template-columns: 1fr; padding-top: 100px; padding-bottom: 40px; gap: 28px; }
+  .closer-robot .sticky { position: relative; height: auto; min-height: 0; }
+  .closer-robot .closer-in { height: auto; padding-block: clamp(48px, 11svh, 100px); }
   .closer-robot .section-robot { height: clamp(320px, 50svh, 520px); }
 }
 
-/* One opaque surface throughout the robot section; no tinted overlay or masked edge. */
 html[data-theme="dark"] body .closer.closer-robot,
-html[data-theme="dark"] body .closer-robot > .sticky,
-html[data-theme="dark"] body .closer-robot .closer-in,
-html[data-theme="dark"] body .closer-robot .section-robot,
-html[data-theme="dark"] body .closer-robot .cx-spline {
+html[data-theme="dark"] body .closer-robot > .sticky {
   background: #0b1213;
 }
 html[data-theme="dark"] .closer-robot > .sticky::before { content: none; }
-html body .closer-robot .cx-spline,
+.closer-robot .section-robot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 48%, #164653 0%, #113039 36%, transparent 71%);
+  opacity: .72;
+  pointer-events: none;
+}
+html body .closer-robot .cx-spline { mask-image: none; }
 html body .robot-stage[data-placement="section"] {
-  mask-image: none;
-  -webkit-mask-image: none;
+  background: transparent;
+  mask-image: linear-gradient(to bottom, #000 76%, transparent 100%);
 }
