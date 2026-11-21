@@ -110,7 +110,7 @@ function Eyes({head,look,blink,motion}:{head:T.Group;look:React.RefObject<{x:num
   </group>)}<group position={[0,-.092,.002]} scale={.2}><ExpressiveMouth motion={motion} mask/></group></group>;
 }
 
-export default function HeroReferenceModel({paused,walking,jumpToken,talkToken,onReady,onError}:MotionControls&{onReady:()=>void;onError:()=>void}) {
+export default function HeroReferenceModel({paused,walking,jumpToken,talkToken,locomotion,onReady,onError}:MotionControls&{locomotion:React.RefObject<{gait:number;stride:number}>;onReady:()=>void;onError:()=>void}) {
   const root=useRef<T.Group>(null),blink=useRef(1),look=useRef({x:0,y:0}),drag=useRef({active:false,last:0,yaw:0,distance:0});
   const [data,setData]=useState<ModelData|null>(null);
   const {pose,jump}=useCompanionMotion({paused,walking,jumpToken,talkToken},!!data);
@@ -126,6 +126,12 @@ export default function HeroReferenceModel({paused,walking,jumpToken,talkToken,o
   },[]);
   useFrame((_,delta)=>{
     if(!data||paused)return;const d=Math.min(delta,.05);const p=pose.current,t=p.time;
+    // Tie each step to distance travelled; retain the original jump/landing motion.
+    const oldBob=p.groundBob;
+    const squat=oldBob-(-.024+.012*Math.cos(p.gait*2))*p.stride;
+    p.gait=locomotion.current.gait;p.stride=locomotion.current.stride;
+    p.groundBob=(-.024+.012*Math.cos(p.gait*2))*p.stride+squat;
+    p.y+=p.groundBob-oldBob;p.x=0;p.z=0;p.lean=Math.sin(p.gait)*p.stride*.018;
     if(root.current){root.current.scale.setScalar(4);root.current.position.set(p.x,.07+p.y,p.z);root.current.rotation.y=T.MathUtils.damp(root.current.rotation.y,-Math.PI/2+.12+p.yaw+drag.current.yaw,4,d);root.current.rotation.x=p.lean}
     look.current.x=p.lookX;look.current.y=p.lookY;blink.current=p.blink;
     data.head.rotation.y=look.current.x*.16;data.head.rotation.z=look.current.y*.11+Math.sin(t*.6)*.008-p.fear*.05;
@@ -133,8 +139,9 @@ export default function HeroReferenceModel({paused,walking,jumpToken,talkToken,o
     const leftStep=sampleStep(p,-1);
     data.arms[0].rotation.x=-p.fear*.10+Math.sin(t*.8+2)*.02;
     data.arms[0].rotation.z=leftStep.arm+Math.sin(t*.65+1)*.018;
-    // Preserve the model's original hello pose through idle, walk and greeting.
+    // Relax the raised arm into a counter-swing while walking; greet when stopped.
     data.arms[1].quaternion.identity();
+    data.arms[1].rotation.z=-p.stride*.85-leftStep.arm;
     data.hand.rotation.x=Math.sin(t*7)*p.gesture*.22;
     data.uniforms.forEach(u=>u.time.value=t);
   });
