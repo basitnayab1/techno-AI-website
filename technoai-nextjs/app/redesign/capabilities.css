@@ -222,12 +222,8 @@ section.cx .cx-inner { z-index: 1; }
 .cx-spline { position: absolute; inset: 0; opacity: 0; transition: opacity .6s ease; pointer-events: auto; }
 .cx-spline.is-ready { opacity: 1; }
 
-@media (prefers-reduced-motion: reduce) {
-  .cx-model[data-model] { background-position: center; background-repeat: no-repeat; background-size: contain; }
-  .cx-model[data-model="ai"] { background-image: url("/redesign/capabilities/ai-still.webp"); }
-  .cx-model[data-model="robotics"] { background-image: url("/redesign/section-robot.png"); }
-  .cx-model[data-model="edge"] { background-image: url("/redesign/capabilities/edge-still.webp"); }
-}
+.cx-model-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; transition: opacity .45s ease-out; }
+.cx-model:has(.cx-canvas[data-ready], .robot-stage[data-visible="true"]) .cx-model-poster { opacity: 0; }
 .cx-spline iframe { width: 100%; height: 100%; border: 0; background: transparent; color-scheme: normal; }
 /* soft bottom edge so the robot does not end on a hard line in the card */
 .cx-spline { -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); }

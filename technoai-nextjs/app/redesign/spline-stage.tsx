@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useOpeningReady } from "./opening-ready";
 import { useReducedMotion } from "./reduced-motion";
+import { afterScroll } from "./after-scroll";
 import type Lenis from "lenis";
 import "./spline-stage.css";
 
@@ -25,18 +26,30 @@ export default function SplineStage() {
   const frame = useRef<HTMLIFrameElement>(null);
   useEffect(() => {
     if (!openingReady || still || near) return;
+    let cancel = () => {};
+    const visible = new Set<Element>();
     const observer = new IntersectionObserver(entries => {
-      if (!entries.some(entry => entry.isIntersecting)) return;
-      observer.disconnect();
-      setNear(true);
+      for (const entry of entries) {
+        if (entry.isIntersecting) visible.add(entry.target);
+        else visible.delete(entry.target);
+      }
+      cancel();
+      if (!visible.size) return;
+      cancel = afterScroll(() => {
+        observer.disconnect();
+        setNear(true);
+      });
     }, { rootMargin: "400px 0px" });
     const watchSlots = () => {
       observer.disconnect();
+      cancel();
+      visible.clear();
       for (const slot of slots) observer.observe(slot);
     };
     window.addEventListener(SLOT_EVENT, watchSlots);
     watchSlots();
     return () => {
+      cancel();
       observer.disconnect();
       window.removeEventListener(SLOT_EVENT, watchSlots);
     };

@@ -2,6 +2,7 @@
 
 import { useOpeningReady } from "./opening-ready";
 import { useReducedMotion } from "./reduced-motion";
+import { afterScroll } from "./after-scroll";
 
 import "./capabilities.css";
 import DotField from "./dot-field";
@@ -39,15 +40,20 @@ function Card({ c }: { c: (typeof CARDS)[number] }) {
   const openingReady = useOpeningReady();
   const still = useReducedMotion();
   useEffect(() => {
-    if (!openingReady || still || !model.current) return;
+    if (!openingReady || still || show || !model.current) return;
+    let cancel = () => {};
     const observer = new IntersectionObserver(([entry]) => {
+      cancel();
       if (!entry.isIntersecting) return;
-      setShow(true);
-      observer.disconnect();
+      cancel = afterScroll(() => {
+        setShow(true);
+        observer.disconnect();
+      });
     }, { rootMargin: "400px 0px" });
     observer.observe(model.current);
-    return () => observer.disconnect();
-  }, [openingReady, still]);
+    return () => { cancel(); observer.disconnect(); };
+  }, [openingReady, still, show]);
+  const poster = c.kind === "robotics" ? "/redesign/section-robot.png" : `/redesign/capabilities/${c.kind}-still.webp`;
   return (
     <a className="cx-card" href={c.href} onPointerEnter={() => setHover(true)} onPointerLeave={() => setHover(false)} onFocus={() => setHover(true)} onBlur={() => setHover(false)}>
       <span className="cx-glow" aria-hidden="true" />
@@ -56,7 +62,10 @@ function Card({ c }: { c: (typeof CARDS)[number] }) {
         <span className="cx-rule" aria-hidden="true" />
       </div>
       {/* Robotics card: the owner's Spline robot (iframe); the other cards keep their small 3D models */}
-      <div className="cx-model" ref={model} data-model={c.kind}>{!still && show && (c.kind === "robotics" ? <SplineCard /> : <CapabilityModel kind={c.kind} hovered={hover} />)}</div>
+      <div className="cx-model" ref={model}>
+        <img className="cx-model-poster" src={poster} width={c.kind === "robotics" ? 235 : 202} height={c.kind === "robotics" ? 300 : 211} alt="" loading="lazy" decoding="async" />
+        {!still && show && (c.kind === "robotics" ? <SplineCard /> : <CapabilityModel kind={c.kind} hovered={hover} />)}
+      </div>
       <h3>{c.title}</h3>
       <p>{c.text}</p>
       <span className="cx-link">
