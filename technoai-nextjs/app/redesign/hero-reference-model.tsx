@@ -6,6 +6,7 @@ import * as T from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { sampleStep,solveLeg,useCompanionMotion, type CompanionPose, type MotionControls } from "./hologram-robot/companion-motion";
 import ExpressiveMouth from "./hologram-robot/expressive-mouth";
+import edgeIndex from "./hologram-robot/robot-edges.json";
 
 const MODEL="/redesign/models/hologram-reference/robot.glb";
 const vertex=`varying vec3 n;varying vec3 v;varying vec3 p;void main(){p=position;vec4 pos=modelViewMatrix*vec4(position,1.);n=normalize(normalMatrix*normal);v=normalize(-pos.xyz);gl_Position=projectionMatrix*pos;}`;
@@ -39,7 +40,7 @@ function makeKneeRig(mesh:T.Mesh,upper=.15):KneeRig {
   }};
 }
 
-function prepare(scene:T.Group):ModelData {
+function prepare(scene:T.Group,edgeBuffer:ArrayBuffer):ModelData {
   const uniforms=[{time:{value:0},face:{value:0}},{time:{value:0},face:{value:1}},{time:{value:0},face:{value:2}}];
   const bodyMaterial=new T.ShaderMaterial({vertexShader:vertex,fragmentShader:surface,uniforms:uniforms[0]});
   const faceMaterial=new T.ShaderMaterial({vertexShader:vertex,fragmentShader:surface,uniforms:uniforms[1]});
@@ -56,8 +57,12 @@ function prepare(scene:T.Group):ModelData {
     const old=Array.isArray(mesh.material)?mesh.material:[mesh.material];old.forEach(m=>m.dispose());
     mesh.material=mesh.name==="tripo_part_8"?faceMaterial:mesh.name==="tripo_part_12"?beaconMaterial:bodyMaterial;
     // Real panel boundaries and creases from the generated geometry; no wireframe triangles.
-    const edges=new T.EdgesGeometry(mesh.geometry,35);
-    if(mesh.name!=="tripo_part_8")mesh.add(new T.LineSegments(edges,edgeMaterial));else edges.dispose();
+    const range=edgeIndex[mesh.name as keyof typeof edgeIndex];
+    if(range){
+      const edges=new T.BufferGeometry();
+      edges.setAttribute("position",new T.BufferAttribute(new Float32Array(edgeBuffer,range.offset*4,range.length),3));
+      mesh.add(new T.LineSegments(edges,edgeMaterial));
+    }
     const contour=new T.Mesh(mesh.geometry,contourMaterial);
     contour.name="neon-contour";contour.renderOrder=1;
     if(mesh.name!=="tripo_part_8")mesh.add(contour);
@@ -117,7 +122,16 @@ export default function HeroReferenceModel({paused,walking,jumpToken,talkToken,l
   const readyRef=useRef(onReady),errorRef=useRef(onError);readyRef.current=onReady;errorRef.current=onError;
   useEffect(()=>{
     let active=true,loaded:ModelData|null=null;
-    new GLTFLoader().load(MODEL,g=>{if(!active){g.scene.traverse(o=>{if((o as T.Mesh).isMesh)(o as T.Mesh).geometry.dispose()});return}loaded=prepare(g.scene);setData(loaded);readyRef.current()},undefined,()=>active&&errorRef.current());
+    Promise.all([
+      new GLTFLoader().loadAsync(MODEL),
+      fetch("/redesign/models/hologram-reference/robot-edges.bin").then(response=>{
+        if(!response.ok)throw new Error("Robot edge buffers unavailable");
+        return response.arrayBuffer();
+      }),
+    ]).then(([g,edges])=>{
+      if(!active){g.scene.traverse(o=>{if((o as T.Mesh).isMesh)(o as T.Mesh).geometry.dispose()});return}
+      loaded=prepare(g.scene,edges);setData(loaded);readyRef.current();
+    }).catch(()=>{if(active)errorRef.current()});
     return()=>{active=false;if(loaded){const geometries=new Set<T.BufferGeometry>();loaded.scene.traverse(o=>{if((o as T.Mesh).isMesh||(o as T.LineSegments).isLineSegments)geometries.add((o as T.Mesh).geometry)});geometries.forEach(g=>g.dispose());loaded.materials.forEach(m=>m.dispose())}};
   },[]);
   useEffect(()=>{
