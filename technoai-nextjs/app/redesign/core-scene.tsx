@@ -1,9 +1,11 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+
+const HeroRobot = lazy(() => import("./hero-robot"));
 
 // "Intelligence Core" — the 3D object of the home hero, built with React Three Fiber.
 // Glass sphere + circuit shells + glowing //:ai core + metallic orbital rings + pedestal + particles.
@@ -612,6 +614,7 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
           <IntelligenceCore mobile={env.mobile} still={env.still} onAnchors={onAnchors} />
           <Warmup onReady={ready} />
           <CoreFrames active={compiled && visible && !env.still} ready={compiled} />
+          {compiled && <Suspense fallback={null}><HeroRobot active={visible} still={env.still} /></Suspense>}
         </Canvas>
       </SceneBoundary>
       <svg ref={svgRef} className="hx-lines" aria-hidden="true">

@@ -1,0 +1,9 @@
+.hx-robot-greeting {
+  position: absolute; left: 0; top: 0; z-index: 2;
+  transform: translate(var(--robot-x, 0px), var(--robot-y, 0px)) translate(-50%, -100%);
+  padding: 5px 11px; border: 1px solid #9fe7e766; border-radius: 12px;
+  background: #0f1a1bee; color: #9fe7e7; font-size: 12px; line-height: 1.4;
+  opacity: 0; pointer-events: none; transition: opacity .4s ease-out;
+}
+.hx-stage[data-robot-greeting="true"] .hx-robot-greeting { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .hx-robot-greeting { display: none; } }

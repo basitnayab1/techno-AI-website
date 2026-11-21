@@ -1,0 +1,12 @@
+{
+  "title": "TechnoAI hologram robot reference model",
+  "source": "User-supplied holographic robot reference image",
+  "creationUrl": "https://www.magnific.com/app/creation/4RFEPmq9Aa",
+  "generator": "Tripo H3.1 via Magnific",
+  "approvedCredits": 580,
+  "triangles": 94626,
+  "meshes": 13,
+  "texture": "Untextured geometry; hologram materials and animated eyes added in Three.js",
+  "animation": "Head, hand, arm, hip and ankle parts animated in code; walking, jump, cursor gaze and proximity startle; no generated skeleton",
+  "preview": "/redesign/hologram-robot-model/"
+}

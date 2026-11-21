@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
+import "./hero-robot.css";
 
 /** CSS-only version of the core, shown while three.js loads and when WebGL is not available. */
 function CoreFallback() {
@@ -55,6 +56,7 @@ export default function CoreStage() {
     <div ref={stageRef} className="hx-stage" data-mode={mode} data-ready={ready || undefined}>
       <CoreScene enabled={mode === "gl"} onFail={fail} onReady={onReady} />
       {(mode !== "gl" || !ready) && <CoreFallback />}
+      <span className="hx-robot-greeting" aria-hidden="true">Hello!</span>
       {LABELS.map(([k, text]) => (
         <p className={`hx-label hx-label-${k}`} data-label={k} key={k}>
           <span>{text}</span>

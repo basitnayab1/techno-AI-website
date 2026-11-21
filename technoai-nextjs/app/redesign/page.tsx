@@ -4,7 +4,6 @@ import { Loader, Motion } from "./fx";
 import Hero from "./hero";
 import HeroNav from "./hero-nav";
 import Capabilities from "./capabilities";
-import Flight from "./flight";
 import GlobalPresence from "./global-presence";
 import "./sector-presence.css";
 import FibreBackground from "./fibre-background";
@@ -105,8 +104,6 @@ export default function Home() {
         <InkSample />
         <Hero />
         <FibreBackground />
-        {/* Phase 2: the drone flies with the scroll from the hero to the journey (flight-scene.tsx) */}
-        <Flight />
 
         {/* 2 ── Find your starting point: three capability cards with live 3D models (capabilities.tsx) */}
         <Capabilities />

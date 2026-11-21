@@ -544,8 +544,8 @@ export function JourneyScene() {
           h.visible = false;
           return;
         }
-        // The drone flying in from Section 2 is the sole 3D drone in this station.
-        const target = i === idx && i !== droneI ? 1 : 0;
+        // The hero no longer supplies a flying drone; each station owns its model.
+        const target = i === idx ? 1 : 0;
         // real products on a scene photo sit a little smaller on desktop so they clear the rail and the card
         let k = wide
           ? (models[i].real && i === robotI ? 0.78 : 1)
