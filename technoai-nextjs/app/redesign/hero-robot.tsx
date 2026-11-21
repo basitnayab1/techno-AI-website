@@ -90,7 +90,7 @@ export default function HeroRobot({ active, still }: { active: boolean; still: b
   }, -3);
   // The pedestal inherits IntelligenceCore's +0.22 world-height offset.
   // Include it here so the reference model's soles meet the top disc.
-  return <group ref={group} position={[still ? 0 : -.52, -1.4325, still ? PATH_RADIUS : PATH_RADIUS * Math.cos(END_ANGLE)]}
+  return <group ref={group} name="hero-pedestal-robot" position={[still ? 0 : -.52, -1.4325, still ? PATH_RADIUS : PATH_RADIUS * Math.cos(END_ANGLE)]}
     rotation-y={still ? 0 : Math.PI / 2 - END_ANGLE} scale={.25}>
     <HeroReferenceModel paused={!active || still} walking={walking}
       locomotion={locomotion} jumpToken={jumpToken} talkToken={talkToken} onReady={onReady} onError={onError} />

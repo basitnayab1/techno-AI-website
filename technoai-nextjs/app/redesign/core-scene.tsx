@@ -534,6 +534,38 @@ function FirstCoreFrame({ onReady }: { onReady?: () => void }) {
   return null;
 }
 
+const ROBOT_LAYER = 1;
+
+function CoreRender() {
+  const raycaster = useThree(state => state.raycaster);
+  useEffect(() => {
+    raycaster.layers.enable(ROBOT_LAYER);
+    return () => raycaster.layers.disable(ROBOT_LAYER);
+  }, [raycaster]);
+
+  useFrame(({ gl, scene, camera }) => {
+    const robot = scene.getObjectByName("hero-pedestal-robot");
+    robot?.traverse(object => object.layers.set(ROBOT_LAYER));
+    gl.render(scene, camera);
+    if (!robot?.children.length) return;
+
+    // The rotating metal bands can cross the camera's line to the pedestal.
+    // Give the companion its own depth buffer pass, retaining its self-occlusion.
+    const { autoClear } = gl;
+    const { mask } = camera.layers;
+    gl.autoClear = false;
+    gl.clearDepth();
+    camera.layers.set(ROBOT_LAYER);
+    try {
+      gl.render(scene, camera);
+    } finally {
+      camera.layers.mask = mask;
+      gl.autoClear = autoClear;
+    }
+  }, 1);
+  return null;
+}
+
 export default function CoreScene({ onFail, onReady }: { onFail: () => void; onReady?: () => void }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -630,6 +662,7 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
           <IntelligenceCore mobile={env.mobile} still={env.still} onAnchors={onAnchors} onCompiled={ready} />
           {compiled && <FirstCoreFrame onReady={onReady} />}
           <CoreFrames visible={visible} ready={compiled} still={env.still} />
+          <CoreRender />
           {compiled && <Suspense fallback={null}><HeroRobot active={visible} still={env.still} /></Suspense>}
         </Canvas>
       </SceneBoundary>
