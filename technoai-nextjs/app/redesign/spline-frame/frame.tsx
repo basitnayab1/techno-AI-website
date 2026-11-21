@@ -11,7 +11,7 @@ const CROP_PERCENT = 15;
 const SIZE_MULTIPLIER = 0.85;
 const SCENE = "/redesign/spline/robot-13bd456a.splinecode";
 
-type SplineApp = { play?: () => void; stop?: () => void; requestRender?: () => void; findObjectByName?: (name: string) => { scale: { x: number; y: number; z: number }; position: { x: number; y: number; z: number } } | undefined };
+type SplineApp = { play?: () => void; stop?: () => void; requestRender?: () => void };
 // Contain a failed WebGL context without interrupting the rest of the site.
 class RobotBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -25,29 +25,10 @@ export default function Frame() {
   const [scale, setScale] = useState(1);
   // ?fit=card → small card view: zoom on the robot's upper body, centred (Section 02 "Robotics" card)
   const [card, setCard] = useState(false); // read after mount (no server/client mismatch)
-  const [section, setSection] = useState(false);
-  const sectionRef = useRef(false);
-  sectionRef.current = section;
-  const modelScale = useRef<{x:number;y:number;z:number} | null>(null);
-  const modelPosition = useRef<{x:number;y:number} | null>(null);
-  const fitModel = (full: boolean) => {
-    const model = appRef.current?.findObjectByName?.("Bot");
-    if (!model) return;
-    const base = modelScale.current ?? (modelScale.current = { x: model.scale.x, y: model.scale.y, z: model.scale.z });
-    const scale = full ? (window.innerWidth < 600 ? .25 : .22) : 1;
-    model.scale.x = base.x * scale;
-    model.scale.y = base.y * scale;
-    model.scale.z = base.z * scale;
-    const position = modelPosition.current ?? (modelPosition.current = { x: model.position.x, y: model.position.y });
-    const camera = appRef.current?.findObjectByName?.("Camera 2");
-    model.position.x = position.x + (1 - scale) * ((camera?.position.x ?? 0) - position.x);
-    model.position.y = position.y + (1 - scale) * ((camera?.position.y ?? 248.98) - position.y) + (full ? 60 : 0);
-  };
   const [box, setBox] = useState({ w: 300, h: 250 });
   const readyFrame = useRef(0);
   const sizeFrame = useRef(0);
   const loaded = useRef(false);
-  const [sceneLoaded,setSceneLoaded] = useState(false);
 
   useEffect(() => {
     setCard(new URLSearchParams(window.location.search).get("fit") === "card");
@@ -58,12 +39,7 @@ export default function Frame() {
     const onMsg = (e: MessageEvent) => {
       if (e.origin !== window.location.origin || e.source !== window.parent) return;
       if (e.data === "spline:stop") appRef.current?.stop?.();
-      if (e.data === "spline:placement:section") setSection(true);
-      if (e.data === "spline:placement:card") setSection(false);
-      if (e.data === "spline:play") {
-        appRef.current?.play?.();
-        fitModel(sectionRef.current);
-      }
+      if (e.data === "spline:play") appRef.current?.play?.();
       if (e.data === "spline:status" && loaded.current) window.parent.postMessage("spline:ready", location.origin);
       if (e.data?.type === "spline:pointer" && loaded.current && Number.isFinite(e.data.x) && Number.isFinite(e.data.y)) {
         const canvas = outerRef.current?.querySelector("canvas");
@@ -103,17 +79,17 @@ export default function Frame() {
   }, []);
 
   useEffect(() => {
-    if (!sceneLoaded) return;
-    // Spline's ResizeObserver updates the camera after the CSS viewport resizes.
-    const timer = window.setTimeout(() => {
-      fitModel(section);
+    // Acknowledge the crop only after React and the scene have painted the new size.
+    // The shared parent keeps a stale-sized frame hidden while switching placements.
+    sizeFrame.current = requestAnimationFrame(() => {
       appRef.current?.requestRender?.();
       sizeFrame.current = requestAnimationFrame(() => {
         window.parent.postMessage({ type: "spline:viewport-ready", width: box.w, height: box.h }, location.origin);
       });
-    }, 150);
-    return () => { clearTimeout(timer); cancelAnimationFrame(sizeFrame.current); };
-  }, [box, card, section, sceneLoaded]);
+    });
+    return () => cancelAnimationFrame(sizeFrame.current);
+  }, [box, card]);
+
   useEffect(() => {
     const el = outerRef.current;
     if (!el) return;
@@ -138,16 +114,13 @@ export default function Frame() {
           // Matching hex colours is unreliable across the canvas post-processing pipeline.
           app.setBackgroundColor("rgba(0, 0, 0, 0)");
           appRef.current = app;
-          fitModel(sectionRef.current);
           app.play?.();
           app.requestRender?.();
           // Let the first canvas frame paint before the parent fades out the poster.
           readyFrame.current = requestAnimationFrame(() => {
             app.requestRender?.();
             readyFrame.current = requestAnimationFrame(() => {
-              app.requestRender?.();
               loaded.current = true;
-              setSceneLoaded(true);
               window.parent?.postMessage("spline:ready", window.location.origin);
             });
           });
@@ -156,16 +129,13 @@ export default function Frame() {
     </RobotBoundary>
   );
   // Keep one component tree when the card crop is applied: remounting Spline loaded the scene twice.
-  const sceneHeight = BASE_HEIGHT;
-  const s = section
-    ? Math.min(box.h / BASE_HEIGHT * .86, box.w / 560)
-    : box.h / BASE_HEIGHT * 1.05;
+  const s = (box.h / BASE_HEIGHT) * 1.05;
   return (
     <div ref={outerRef} style={{ width: "100%", height: "100vh", overflow: "hidden", position: "relative" }}>
       <div
         style={card ? {
-          position: "absolute", left: box.w / 2 - BASE_WIDTH * .5 * s, top: box.h / 2 - sceneHeight * (section ? .5 : 560 / 900) * s,
-          width: BASE_WIDTH, height: sceneHeight, transform: `scale(${s})`, transformOrigin: "0 0",
+          position: "absolute", left: box.w / 2 - BASE_WIDTH * .5 * s, top: box.h / 2 - BASE_HEIGHT * (560 / 900) * s,
+          width: BASE_WIDTH, height: BASE_HEIGHT, transform: `scale(${s})`, transformOrigin: "0 0",
         } : {
           position: "absolute",
           bottom: 0,
@@ -177,7 +147,7 @@ export default function Frame() {
           transformOrigin: "bottom center",
         }}
       >
-        <div style={{ width: BASE_WIDTH, height: sceneHeight, transform: card ? undefined : `translateY(-${CROP_PERCENT / 2}%)` }}>
+        <div style={{ width: BASE_WIDTH, height: BASE_HEIGHT, transform: card ? undefined : `translateY(-${CROP_PERCENT / 2}%)` }}>
           {spline}
         </div>
       </div>
