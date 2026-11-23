@@ -9,7 +9,7 @@
   overflow: hidden;
   pointer-events: none;
   background: var(--bg, #fff);
-  will-change: transform;
+  will-change: opacity;
   backface-visibility: hidden;
   color: inherit;
 }
@@ -41,8 +41,14 @@ html.arriving .op { display: none; }
 @keyframes opOrbit { to { transform: rotate(360deg); } }
 @keyframes opLoading { from { transform: translateX(-110%); } to { transform: translateX(210%); } }
 @keyframes opLogoOut { to { opacity: 0; transform: translateY(-14px); } }
-@keyframes opExit { from { transform: translate3d(0,0,0); } to { transform: translate3d(-100%,0,0); } }
-/* Animate the visible hero instead of rasterizing the entire long page as one layer. */
-html.op-entering .hx-hero { will-change: transform; animation: opPageIn .42s cubic-bezier(.22,.61,.36,1) both; }
-@keyframes opPageIn { from { transform: translate3d(100vw,0,0); } to { transform: translate3d(0,0,0); } }
+@keyframes opExit { from { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: no-preference) {
+  html:not(.arriving) .op:not(.op-revealing) ~ main .hx-hero {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .op-revealing ~ main .hx-hero { animation: opPageIn .42s ease-out both; }
+}
+@keyframes opPageIn { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .op { display: none; } .op * { animation: none; } }

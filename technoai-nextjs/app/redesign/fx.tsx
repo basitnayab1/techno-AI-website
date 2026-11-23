@@ -224,7 +224,7 @@ export function Motion() {
   return <PageCurtain />;
 }
 
-/** A short brand opener while the hero warms up; slower assets never block entry. */
+/** Reveal once the opening beat and the visible hero's first frame are both ready. */
 export function Loader({ preload }: { preload: string[] }) {
   const [done, setDone] = useState(false);
   const [revealing, setRevealing] = useState(false);
@@ -242,25 +242,38 @@ export function Loader({ preload }: { preload: string[] }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    // A normal refresh repeats the horizontal reveal. In-site navigation uses the shared curtain.
     if (reduced() || root.classList.contains("arriving")) {
       finish();
       return;
     }
-    let active = true;
-    let frame = 0;
-    // A fixed short beat avoids waiting unpredictably for shader compilation.
+    const stage = document.querySelector<HTMLElement>(".hx-stage");
+    let beatFinished = false;
+    let offscreen = false;
+    const reveal = () => {
+      if (!beatFinished || (stage && !offscreen && !stage.dataset.openingSceneReady)) return;
+      scene.disconnect();
+      viewport.disconnect();
+      setRevealing(true);
+      root.classList.add("loaded", "op-entering");
+    };
+    const scene = new MutationObserver(reveal);
+    const viewport = new IntersectionObserver(([entry]) => {
+      // Restored scroll positions and deep links can start below the hero.
+      offscreen = !entry.isIntersecting;
+      reveal();
+    });
+    if (stage) {
+      scene.observe(stage, { attributes: true, attributeFilter: ["data-opening-scene-ready"] });
+      viewport.observe(stage);
+    }
     const timer = window.setTimeout(() => {
-      frame = requestAnimationFrame(() => {
-        if (!active) return;
-        setRevealing(true);
-        root.classList.add("loaded", "op-entering");
-      });
+      beatFinished = true;
+      reveal();
     }, 240);
     return () => {
-      active = false;
       clearTimeout(timer);
-      cancelAnimationFrame(frame);
+      scene.disconnect();
+      viewport.disconnect();
     };
   }, []);
 
