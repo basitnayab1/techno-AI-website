@@ -43,9 +43,17 @@ export default function CoreStage() {
   const onReady = useCallback(() => setReady(true), []);
   useEffect(() => { if (still) setReady(false); }, [still]);
   const live = !still && mode === "gl";
+  useEffect(() => {
+    if (!live || ready) return;
+    // Some drivers never return from shader initialization. The poster is the
+    // finished scene for this visit if the visible canvas cannot start.
+    const timer = window.setTimeout(fail, 10000);
+    return () => clearTimeout(timer);
+  }, [live, ready, fail]);
 
   return (
-    <div ref={stageRef} className="hx-stage" data-mode={still ? "fallback" : mode} data-ready={(live && ready) || undefined}>
+    <div ref={stageRef} className="hx-stage" data-mode={still ? "fallback" : mode} data-ready={(live && ready) || undefined}
+      data-opening-scene-ready={(mode === "fallback" || (live && ready)) || undefined}>
       <picture className="hx-core-poster" aria-hidden="true">
         <source media="(max-width: 760px)" srcSet="/redesign/hero/core-mobile.webp" width="390" height="421" />
         <img src="/redesign/hero/core-desktop.webp" width="736" height="684" alt="" fetchPriority="high" />

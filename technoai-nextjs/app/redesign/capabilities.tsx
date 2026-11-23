@@ -2,7 +2,6 @@
 
 import { useOpeningReady } from "./opening-ready";
 import { useReducedMotion } from "./reduced-motion";
-import { afterScroll } from "./after-scroll";
 
 import "./capabilities.css";
 import DotField from "./dot-field";
@@ -40,33 +39,21 @@ function Card({ c }: { c: (typeof CARDS)[number] }) {
   const openingReady = useOpeningReady();
   const still = useReducedMotion();
   useEffect(() => {
-    if (!openingReady || still || show || !model.current) return;
-    let cancel = () => {};
-    let inView = false;
-    let heroVisible = true;
-    const schedule = () => {
-      cancel();
-      if (!inView || heroVisible) return;
-      cancel = afterScroll(() => {
-        setShow(true);
-        observer.disconnect();
-        heroObserver.disconnect();
-      });
-    };
+    const element = model.current;
+    if (!openingReady || show || !element) return;
     const observer = new IntersectionObserver(([entry]) => {
-      inView = entry.isIntersecting;
-      schedule();
-    });
-    const heroObserver = new IntersectionObserver(([entry]) => {
-      heroVisible = entry.isIntersecting;
-      schedule();
-    });
-    const hero = document.querySelector(".hx-hero");
-    if (hero) heroObserver.observe(hero);
-    else heroVisible = false;
-    observer.observe(model.current);
-    return () => { cancel(); observer.disconnect(); heroObserver.disconnect(); };
-  }, [openingReady, still, show]);
+      if (!entry.isIntersecting) return;
+      observer.disconnect();
+      const image = element.querySelector("img");
+      if (image) {
+        image.loading = "eager";
+        void image.decode().catch(() => {});
+      }
+      setShow(true);
+    }, { rootMargin: "400px 0px" });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [openingReady, show]);
   const poster = c.kind === "robotics" ? "/redesign/section-robot.png" : `/redesign/capabilities/${c.kind}-still.webp`;
   return (
     <a className="cx-card" href={c.href} onPointerEnter={() => setHover(true)} onPointerLeave={() => setHover(false)} onFocus={() => setHover(true)} onBlur={() => setHover(false)}>

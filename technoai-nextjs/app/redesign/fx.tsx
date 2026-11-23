@@ -209,8 +209,9 @@ export function Motion() {
   return <PageCurtain />;
 }
 
-/** A short brand opener while the hero warms up; slower assets never block entry. */
+/** Start the loader exit as soon as the visible hero has its first frame. */
 export function Loader({ preload }: { preload: string[] }) {
+  const robotImage = "/redesign/hero/loader-robot.webp";
   const [done, setDone] = useState(false);
   const [revealing, setRevealing] = useState(false);
   const finished = useRef(false);
@@ -227,25 +228,33 @@ export function Loader({ preload }: { preload: string[] }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    // A normal refresh repeats the horizontal reveal. In-site navigation uses the shared curtain.
     if (reduced() || root.classList.contains("arriving")) {
       finish();
       return;
     }
-    let active = true;
-    let frame = 0;
-    // A fixed short beat avoids waiting unpredictably for shader compilation.
-    const timer = window.setTimeout(() => {
-      frame = requestAnimationFrame(() => {
-        if (!active) return;
-        setRevealing(true);
-        root.classList.add("loaded", "op-entering");
-      });
-    }, 240);
+    const stage = document.querySelector<HTMLElement>(".hx-stage");
+    let offscreen = false;
+    const reveal = () => {
+      if (stage && !offscreen && !stage.dataset.openingSceneReady) return;
+      scene.disconnect();
+      viewport.disconnect();
+      setRevealing(true);
+      root.classList.add("loaded", "op-entering");
+    };
+    const scene = new MutationObserver(reveal);
+    const viewport = new IntersectionObserver(([entry]) => {
+      // Restored scroll positions and deep links can start below the hero.
+      offscreen = !entry.isIntersecting;
+      reveal();
+    });
+    if (stage) {
+      scene.observe(stage, { attributes: true, attributeFilter: ["data-opening-scene-ready"] });
+      viewport.observe(stage);
+    }
+    reveal();
     return () => {
-      active = false;
-      clearTimeout(timer);
-      cancelAnimationFrame(frame);
+      scene.disconnect();
+      viewport.disconnect();
     };
   }, []);
 
@@ -263,14 +272,20 @@ export function Loader({ preload }: { preload: string[] }) {
   if (done) return null;
   return (
     <div className={revealing ? "op op-revealing" : "op"} aria-hidden="true" onAnimationEnd={end}>
+      <link rel="preload" as="image" href={robotImage} fetchPriority="high" />
       <div className="op-center">
         <div className="op-emblem">
-          <svg className="op-orbit" viewBox="0 0 240 240" fill="none">
-            <circle className="op-orbit-base" cx="120" cy="120" r="113" />
-            <circle className="op-orbit-trace" cx="120" cy="120" r="113" pathLength="100" />
-          </svg>
+          <span className="op-orbit">
+            <svg viewBox="0 0 240 240" fill="none">
+              <circle className="op-orbit-base" cx="120" cy="120" r="113" />
+              <circle className="op-orbit-trace" cx="120" cy="120" r="113" pathLength="100" />
+            </svg>
+          </span>
           <span className="op-logo" style={{ ["--op-logo" as string]: `url("${preload[0]}")` }} />
         </div>
+        <span className="op-robot">
+          <img src={robotImage} alt="" width="158" height="272" fetchPriority="high" decoding="sync" />
+        </span>
         <div className="op-status">
           <span className="op-track" />
           <span>Loading</span>
