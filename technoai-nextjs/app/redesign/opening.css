@@ -27,28 +27,27 @@ html[data-theme="light"] .op {
 .op-center { display: grid; justify-items: center; gap: 38px; }
 .op-emblem { position: relative; display: grid; place-items: center; width: clamp(168px,24vmin,228px); aspect-ratio: 1; }
 .op-logo { display: block; width: 56%; aspect-ratio: 225.31 / 105.44; background: currentColor; mask: var(--op-logo) center / contain no-repeat; -webkit-mask: var(--op-logo) center / contain no-repeat; animation: opLogoIn .25s ease-out both; }
-.op-orbit { position: absolute; inset: 0; width: 100%; height: 100%; animation: opOrbit 1.4s linear infinite; }
+.op-orbit { position: absolute; inset: 0; will-change: transform; animation: opOrbit 1.4s linear infinite; }
+.op-orbit svg { display: block; width: 100%; height: 100%; }
 .op-orbit-base { stroke: var(--op-line); stroke-width: 1; }
 .op-orbit-trace { stroke: var(--op-accent); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 24 26; }
 .op-status { display: grid; justify-items: center; gap: 15px; color: inherit; font-size: .65rem; letter-spacing: .26em; text-transform: uppercase; }
 .op-status > span:last-child { opacity: .6; }
 .op-track { display: block; width: 96px; height: 2px; overflow: hidden; background: var(--op-line); }
-.op-track::after { content: ""; display: block; width: 50%; height: 100%; background: var(--op-accent); animation: opLoading .65s ease-in-out infinite; }
-.op-revealing { animation: opExit .42s cubic-bezier(.22,.61,.36,1) both; }
-.op-revealing .op-center { animation: opLogoOut .18s ease-in both; }
+.op-track::after { content: ""; display: block; width: 50%; height: 100%; background: var(--op-accent); will-change: transform; animation: opLoading .65s linear infinite alternate; }
+.op-revealing { animation: opExit .18s ease-out both; }
 html.arriving .op { display: none; }
 @keyframes opLogoIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes opOrbit { to { transform: rotate(360deg); } }
-@keyframes opLoading { from { transform: translateX(-110%); } to { transform: translateX(210%); } }
-@keyframes opLogoOut { to { opacity: 0; transform: translateY(-14px); } }
+@keyframes opLoading { from { transform: translateX(0); } to { transform: translateX(100%); } }
 @keyframes opExit { from { opacity: 1; } to { opacity: 0; } }
 @media (prefers-reduced-motion: no-preference) {
-  html:not(.arriving) .op:not(.op-revealing) ~ main .hx-hero {
+  html:not(.arriving) .op ~ main .hx-hero,
+  html:not(.arriving) .op ~ .tai-header {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
   }
-  .op-revealing ~ main .hx-hero { animation: opPageIn .42s ease-out both; }
+  .hx-hero { transition: opacity .24s ease-out; }
 }
-@keyframes opPageIn { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .op { display: none; } .op * { animation: none; } }

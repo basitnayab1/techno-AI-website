@@ -224,7 +224,7 @@ export function Motion() {
   return <PageCurtain />;
 }
 
-/** Reveal once the opening beat and the visible hero's first frame are both ready. */
+/** Start the loader exit as soon as the visible hero has its first frame. */
 export function Loader({ preload }: { preload: string[] }) {
   const [done, setDone] = useState(false);
   const [revealing, setRevealing] = useState(false);
@@ -247,10 +247,9 @@ export function Loader({ preload }: { preload: string[] }) {
       return;
     }
     const stage = document.querySelector<HTMLElement>(".hx-stage");
-    let beatFinished = false;
     let offscreen = false;
     const reveal = () => {
-      if (!beatFinished || (stage && !offscreen && !stage.dataset.openingSceneReady)) return;
+      if (stage && !offscreen && !stage.dataset.openingSceneReady) return;
       scene.disconnect();
       viewport.disconnect();
       setRevealing(true);
@@ -266,12 +265,8 @@ export function Loader({ preload }: { preload: string[] }) {
       scene.observe(stage, { attributes: true, attributeFilter: ["data-opening-scene-ready"] });
       viewport.observe(stage);
     }
-    const timer = window.setTimeout(() => {
-      beatFinished = true;
-      reveal();
-    }, 240);
+    reveal();
     return () => {
-      clearTimeout(timer);
       scene.disconnect();
       viewport.disconnect();
     };
@@ -293,10 +288,12 @@ export function Loader({ preload }: { preload: string[] }) {
     <div className={revealing ? "op op-revealing" : "op"} aria-hidden="true" onAnimationEnd={end}>
       <div className="op-center">
         <div className="op-emblem">
-          <svg className="op-orbit" viewBox="0 0 240 240" fill="none">
-            <circle className="op-orbit-base" cx="120" cy="120" r="113" />
-            <circle className="op-orbit-trace" cx="120" cy="120" r="113" pathLength="100" />
-          </svg>
+          <span className="op-orbit">
+            <svg viewBox="0 0 240 240" fill="none">
+              <circle className="op-orbit-base" cx="120" cy="120" r="113" />
+              <circle className="op-orbit-trace" cx="120" cy="120" r="113" pathLength="100" />
+            </svg>
+          </span>
           <span className="op-logo" style={{ ["--op-logo" as string]: `url("${preload[0]}")` }} />
         </div>
         <div className="op-status">
