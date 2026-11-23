@@ -226,6 +226,7 @@ export function Motion() {
 
 /** Start the loader exit as soon as the visible hero has its first frame. */
 export function Loader({ preload }: { preload: string[] }) {
+  const robotImage = "/redesign/hero/loader-robot.webp";
   const [done, setDone] = useState(false);
   const [revealing, setRevealing] = useState(false);
   const finished = useRef(false);
@@ -286,6 +287,7 @@ export function Loader({ preload }: { preload: string[] }) {
   if (done) return null;
   return (
     <div className={revealing ? "op op-revealing" : "op"} aria-hidden="true" onAnimationEnd={end}>
+      <link rel="preload" as="image" href={robotImage} fetchPriority="high" />
       <div className="op-center">
         <div className="op-emblem">
           <span className="op-orbit">
@@ -296,6 +298,9 @@ export function Loader({ preload }: { preload: string[] }) {
           </span>
           <span className="op-logo" style={{ ["--op-logo" as string]: `url("${preload[0]}")` }} />
         </div>
+        <span className="op-robot">
+          <img src={robotImage} alt="" width="158" height="272" fetchPriority="high" decoding="sync" />
+        </span>
         <div className="op-status">
           <span className="op-track" />
           <span>Loading</span>
