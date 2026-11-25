@@ -2,12 +2,10 @@
 
 import type Lenis from "lenis";
 import { useEffect } from "react";
-import PageCurtain from "../page-curtain";
 
 /**
- * All motion of the home page in one place, driven by one requestAnimationFrame loop:
+ * Inner-page interactions driven by one requestAnimationFrame loop:
  *  - Lenis smooth scrolling (desktop wheel; touch stays native)
- *  - [data-reveal]  -> gets .in when it enters the viewport (word / fade reveals in home.css)
  *  - [data-progress] -> CSS var --p (0..1) = how far the visitor has scrolled through it
  *      .chapters: also sets data-active (which solution is shown) on the element
  *      .hscroll:  also moves its .hscroll-track sideways (--x)
@@ -21,6 +19,18 @@ export function Motion() {
     root.classList.add("ready");
     const reduce = root.dataset.motion !== "full" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+    // Hybrid laptops / device emulation can report a coarse primary pointer even
+    // while a real mouse is in use. Cards follow the latest actual input only.
+    const cardPointer = (event: PointerEvent) => {
+      if (event.pointerType === "mouse") {
+        if (root.dataset.cardPointer !== "mouse") root.dataset.cardPointer = "mouse";
+      } else {
+        delete root.dataset.cardPointer;
+      }
+    };
+    window.addEventListener("pointermove", cardPointer, { passive: true });
+    window.addEventListener("pointerdown", cardPointer, { passive: true });
     if (!reduce) root.classList.add("fx");
 
     let disposed = false;
@@ -29,24 +39,10 @@ export function Motion() {
       if (!disposed) {
         lenis = new SmoothScroll({ lerp: 0.085, wheelMultiplier: 0.9, anchors: true });
         (window as Window & { lenis?: Lenis }).lenis = lenis;
+        window.dispatchEvent(new Event("site:scroll-source"));
         if (root.style.overflow === "hidden") lenis.stop();
       }
     }).catch(() => { /* Native scroll still drives the effects if smooth scrolling fails. */ });
-    const pageTransition = pageTransitions(root);
-
-    // ---- reveals
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            e.target.classList.add("in");
-            io.unobserve(e.target);
-          }
-        }
-      },
-      { rootMargin: "0px 0px -10% 0px", threshold: 0.05 },
-    );
-    document.querySelectorAll("[data-reveal]").forEach((el) => io.observe(el));
 
     // ---- scroll-progress sections
     const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-progress]"));
@@ -320,10 +316,8 @@ export function Motion() {
       panels.forEach(panel => { panel.removeAttribute("inert"); panel.removeAttribute("aria-hidden"); });
       document.removeEventListener("visibilitychange", onVisibility);
       cancelAnimationFrame(raf);
-      pageTransition();
       if ((window as Window & { lenis?: Lenis }).lenis === lenis) delete (window as Window & { lenis?: Lenis }).lenis;
       lenis?.destroy();
-      io.disconnect();
       menuBtn?.removeEventListener("click", onMenu);
       menu?.removeEventListener("click", onMenuLink);
       window.removeEventListener("keydown", onKey);
@@ -335,63 +329,19 @@ export function Motion() {
       });
       glows.forEach((g) => g.removeEventListener("pointermove", glowMove));
       tilts.forEach((el) => { el.removeEventListener("pointermove", tiltMove); el.removeEventListener("pointerleave", tiltLeave); });
+      window.removeEventListener("pointermove", cardPointer);
+      window.removeEventListener("pointerdown", cardPointer);
+      delete root.dataset.cardPointer;
       root.classList.remove("fx", "has-cursor", "cursor-on", "menu-open");
     };
   }, []);
 
   return (
-    <><PageCurtain /><div className="cursor" aria-hidden="true">
+    <div className="cursor" aria-hidden="true">
       <i />
       <span className="cursor-label" />
-    </div></>
+    </div>
   );
-}
-
-/**
- * Curtain between pages (same as public/site.js): an internal link click raises .px, then navigates;
- * the next page starts covered (html.arriving, set before first paint by an inline head script) and
- * the curtain leaves upward. Returns a cleanup function.
- */
-export function pageTransitions(root: HTMLElement) {
-  let arrivalFrame = 0;
-  let arrivalTimer = 0;
-  let navigationTimer = 0;
-  if (root.classList.contains("arriving")) {
-    arrivalFrame = requestAnimationFrame(() => { arrivalFrame = requestAnimationFrame(() => root.classList.add("arrived")); });
-    arrivalTimer = window.setTimeout(() => root.classList.remove("arriving", "arrived"), 420);
-  }
-  try {
-    sessionStorage.removeItem("tai-px");
-  } catch {}
-  const reduce = root.dataset.motion !== "full" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const onClick = (e: MouseEvent) => {
-    const a = (e.target as HTMLElement).closest?.("a");
-    if (!a || reduce || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    if ((a.target && a.target !== "_self") || a.hasAttribute("download")) return;
-    const url = new URL(a.href, location.href);
-    if (url.origin !== location.origin || !/^https?:$/.test(url.protocol)) return;
-    if (url.pathname === location.pathname && url.search === location.search) return; // same page / #anchor
-    if (/\.(pdf|zip|jpe?g|png|webp|mp4)$/i.test(url.pathname)) return;
-    e.preventDefault();
-    root.classList.remove("menu-open");
-    root.classList.add("leaving");
-    try {
-      sessionStorage.setItem("tai-px", "1");
-    } catch {}
-    if (navigationTimer) return;
-    navigationTimer = window.setTimeout(() => location.assign(url.href), 280);
-  };
-  // back/forward cache restores the page with the curtain still up
-  const onShow = (e: PageTransitionEvent) => e.persisted && root.classList.remove("leaving", "arriving", "arrived");
-  document.addEventListener("click", onClick);
-  window.addEventListener("pageshow", onShow);
-  return () => {
-    cancelAnimationFrame(arrivalFrame);
-    clearTimeout(arrivalTimer);
-    clearTimeout(navigationTimer);
-    document.removeEventListener("click", onClick);
-    window.removeEventListener("pageshow", onShow);
-  };
 }
 
 function clamp(v: number) {

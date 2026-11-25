@@ -7,7 +7,7 @@
   .hx-nav .hx-brand-name, .hx-nav .hx-brand-sep { display: none; }
 }
 html[data-theme="dark"] { color-scheme: dark; }
-html[data-theme="dark"] body { background: #030505; color: #ffffff; --white: #ffffff; --t2: rgba(255,255,255,.64); --t3: rgba(255,255,255,.56); --line: rgba(255,255,255,.14); }
+html[data-theme="dark"] body { --site-bg: #030505; background: var(--site-bg); color: #ffffff; --white: #ffffff; --t2: rgba(255,255,255,.64); --t3: rgba(255,255,255,.56); --line: rgba(255,255,255,.14); }
 html[data-theme="dark"] .hx-hero { background: #030505; --hx-ink: #ffffff; --hx-text: rgba(255,255,255,.64); }
 html[data-theme="dark"] .hx-nav { background: rgba(3,5,5,.96); --hx-ink: #ffffff; --hx-text: rgba(255,255,255,.64); --hx-line: rgba(255,255,255,.14); }
 html[data-theme="dark"] .hx-nav :is(.hx-brand-name,.hx-menu-link) { color: #ffffff; }

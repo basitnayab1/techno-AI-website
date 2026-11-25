@@ -1,8 +1,11 @@
+import { FooterReveal } from "../section-motion";
 import type { Metadata, Viewport } from "next";
+import { ROUTE_ARRIVAL } from "../route-arrival";
 import { THEME_BOOT_SCRIPT } from "../theme-preference";
 import "../brand-font.css";
 import "lenis/dist/lenis.css";
 import "./chrome.css";
+import "../social-footer.css";
 import "./home.css";
 import "../type-spacing.css";
 import "./experience.css";
@@ -12,7 +15,7 @@ import "./experience.css";
 export const metadata: Metadata = {
   metadataBase: new URL("https://technoai.ae"),
   alternates: { canonical: "https://technoai.ae/" },
-  title: "TechnoAi Technology, AI and Procurement Company in UAE - TechnoAi",
+  title: "TechnoAi Technology, AI and Procurement Company in UAE | TechnoAi",
   description:
     "Advanced technology solutions for mission critical operations: drones, robotics, satellite connectivity, AI hardware and security systems.",
   icons: {
@@ -23,11 +26,6 @@ export const metadata: Metadata = {
   },
 };
 
-// Runs before first paint: marks JS as on, and keeps the page-transition curtain up when we arrive
-// from another page of the site (motion.tsx then lifts it). Same snippet in app/theme-document.ts.
-const ARRIVE_SCRIPT =
-  "var d=document.documentElement;d.classList.add('js');try{if(sessionStorage.getItem('tai-px')==='1')d.classList.add('arriving')}catch(e){}";
-
 export const viewport: Viewport = { themeColor: "#030505", colorScheme: "dark" };
 
 export default function RedesignLayout({ children }: { children: React.ReactNode }) {
@@ -35,9 +33,10 @@ export default function RedesignLayout({ children }: { children: React.ReactNode
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
-        <script dangerouslySetInnerHTML={{ __html: ARRIVE_SCRIPT }} />
+        <link rel="stylesheet" href="/route-motion.css" />
+        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js');" + ROUTE_ARRIVAL }} />
       </head>
-      <body className="inner-site">{children}</body>
+      <body className="inner-site">{children}<FooterReveal /></body>
     </html>
   );
 }

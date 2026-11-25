@@ -1,0 +1,37 @@
+/* Page change (2026-11-25 owner): an ink panel with the //:ai logo swipes across the screen.
+   data-swap-out = the old page is being covered, data-swap-in = the new page is being uncovered.
+   The direction (left / right / up / down) is picked per click in route-arrival.ts.
+   The home page plays its own opening loader instead of the swipe-in.
+   (Replaces the earlier view-transition fade; old copy in backup-before-swap-loader-20261125.) */
+html[data-swap-out]::after,
+html[data-swap-in]::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  pointer-events: all;
+  background: url("/wp-content/uploads/2026/07/Logo.svg") center / clamp(84px, 11vmin, 128px) auto no-repeat, #0b1415;
+  will-change: transform;
+}
+html[data-swap-out="left"]::after  { animation: swap-out-left  .46s cubic-bezier(.76,0,.24,1) both; }
+html[data-swap-out="right"]::after { animation: swap-out-right .46s cubic-bezier(.76,0,.24,1) both; }
+html[data-swap-out="up"]::after    { animation: swap-out-up    .46s cubic-bezier(.76,0,.24,1) both; }
+html[data-swap-out="down"]::after  { animation: swap-out-down  .46s cubic-bezier(.76,0,.24,1) both; }
+html[data-swap-in="left"]::after   { animation: swap-in-left   .6s cubic-bezier(.76,0,.24,1) .18s both; }
+html[data-swap-in="right"]::after  { animation: swap-in-right  .6s cubic-bezier(.76,0,.24,1) .18s both; }
+html[data-swap-in="up"]::after     { animation: swap-in-up     .6s cubic-bezier(.76,0,.24,1) .18s both; }
+html[data-swap-in="down"]::after   { animation: swap-in-down   .6s cubic-bezier(.76,0,.24,1) .18s both; }
+
+/* "left" = the panel travels to the left: enters from the right edge, leaves past the left edge. */
+@keyframes swap-out-left  { from { transform: translateX(100%); }  to { transform: none; } }
+@keyframes swap-out-right { from { transform: translateX(-100%); } to { transform: none; } }
+@keyframes swap-out-up    { from { transform: translateY(100%); }  to { transform: none; } }
+@keyframes swap-out-down  { from { transform: translateY(-100%); } to { transform: none; } }
+@keyframes swap-in-left   { from { transform: none; } to { transform: translateX(-100%); } }
+@keyframes swap-in-right  { from { transform: none; } to { transform: translateX(100%); } }
+@keyframes swap-in-up     { from { transform: none; } to { transform: translateY(-100%); } }
+@keyframes swap-in-down   { from { transform: none; } to { transform: translateY(100%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-swap-out]::after, html[data-swap-in]::after { display: none; }
+}

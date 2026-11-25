@@ -1,9 +1,10 @@
 "use client";
 
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { StudioEnvironment, Warmup } from "./core-scene";
+import CardLighting from "./studio-lighting";
+import { Warmup } from "./core-scene";
 
 // Small R3F models for the three capability cards (section 02).
 // Brand colours only: #0f1a1b, #146b8c, #289fb7, #9fe7e7, white/greys.
@@ -284,11 +285,13 @@ const MODELS: Record<Kind, { el: (l: Live) => React.ReactNode; cam: [number, num
   edge: { el: (l) => <EdgeServer live={l} />, cam: [0, 0.5, 5.9], base: [0.22, -0.55] },
 };
 
-export default function CapabilityModel({ kind, hovered }: { kind: Kind; hovered: boolean }) {
+// The same studio lighting is baked once instead of generating a cubemap in each card.
+
+export default function CapabilityModel({ kind, hovered, moving, onWarm }: { kind: Kind; hovered: boolean; moving: boolean; onWarm: () => void }) {
   const wrap = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [compiled, setCompiled] = useState(false); // shaders compiled in the background → start drawing
-  const onCompiled = useCallback(() => setCompiled(true), []);
+  const onCompiled = useCallback(() => { setCompiled(true); onWarm(); }, [onWarm]);
   const [still] = useState(() => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const live = useRef<Live>({ hover: 0, still }).current;
   live.hover = hovered ? 1 : 0;
@@ -313,7 +316,7 @@ export default function CapabilityModel({ kind, hovered }: { kind: Kind; hovered
         dpr={[1, 1.25]}
         gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
         camera={{ fov: 30, position: m.cam }}
-        frameloop={!compiled ? "never" : still ? "demand" : visible ? "always" : "never"}
+        frameloop={!compiled ? "never" : still ? "demand" : visible && !moving ? "always" : "never"}
         onCreated={({ gl, camera }) => {
           gl.toneMapping = THREE.ACESFilmicToneMapping;
           gl.debug.checkShaderErrors = false; // no synchronous shader stall
@@ -321,14 +324,14 @@ export default function CapabilityModel({ kind, hovered }: { kind: Kind; hovered
         }}
         aria-hidden="true"
       >
-        <StudioEnvironment />
+        <CardLighting />
         <hemisphereLight args={["#ffffff", "#d6e2e6", 1.3]} />
         <directionalLight position={[-2, 4, 4]} intensity={2} />
         <pointLight color={TEAL} intensity={8} distance={6} position={[2, 1, 2]} />
         <Parallax live={live} base={m.base}>
           {m.el(live)}
         </Parallax>
-        <Warmup onReady={onCompiled} />
+        <Warmup onReady={onCompiled} draw />
       </Canvas>
     </div>
   );

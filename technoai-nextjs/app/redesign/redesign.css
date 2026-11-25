@@ -303,7 +303,7 @@ main, .hd, .ft { position: relative; z-index: 1; }
   .journey-head { top: 80px; left: 16px; right: 16px; }
   .stations { left: 16px; right: 16px; width: auto; top: auto; bottom: 40px; transform: none; height: 280px; }
   .rail { display: none; }
-  .industries { height: auto !important; }
+  .industries { height: auto; }
   .industries .sticky { position: static; height: auto; overflow: visible; padding: 88px 0; }
   .h-track { width: auto; padding: 0 16px; flex-direction: column; transform: none; }
   .ind { width: 100%; height: 300px; }

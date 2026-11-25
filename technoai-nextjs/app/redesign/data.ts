@@ -15,12 +15,12 @@ export const SOLUTIONS = [
   { slug: "robot", title: "AI & Robotics", text: "Automation that actually fits into day to day operations.", href: "/ai-robotics/" },
   { slug: "industry", title: "Industrial & Infrastructure", text: "Systems built for continuous operation in demanding environments.", href: "/industrial-smart-infrastructure/" },
   { slug: "satellite", title: "Connectivity & Satellite", text: "Reliable communication where traditional networks do not work.", href: "/connectivity-satellite-systems/" },
-  { slug: "security", title: "Security Systems", text: "Perimeter monitoring and drone detection for critical sites and assets.", href: "/security-mission-critical-systems/" },
+  { slug: "security", title: "Security Systems", text: "Integrated security and monitoring for your facilities.", href: "/security-mission-critical-systems/" },
   { slug: "financial", title: "Financial & Transaction", text: "Structure deals, manage procurement, and keep projects financially controlled.", href: "/financial-transaction-solutions/" },
 ];
 
 export const DOMAINS = [
-  ["AI & Robotics", "Autonomous robots, AI-powered systems, automation tools, and smart operational support."],
+  ["AI & Robotics", "Autonomous robots, AI powered systems, automation tools, and smart operational support."],
   ["AI Hardware", "Advanced computing hardware, edge AI systems, NVIDIA platforms, and embedded intelligence."],
   ["Satellite Communication", "Connectivity solutions for remote sites, field operations, maritime, and critical communication."],
   ["Security & Monitoring", "Detection, surveillance, monitoring, and protection systems for critical assets and locations."],
@@ -29,9 +29,9 @@ export const DOMAINS = [
 
 export const INDUSTRIES = [
   ["Government & Public Sector", "Systems aligned with national scale operations", "/government-public-sector/"],
-  ["Defense & Security", "Built for high-risk and mission-critical environments", "/defense-security/"],
+  ["Security and Surveillance", "Built for high risk and mission critical environments", "/defense-security/"],
   ["Agriculture", "Monitoring, automation, and field intelligence", "/agriculture/"],
-  ["Energy & Infrastructure", "Inspection, control, and long-term system reliability.", "/energy-infrastructure/"],
+  ["Energy & Infrastructure", "Inspection, control, and long term system reliability.", "/energy-infrastructure/"],
   ["Logistics & Mobility", "Tracking, coordination, and operational visibility", "/logistics-mobility/"],
   ["Research & Development", "Flexible platforms for testing and innovation", "/research-and-development/"],
 ] as const;
@@ -53,8 +53,8 @@ export const PARTNERS = [
 /** lat / lon used by the globe. */
 export const OFFICES = [
   { name: "Headquarters", city: "Abu Dhabi", country: "United Arab Emirates", place: "Abu Dhabi, United Arab Emirates", lat: 24.45, lon: 54.38 },
-  { name: "Europe Innovation Hub", city: "Prague", country: "Czech Republic", place: "Prague - Czech Republic", lat: 50.08, lon: 14.44 },
-  { name: "Asia Innovation Hub", city: "Lahore", country: "Pakistan", place: "Lahore - Pakistan", lat: 31.55, lon: 74.34 },
+  { name: "Europe Innovation Hub", city: "Prague", country: "Czech Republic", place: "Prague, Czech Republic", lat: 50.08, lon: 14.44 },
+  { name: "Asia Innovation Hub", city: "Lahore", country: "Pakistan", place: "Lahore, Pakistan", lat: 31.55, lon: 74.34 },
 ];
 
 export const FOOTER = [

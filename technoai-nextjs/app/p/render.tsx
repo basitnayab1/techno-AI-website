@@ -3,6 +3,8 @@
 // statements that light up word by word, call-to-action bands, articles. All content comes from the
 // original WordPress page; only the layout is new. Motion hooks are the home page's (motion.tsx).
 
+import Link from "next/link";
+import { Reveal, StackSection } from "../section-motion";
 import { SiteImage } from "../image";
 import { Arrow, Eyebrow, Words } from "../interior-kit/ui";
 import { SiteForm } from "./form";
@@ -43,12 +45,12 @@ function Buttons({ items, tags }: { items: { text: string; href: string }[]; tag
   return (
     <>
       {labels.length > 0 && (
-        <ul className="pg-tags" data-reveal>
+        <ul className="pg-tags">
           {labels.map((b, i) => <li key={i}>{b.text}</li>)}
         </ul>
       )}
       {links.length > 0 && (
-        <div className="actions pg-actions" data-reveal>
+        <div className="actions pg-actions">
           {links.map((b, i) => (
             <a key={i} className={`btn ${i === 0 && !tags ? "btn-fill" : "btn-line"}`} href={b.href} {...linkProps(b.href)} data-magnetic={i === 0 ? true : undefined}>
               {b.text} {i === 0 && <Arrow />}
@@ -75,10 +77,10 @@ function Crumbs({ route, group, title }: { route: string; group: string; title: 
   const parent = PARENTS[group];
   const short = title.length > 48 ? title.slice(0, 46).trimEnd() + "…" : title;
   return (
-    <nav className="crumbs fade" data-reveal aria-label="Breadcrumb">
+    <nav className="crumbs fade" aria-label="Breadcrumb">
       <ol>
         <li><a href="/">Home</a></li>
-        {parent && parent[1] !== route && <li><a href={parent[1]}>{parent[0]}</a></li>}
+        {parent && parent[1] !== route && <li><Link href={parent[1]}>{parent[0]}</Link></li>}
         <li aria-current="page">{short}</li>
       </ol>
     </nav>
@@ -90,7 +92,7 @@ export function PageHero({ model, group }: { model: PageModel; group: string }) 
   const image = hero.image || (model.kind === "post" ? model.ogImage : undefined);
   const date = model.kind === "post" && model.date ? new Date(model.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : null;
   return (
-    <section className={`pg-hero${image ? " has-img" : ""}`} data-progress>
+    <section className={`pg-hero${image ? " has-img" : ""}`}>
       <div className="pg-hero-pin">
         {image && (
           <div className="pg-hero-media" aria-hidden="true">
@@ -106,9 +108,9 @@ export function PageHero({ model, group }: { model: PageModel; group: string }) 
         <div className="wrap pg-hero-body">
           <Eyebrow>{hero.eyebrow || group}</Eyebrow>
           <Words as="h1" className={`pg-title${plain(hero.title).length > 64 ? " is-long" : ""}`} text={plain(hero.title)} />
-          {date && <p className="pg-date fade" data-reveal>{date}</p>}
+          {date && <p className="pg-date fade">{date}</p>}
           {hero.lead.length > 0 && (
-            <div className="pg-lead fade" data-reveal>
+            <div className="pg-lead fade">
               {hero.lead.map((p, i) => <Html key={i} html={p} />)}
             </div>
           )}
@@ -180,13 +182,13 @@ function Body({ blocks }: { blocks: Block[] }) {
     switch (b.t) {
       case "eyebrow": out.push(<Eyebrow key={k}>{b.text}</Eyebrow>); break;
       case "h": out.push(<Html key={k} as={b.level <= 3 ? "h3" : "h4"} className="pg-h fade" html={b.html} />); break;
-      case "p": out.push(<p key={k} className="fade" data-reveal dangerouslySetInnerHTML={{ __html: b.html }} />); break;
+      case "p": out.push(<p key={k} className="fade" dangerouslySetInnerHTML={{ __html: b.html }} />); break;
       case "ul": {
         const L = b.ordered ? "ol" : "ul";
-        out.push(<L key={k} className="pg-list fade" data-reveal>{b.items.map((li, j) => <li key={j} dangerouslySetInnerHTML={{ __html: li }} />)}</L>);
+        out.push(<L key={k} className="pg-list fade">{b.items.map((li, j) => <li key={j} dangerouslySetInnerHTML={{ __html: li }} />)}</L>);
         break;
       }
-      case "img": if (!b.small) out.push(<figure key={k} className="pg-fig"><SiteImage className="rv-img" data-reveal src={b.src} alt={b.alt} sizes="(max-width: 900px) 100vw, 880px" loading="lazy" /></figure>); break;
+      case "img": if (!b.small) out.push(<figure key={k} className="pg-fig"><SiteImage className="rv-img" src={b.src} alt={b.alt} sizes="(max-width: 900px) 100vw, 880px" loading="lazy" /></figure>); break;
       case "btn": buttons.push({ text: b.text, href: b.href }); break;
       case "video": out.push(<Video key={k} src={b.src} iframe={b.iframe} />); break;
       case "grid": out.push(<Grid key={k} items={b.items} />); break;
@@ -199,7 +201,7 @@ function Body({ blocks }: { blocks: Block[] }) {
 
 function Video({ src, iframe }: { src: string; iframe?: boolean }) {
   return (
-    <div className={`pg-video${iframe ? " is-embed" : ""}`} data-reveal>
+    <div className={`pg-video${iframe ? " is-embed" : ""}`}>
       {iframe ? <iframe src={src} title="Video" loading="lazy" allow="fullscreen; picture-in-picture" allowFullScreen /> : <video src={src} controls playsInline preload="metadata" />}
     </div>
   );
@@ -216,7 +218,7 @@ function Grid({ items }: { items: Card[] }) {
           const Tag = usable(c0.href) ? "a" : "div";
           const c = Tag === "a" ? { ...c0, title: c0.title && unlink(c0.title), text: c0.text.map(unlink), list: c0.list?.map(unlink) } : c0;
           return (
-            <Tag key={i} className="pg-card fade" data-reveal data-tilt style={{ "--rd": `${(i % 4) * 0.08}s` } as React.CSSProperties}
+            <Tag key={i} className="pg-card fade"
               {...(Tag === "a" ? { href: c.href, "data-cursor": "View", ...linkProps(c.href) } : {})}>
               {c.image && (
                 <div className={`pg-card-media${containPreview(c.image) ? " is-artwork" : ""}`}>
@@ -236,22 +238,22 @@ function Grid({ items }: { items: Card[] }) {
       </div>
     );
   }
-  // no pictures: numbered rows, like "Industries We Serve" on the home page
+  // The text-only features share the landing page's card style.
   return (
-    <div className="ind-list pg-rows">
+    <div className={`pg-features${items.length >= 6 ? " is-six" : ""}`}>
       {items.map((c0, i) => {
         const Tag = usable(c0.href) ? "a" : "div";
         const c = Tag === "a" ? { ...c0, title: c0.title && unlink(c0.title), text: c0.text.map(unlink), list: c0.list?.map(unlink) } : c0;
         return (
-          <Tag key={i} className={`ind${c.text.length || c.list?.length ? "" : " short"}`} data-reveal
+          <Tag key={i} className="pg-feature"
             {...(Tag === "a" ? { href: c.href, "data-cursor": "Open", ...linkProps(c.href) } : {})}>
-            {c.icon ? <span className="pg-ico" aria-hidden="true" dangerouslySetInnerHTML={{ __html: c.icon }} /> : <span className="n">{num(i)}</span>}
+            {c.icon ? <span className="pg-feature-icon" aria-hidden="true" dangerouslySetInnerHTML={{ __html: c.icon }} /> : <span className="pg-feature-icon">{num(i)}</span>}
             {c.title ? <Html as="h3" html={c.title} /> : <span />}
-            <div className="pg-row-text">
+            <div className="pg-feature-copy">
               {c.text.map((t, j) => <Html key={j} html={t} />)}
-              {c.list && c.list.length > 0 && <ul className="pg-list">{c.list.map((li, j) => <li key={j} dangerouslySetInnerHTML={{ __html: li }} />)}</ul>}
+              {c.list && c.list.length > 0 && <ul>{c.list.map((li, j) => <li key={j} dangerouslySetInnerHTML={{ __html: li }} />)}</ul>}
             </div>
-            {Tag === "a" ? <span className="ind-go" aria-hidden="true"><Arrow /></span> : <span />}
+            {Tag === "a" ? <span className="pg-feature-go" aria-hidden="true"><Arrow /></span> : null}
           </Tag>
         );
       })}
@@ -270,7 +272,7 @@ function SecHead({ head, center }: { head: Head; center?: boolean }) {
         {head.title && <Words text={plain(head.title)} />}
       </div>
       {head.intro.length > 0 && (
-        <div className="pg-intro fade" data-reveal>
+        <div className="pg-intro fade">
           {head.intro.map((p, i) => <Html key={i} html={p} />)}
         </div>
       )}
@@ -326,7 +328,7 @@ function ChunkView({ chunk, index }: { chunk: Chunk; index: number }) {
         <div className="pg-story">
           {rows.map((r, i) => (
             <div className={`pg-story-row${r.img ? "" : " text-only"}`} key={i}>
-              {r.img && <figure className={`pg-fig${r.img.bg ? "" : " is-artwork"}`}><SiteImage className="rv-img" data-reveal src={r.img.src} alt={r.img.alt} sizes={splitSizes} loading="lazy" /></figure>}
+              {r.img && <figure className={`pg-fig${r.img.bg ? "" : " is-artwork"}`}><SiteImage className="rv-img" src={r.img.src} alt={r.img.alt} sizes={splitSizes} loading="lazy" /></figure>}
               <div className="pg-prose-body"><Body blocks={r.blocks} /></div>
             </div>
           ))}
@@ -344,18 +346,18 @@ function ChunkView({ chunk, index }: { chunk: Chunk; index: number }) {
     return (
       <section className={`wrap sec pg-sec pg-split${index % 2 ? " flip" : ""}`}>
         <div className="pg-split-text">
-          {logo && <SiteImage className="pg-logo fade" data-reveal src={logo.src} alt={logo.alt} sizes="240px" loading="lazy" />}
+          {logo && <SiteImage className="pg-logo fade" src={logo.src} alt={logo.alt} sizes="240px" loading="lazy" />}
           {head.eyebrow && <Eyebrow>{head.eyebrow}</Eyebrow>}
           {head.title && <Words text={plain(head.title)} />}
           <div className="pg-prose-body">
-            {head.intro.map((p, i) => <p key={i} className="fade" data-reveal dangerouslySetInnerHTML={{ __html: p }} />)}
+            {head.intro.map((p, i) => <p key={i} className="fade" dangerouslySetInnerHTML={{ __html: p }} />)}
             <Body blocks={rest} />
           </div>
           <Buttons items={head.buttons} />
         </div>
         <figure className={`pg-split-media${photo.bg ? "" : " is-artwork"}`}>
           <div className="pg-split-frame">
-            <SiteImage className="rv-img" data-reveal src={photo.src} alt={photo.alt} sizes={splitSizes} loading="lazy" />
+            <SiteImage className="rv-img" src={photo.src} alt={photo.alt} sizes={splitSizes} loading="lazy" />
           </div>
         </figure>
       </section>
@@ -391,7 +393,7 @@ function ChunkView({ chunk, index }: { chunk: Chunk; index: number }) {
           {head.eyebrow && <Eyebrow>{head.eyebrow}</Eyebrow>}
           <Words text={plain(head.title)} className="pg-band-t" />
           <div className="pg-band-row">
-            <div className="pg-intro fade" data-reveal>
+            <div className="pg-intro fade">
               {head.intro.map((p, i) => <Html key={i} html={p} />)}
               <Body blocks={body.filter((b) => b.t !== "btn")} />
             </div>
@@ -411,7 +413,7 @@ function ChunkView({ chunk, index }: { chunk: Chunk; index: number }) {
         {head.title && <Words text={plain(head.title)} />}
       </div>
       <div className="pg-prose-body">
-        {head.intro.map((p, i) => <p key={i} className="fade" data-reveal dangerouslySetInnerHTML={{ __html: p }} />)}
+        {head.intro.map((p, i) => <p key={i} className="fade" dangerouslySetInnerHTML={{ __html: p }} />)}
         <Body blocks={body} />
         <Buttons items={head.buttons} />
       </div>
@@ -442,8 +444,12 @@ export function PageSections({ model }: { model: PageModel }) {
     <>
       {model.sections.map((s, si) => {
         const hasGridOrForm = s.blocks.some((b) => b.t === "grid" || b.t === "form");
-        if (model.kind === "post" && !hasGridOrForm) return <Article key={si} blocks={s.blocks} />;
-        return chunksOf(s.blocks).map((c, ci) => <ChunkView key={`${si}-${ci}`} chunk={c} index={index++} />);
+        if (model.kind === "post" && !hasGridOrForm) return <Reveal key={si}><Article blocks={s.blocks} /></Reveal>;
+        const chunks = chunksOf(s.blocks).map((c, ci) => <ChunkView key={`${si}-${ci}`} chunk={c} index={index++} />);
+        if (si === 0 && ["/solutions/", "/industries/", "/services/"].includes(model.route)) {
+          return <StackSection key={si}>{chunks}</StackSection>;
+        }
+        return s.blocks.some(b => b.t === "form") ? chunks : <Reveal key={si}>{chunks}</Reveal>;
       })}
     </>
   );

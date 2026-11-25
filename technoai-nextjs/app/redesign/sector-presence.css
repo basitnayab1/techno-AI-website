@@ -69,6 +69,11 @@ html body .presence-locate svg { width: 23px; height: 23px; fill: none; stroke: 
 html body .presence-visual { position: relative; min-width: 0; }
 html body .presence .where-globe { width: 100%; max-width: none; aspect-ratio: 1; }
 html body .presence-globe-stage { position: relative; width: 100%; height: 100%; }
+.presence-surface { position: relative; width: 100%; height: 100%; }
+.presence-surface .presence-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.presence-surface :is(.presence-poster, .presence-globe-stage) { transition: opacity .3s ease-out; }
+.presence-surface .presence-globe-stage:not([data-ready]) { opacity: 0; visibility: hidden; }
+.presence-surface:has(.presence-globe-stage[data-ready]) .presence-poster { opacity: 0; }
 html body .presence .globe-gl { cursor: default; }
 html body .presence-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 html body .presence-labels button { position: absolute; left: 0; top: 0; margin: -16px 0 0 13px; padding: 5px 9px; border-radius: 8px; background: #0b1518; border: 1px solid #32606c; color: #fff; font-family: inherit; font-size: .85rem; font-weight: 500; line-height: 1.4; cursor: pointer; pointer-events: auto; visibility: hidden; }
@@ -121,4 +126,52 @@ html[data-theme="dark"] body .presence-locate { color: #9fe7e7; }
   html body .industries .ind { scroll-snap-align: start; }
   html body .industries .ind, html body .industries .ind img, html body .presence-offices button { transition: none; }
   html body .industries .ind:hover, html body .industries .ind:hover img { transform: none; }
+}
+
+/* Vertical touch scrolling drives the same track as desktop. Short screens can swipe the cards. */
+@media (max-width: 760px) {
+  html body #industries .h-track {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    max-width: none;
+    gap: 12px;
+    padding: 4px 18px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+  html body #industries .ind {
+    width: min(405px, calc(100vw - 58px));
+    min-height: 0;
+    height: auto;
+    scroll-snap-align: center;
+  }
+  html body #industries .ind-photo { height: clamp(125px, 24svh, 225px); }
+  html body #industries .ind-copy { padding: 15px 17px; }
+  html body #industries .ind p { margin-block: 8px 14px; }
+}
+@media (max-width: 760px) and (min-height: 560px) and (prefers-reduced-motion: no-preference) {
+  html.fx #industries .sticky {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: clip;
+    padding: 80px 0 16px;
+    gap: clamp(12px, 2.4svh, 22px);
+  }
+  html.fx body #industries .h-track {
+    width: max-content;
+    flex-shrink: 0;
+    overflow: visible;
+    scroll-snap-type: none;
+    transform: translateX(calc(-1 * var(--shift, 0px) * var(--p, 0)));
+  }
+  html.fx #industries .h-bar { display: block; }
+  html.fx #industries .ind-head .eyebrow { margin-bottom: 12px; }
+  html.fx #industries .ind-head .sub { margin-top: 8px; }
+  html.fx #industries { view-timeline-name: --industries; view-timeline-inset: 0 calc(100% - 100svh); }
+  @supports (animation-timeline: view()) {
+    html.fx #industries .h-track { animation: industryTrackTravel linear both; animation-timeline: --industries; animation-range: contain; }
+    html.fx #industries .h-bar i::after { animation: industryProgress linear both; animation-timeline: --industries; animation-range: contain; }
+  }
 }

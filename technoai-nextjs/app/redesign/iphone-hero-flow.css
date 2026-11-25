@@ -1,0 +1,11 @@
+/* The artwork is the hero's three original glow layers, baked at the portrait
+   hero proportions. The parent still owns the scroll translation and opacity. */
+@media (orientation: portrait) and (max-width: 600px) {
+  .hx-bg[data-iphone] .hx-flow {
+    background: url("/redesign/hero/flow-iphone.webp") center / 100% 100% no-repeat;
+  }
+
+  .hx-bg[data-iphone] .hx-flow i {
+    display: none;
+  }
+}

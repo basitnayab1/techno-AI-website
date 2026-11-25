@@ -1,0 +1,7 @@
+/* The incoming section travels in document flow and paints over its predecessor. */
+@media (min-width:768px) and (prefers-reduced-motion:no-preference) {
+  .motion-stack { position: relative; isolation: isolate; }
+  .motion-stack > div { transform-origin: 50% 100%; }
+  .motion-stack + * { position: relative; background-color: var(--bg, #fff); }
+  html[data-theme="dark"] .motion-stack + * { background-color: var(--bg, #030505); }
+}

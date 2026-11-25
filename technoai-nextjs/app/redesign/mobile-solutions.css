@@ -1,0 +1,164 @@
+.solution-progress { display: none; }
+
+@media (max-width: 760px) and (min-height: 600px) and (prefers-reduced-motion: no-preference) {
+  .mobile-journey[data-stepped] .mj-stage { position: sticky; top: 0; }
+  .mobile-journey[data-stepped] .mj-panel[hidden] { display: none; }
+  .mobile-journey[data-stepped] .mj-panel:not([hidden]) { animation: mobileSolutionArrival .28s ease-out; }
+  .mobile-journey[data-stepped]::after {
+    content: "";
+    display: block;
+    height: calc(var(--film-intervals) * 40svh);
+  }
+}
+@keyframes mobileSolutionArrival {
+  from { opacity: .35; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 760px) {
+  #technology, .mobile-journey {
+    --solution-pad: clamp(16px, 5.5vw, 28px);
+    --solution-top: 96px;
+    --solution-bottom: max(18px, env(safe-area-inset-bottom));
+    --solution-gap: clamp(10px, 1.8svh, 16px);
+  }
+  .mobile-journey .mj-panel {
+    display: grid;
+    grid-template: "head" auto "intro" auto "visual" minmax(175px, 1fr) "action" auto / minmax(0,1fr);
+    align-content: stretch;
+    gap: var(--solution-gap);
+    min-height: 100svh;
+    padding: var(--solution-top) var(--solution-pad) var(--solution-bottom);
+    background: linear-gradient(160deg, #030809, #07191e 82%, #0a1c20);
+  }
+  .mobile-journey .mj-panel::after { content: none; }
+  .mj-head { grid-area: head; }
+  .solution-intro { grid-area: intro; }
+  .mobile-journey .solution-intro h2, #technology .station .jx-title-wrap h2 {
+    margin: 0;
+    padding: 0;
+    max-width: 13ch;
+    border-radius: 0;
+    background: transparent;
+    color: #f5fafa;
+    font-size: clamp(31px, 10.65vw, 47px);
+    line-height: 1.04;
+    letter-spacing: -.055em;
+    font-weight: 530;
+    text-wrap: balance;
+  }
+  .mobile-journey .solution-intro p, #technology .station > p {
+    margin: 12px 0 0;
+    color: #c3d3d5;
+    font-size: .9rem;
+    font-weight: 400;
+    line-height: 1.55;
+    text-shadow: none;
+  }
+  .solution-visual {
+    grid-area: visual;
+    position: relative;
+    overflow: hidden;
+    margin-inline: calc(-1 * var(--solution-pad));
+    mask-image: linear-gradient(transparent, #000 14% 85%, transparent);
+  }
+  .solution-visual::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(#0008, #0003 35% 65%, #0009);
+  }
+  .solution-visual > :is(video, img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 72% center;
+  }
+  /* Centre the moving satellite in the mobile crop so both solar panels stay in view. */
+  .mj-panel[data-solution="satellite"] .solution-visual video {
+    inset: 50% auto auto 50%;
+    width: 175%;
+    max-width: none;
+    height: auto;
+    transform: translate(-57%, -50%);
+    mask-image: linear-gradient(transparent, #000 11% 82%, transparent);
+  }
+  .solution-progress {
+    grid-area: visual;
+    justify-self: start;
+    align-self: center;
+    position: relative;
+    display: grid;
+    gap: 5px;
+    width: 3px;
+    pointer-events: none;
+  }
+  .solution-progress i { height: clamp(9px, 1.6svh, 15px); background: #496067; }
+  .solution-progress i[data-current] { background: #87e1e3; }
+  .solution-link, #technology .station > a.btn {
+    grid-area: action;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 44px;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-bottom: 1px solid #79cbd1;
+    border-radius: 0;
+    background: transparent;
+    color: #f3fafa;
+    font-size: .81rem;
+    font-weight: 650;
+    text-align: left;
+    text-decoration: none;
+  }
+  .solution-link span { font-size: 1.25rem; }
+  #technology .station .btn .arrow { color: inherit; }
+  #technology .station .jx-title-wrap { margin: 0; }
+  #technology .station .n, #technology .station h2::after { display: none; }
+}
+@media (max-width: 760px) and (prefers-reduced-motion: no-preference) {
+  #technology .journey-head {
+    inset: var(--solution-top) var(--solution-pad) auto;
+    height: 28px;
+    color: #f5fafa;
+  }
+  #technology .stations {
+    inset: calc(var(--solution-top) + 28px + var(--solution-gap)) var(--solution-pad) var(--solution-bottom);
+    width: auto;
+    height: auto;
+    transform: none;
+  }
+  #technology .stations .station:is([data-i="0"], [data-i="1"]) {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template: "title" auto "description" auto "visual" minmax(0,1fr) "action" auto / 1fr;
+    align-content: stretch;
+    padding: 0;
+  }
+  #technology .station .jx-title-wrap { grid-area: title; }
+  #technology .station > p { grid-area: description; }
+  #technology .jx-clean { inset: auto var(--solution-pad) calc(var(--solution-bottom) + 60px); }
+  #technology .jx-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(#051014 8%, #051014ed 27%, #0003 53% 72%, #051014ed 94%);
+  }
+}
+@media (max-width: 760px) and (prefers-reduced-motion: reduce) {
+  #technology .solution-progress { display: none; }
+  #technology .station > p { margin-bottom: 8px; }
+  #technology .journey-in { background: #061318; color: #f5fafa; }
+}
+@media (max-width: 760px) and (max-height: 710px) {
+  .mobile-journey, #technology { --solution-top: 86px; --solution-gap: 9px; --solution-bottom: 12px; }
+  .mobile-journey .solution-intro h2, #technology .station .jx-title-wrap h2 { font-size: clamp(29px, 8.6vw, 38px); }
+}

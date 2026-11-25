@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import templated from "../../../content/templated.json";
 import { ctaHtml, footerHtml, SOLUTION_LINKS } from "../../chrome";
+import { Reveal } from "../../section-motion";
 import { Motion } from "../../interior-kit/motion";
 import type { PageModel } from "../model";
 import { PageHero, PageSections } from "../render";
@@ -67,7 +68,10 @@ export default async function Page({ params }: { params: Promise<{ slug: string[
         <PageHero model={model} group={groupOf(model)} />
         <PageSections model={model} />
       </main>
-      <div className="chrome" dangerouslySetInnerHTML={{ __html: ctaHtml + footerHtml }} />
+      <div className="chrome">
+        <Reveal><div dangerouslySetInnerHTML={{ __html: ctaHtml }} /></Reveal>
+        <div dangerouslySetInnerHTML={{ __html: footerHtml }} />
+      </div>
     </>
   );
 }

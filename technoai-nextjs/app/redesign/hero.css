@@ -168,6 +168,17 @@ html.fx:not(.loaded) .hx-scroll, html.fx:not(.loaded) .hx-stage { animation-play
 .hx-mouse { position: relative; width: 22px; height: 34px; border-radius: 12px; border: 1.5px solid var(--hx-ink); }
 .hx-mouse i { position: absolute; left: 50%; top: 7px; width: 3px; height: 7px; margin-left: -1.5px; border-radius: 2px; background: var(--hx-teal); box-shadow: 0 0 6px var(--hx-aqua); animation: hxWheel 1.8s var(--hx-ease) infinite; }
 .hx-scroll-text { position: relative; font-size: .74rem; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; }
+.hx-swipe { display: none; }
+@media (max-width: 760px) {
+  .hx-hero .hx-scroll { display: none; }
+  .hx-swipe {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 44px;
+    margin-top: 8px; color: var(--hx-ink); font-size: .9rem; font-weight: 600; text-decoration: none;
+  }
+  .hx-swipe svg { color: var(--hx-blue); }
+  html[data-theme="dark"] .hx-swipe { color: #d9eeee; }
+  html[data-theme="dark"] .hx-swipe svg { color: #9fe7e7; }
+}
 .hx-scroll-text::before, .hx-scroll-text::after { content: ""; position: absolute; top: 50%; width: 120px; height: 1px; background: linear-gradient(90deg, transparent, rgba(15, 26, 27, .25)); }
 .hx-scroll-text::before { right: calc(100% + 18px); }
 .hx-scroll-text::after { left: calc(100% + 18px); transform: scaleX(-1); }

@@ -17,12 +17,12 @@ export function Eyebrow({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Heading whose words rise out of a mask one after another when it scrolls into view ("\n" = new line). */
+/** Heading with the shared word spacing and wrapping ("\n" = new line). */
 export function Words({ text, as: Tag = "h2", className }: { text: string; as?: "h1" | "h2" | "h3" | "p"; className?: string }) {
   const lines = text.split("\n");
   let i = 0;
   return (
-    <Tag className={`words ${className ?? ""}`} data-reveal aria-label={text.replace(/\n/g, " ")}>
+    <Tag className={`words ${className ?? ""}`} aria-label={text.replace(/\n/g, " ")}>
       {lines.map((line, li) => (
         <span className="wl" key={li} aria-hidden="true">
           {line.split(" ").filter(Boolean).map((w, wi) => (

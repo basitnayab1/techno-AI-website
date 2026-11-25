@@ -1,0 +1,337 @@
+/* Hardware, robot and industries share a single scroll-controlled stage. */
+.robotics-sequence {
+  position: relative;
+  background: transparent;
+  color: var(--white);
+}
+.robotics-sequence #robotics-hardware,
+.robotics-sequence #robotics,
+.robotics-sequence #industries {
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  background: var(--site-bg, var(--ink));
+  animation: none;
+  translate: none;
+  clip-path: none;
+  filter: none;
+  backdrop-filter: none;
+}
+.robotics-sequence #robotics-hardware {
+  --scene-top: 0px;
+  --scene-ink: var(--site-bg, var(--ink));
+}
+.robotics-sequence #robotics-hardware > .sticky {
+  position: relative;
+  top: auto;
+  height: auto;
+  min-height: 100svh;
+  background: var(--site-bg, var(--ink));
+}
+.robotics-sequence #robotics-hardware .closer-in {
+  display: block;
+  min-height: 0;
+  padding-block: 110px 32px;
+}
+.robotics-sequence #robotics-hardware .closer-text { position: relative; display: block; width: min(100%, 480px); }
+.robotics-sequence #robotics-hardware .robotics-showcase {
+  position: relative;
+  inset: auto;
+  margin-top: 24px;
+}
+.robotics-sequence #robotics-hardware .robotics-products,
+.robotics-sequence #robotics-hardware .robotics-products figure {
+  position: relative;
+  inset: auto;
+  visibility: visible;
+}
+.robotics-sequence #robotics-hardware .robotics-products figure { min-height: 70svh; }
+.robotics-sequence #robotics-hardware .robotics-product-media { inset: 0; }
+.robotics-sequence #robotics-hardware .robotics-product-media :is(picture, img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 0;
+  filter: none;
+}
+.robotics-sequence #robotics-hardware .robotics-products figcaption {
+  display: block;
+  position: absolute;
+  left: var(--scene-gutter);
+  bottom: 24px;
+  padding-left: 0;
+  border-left: 0;
+  z-index: 2;
+}
+.robotics-sequence #robotics-hardware .robotics-showcase::before { content: none; }
+.robotics-sequence #robotics-hardware .robotics-product-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, var(--site-bg) 0%, color-mix(in srgb, var(--site-bg) 85%, transparent) 22%, color-mix(in srgb, var(--site-bg) 30%, transparent) 40%, transparent 54%),
+    linear-gradient(0deg, var(--site-bg), transparent 24%);
+}
+.robotics-sequence #robotics-hardware .robotics-showcase::after { content: none; }
+.robotics-sequence #robotics-hardware .uses {
+  position: static;
+  display: block;
+  margin-top: clamp(18px, 3vh, 34px);
+}
+.robotics-sequence #robotics-hardware .uses a {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  width: min(100%, 17.5rem);
+  height: auto;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+}
+.robotics-sequence #robotics-hardware .uses .n { display: inline; color: inherit; }
+.robotics-sequence #robotics-hardware .product-name {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+}
+
+.robotics-sequence #robotics-hardware .uses a::before { background: none; box-shadow: none; }
+.robotics-sequence #robotics-hardware .uses a:is(:hover, [aria-selected="true"]) {
+  background: color-mix(in srgb, var(--site-bg) 70%, transparent);
+  box-shadow: inset 2px 0 var(--white);
+}
+/* Continue the existing page fibres behind the robot; share Section 2's dot grid. */
+.robotics-sequence #robotics { background: transparent; }
+.robotics-sequence #robotics .dot-field {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+.robotics-sequence #robotics .robot-intro-inner { min-height: 100svh; padding-block: 110px 32px; }
+.robotics-sequence #industries .sticky {
+  position: relative;
+  top: auto;
+  height: auto;
+  min-height: 100svh;
+  padding-block: 110px 32px;
+}
+.robotics-sequence #industries .h-track {
+  flex-direction: row;
+  width: 100%;
+  max-width: none;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  transform: none;
+  animation: none;
+  will-change: auto;
+}
+.robotics-sequence #industries .ind { scroll-snap-align: center; }
+.robotics-sequence #industries .h-bar i { background: var(--white); transform-origin: left; }
+.robotics-sequence #industries .h-bar i::after { display: none; animation: none; }
+.robotics-sequence #industries .ind-photo img { filter: none; transition: transform .3s ease-out; }
+
+.robotics-sequence[data-pinned] { height: 600vh; height: 600svh; }
+.robotics-sequence[data-pinned] > .rs-stage {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  overflow: clip;
+  isolation: isolate;
+}
+.robotics-sequence[data-pinned] .rs-scene { position: absolute; inset: 0; }
+.robotics-sequence[data-pinned] .rs-scene[inert] { pointer-events: none; }
+.robotics-sequence[data-pinned] :is(#robotics-hardware, #robotics, #industries) { height: 100%; }
+.robotics-sequence[data-pinned] #robotics-hardware > .sticky { position: relative; top: auto; height: 100%; min-height: 0; }
+.robotics-sequence[data-pinned] #robotics-hardware::after { content: none; }
+.robotics-sequence[data-pinned] #robotics-hardware .closer-in {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-height: 0;
+  padding-block: 110px 64px;
+}
+.robotics-sequence[data-pinned] #robotics-hardware .closer-text { width: min(36vw, 480px); }
+.robotics-sequence[data-pinned] #robotics-hardware :is(.robotics-showcase, .robotics-products, .robotics-products figure) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+}
+.robotics-sequence[data-pinned] #robotics-hardware .robotics-products figure { opacity: 0; }
+.robotics-sequence[data-pinned] #robotics .robot-intro-inner {
+  height: 100%;
+  min-height: 0;
+  padding-block: 100px 24px;
+}
+.robotics-sequence[data-pinned] #robotics .section-robot { max-height: 78svh; }
+.robotics-sequence[data-pinned] #industries .sticky { height: 100%; min-height: 0; overflow: clip; }
+.robotics-sequence[data-pinned] #industries .h-track {
+  width: max-content;
+  overflow: visible;
+  scroll-snap-type: none;
+}
+.robot-stage[data-placement="section"][data-visible="true"]:not([data-attached="true"]) {
+  opacity: var(--robotics-stage-opacity, 1);
+}
+
+@media (max-width: 760px) {
+  .robotics-sequence[data-pinned] #robotics-hardware .closer-in { align-items: flex-start; padding-top: 120px; }
+  .robotics-sequence[data-pinned] #robotics-hardware .closer-text { width: min(100%, 480px); }
+  .robotics-sequence #robotics-hardware .closer-text h2 { font-size: clamp(2rem, 8.5vw, 3.1rem); }
+  .robotics-sequence #robotics-hardware .uses a { font-size: 1rem; }
+  .robotics-sequence #robotics-hardware .robotics-product-media::after {
+    background:
+      linear-gradient(90deg, var(--site-bg), color-mix(in srgb, var(--site-bg) 85%, transparent) 22%, color-mix(in srgb, var(--site-bg) 30%, transparent) 40%, transparent 54%),
+      linear-gradient(180deg, var(--site-bg), transparent 53%),
+      linear-gradient(0deg, var(--site-bg), transparent 24%);
+  }
+  .robotics-sequence #industries .ind { width: 82vw; height: min(50svh, 440px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .robotics-sequence :is(.uses a, .ind, .ind-photo img) { transition: none; }
+}
+
+/* Keep this stage's geometry independent of the earlier separate-section layouts. */
+.robotics-sequence #robotics-hardware {
+  --scene-gutter: clamp(24px, 6vw, 116px);
+  position: relative;
+  isolation: isolate;
+}
+.robotics-sequence #robotics-hardware .closer-in { max-width: none; padding-inline: var(--scene-gutter); }
+.robotics-sequence #robotics-hardware .closer-text { z-index: 4; }
+.robotics-sequence #robotics-hardware .closer-text h2 {
+  font-size: clamp(2.25rem, 3.8vw, 4.6rem);
+  line-height: 1.04;
+  letter-spacing: -.04em;
+  max-width: 12ch;
+}
+.robotics-sequence #robotics-hardware .uses { padding: 0; border: 0; list-style: none; }
+.robotics-sequence #robotics-hardware .uses li { display: block; padding: 0; border: 0; box-shadow: none; color: var(--white); }
+.robotics-sequence #robotics-hardware .uses a { color: inherit; text-decoration: none; }
+.robotics-sequence #robotics-hardware .robotics-products figure { margin: 0; }
+.robotics-sequence #robotics-hardware .robotics-product-media { position: absolute; pointer-events: none; }
+.robotics-sequence #robotics .robot-intro-inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  align-items: center;
+  gap: 4vw;
+}
+.robotics-sequence #robotics .robot-intro-copy h2 {
+  font-size: clamp(2.3rem, 3.8vw, 4.6rem);
+  line-height: 1.04;
+  letter-spacing: -.04em;
+  max-width: 12ch;
+}
+.robotics-sequence #robotics .robot-intro-copy p { margin-block: 1rem 1.5rem; }
+.robotics-sequence #robotics .section-robot { position: relative; height: clamp(340px, 76svh, 850px); }
+@media (max-width: 760px) {
+  .robotics-sequence #robotics-hardware { --scene-gutter: 20px; }
+  .robotics-sequence #robotics-hardware .closer-text h2 { font-size: clamp(2rem, 8.5vw, 3.1rem); }
+  .robotics-sequence #robotics .robot-intro-inner { grid-template-columns: 1fr; align-content: center; gap: 16px; }
+  .robotics-sequence #robotics .section-robot { height: clamp(260px, 48svh, 460px); }
+}
+
+/* Approved desktop gallery: two complete cards inside the heading gutters. */
+.industry-viewport { display: contents; }
+@media (min-width: 761px) {
+  html body .robotics-sequence #industries .sticky {
+    padding-block: clamp(110px, 15.51svh, 134px) 28px;
+    justify-content: flex-start;
+    gap: 26px;
+  }
+  html body #industries .industry-viewport {
+    display: block;
+    margin-inline: var(--home-heading-gutter);
+    width: calc(100% - 2 * var(--home-heading-gutter));
+    max-height: 486px;
+    min-height: 0;
+    flex: 1;
+    overflow: clip;
+    padding-block: 8px;
+  }
+  html body .robotics-sequence #industries .h-track {
+    width: max-content;
+    height: 100%;
+    padding: 0;
+    gap: 24px;
+    animation: none;
+  }
+  html body .robotics-sequence #industries .ind {
+    width: calc((100vw - 2 * var(--home-heading-gutter) - 24px) / 2);
+    height: 100%;
+    min-height: 0;
+    border-radius: 20px;
+  }
+  html body #industries .ind-photo { height: calc(100% - 180px); }
+  html body #industries .ind-photo img { object-position: 50% 36%; }
+  html body #industries .ind-copy { padding: 23px 26px 24px; }
+  html body #industries .ind h3 { font-size: 25px; line-height: 1.25; }
+  html body #industries .ind p { font-size: 16px; margin-top: 11px; }
+  html body #industries .h-bar {
+    flex: none;
+    width: calc(100% - 2 * var(--home-heading-gutter));
+    height: 2px;
+    margin: 0 auto;
+    padding: 0;
+    max-width: none;
+    background: rgba(159,231,231,.15);
+  }
+  html body .robotics-sequence #industries .h-bar i { background: #9fe7e7; }
+}
+@media (min-width: 761px) and (max-height: 760px) {
+  html body .robotics-sequence #industries .sticky { gap: 16px; padding-bottom: 20px; }
+  html body #industries .ind-head .eyebrow { margin-bottom: 10px; }
+  html body #industries .ind-head .sub { margin-top: 8px; }
+}
+/* A short window / reduced-motion page flows normally instead of clipping cards. */
+@media (min-width: 761px) {
+  html body .robotics-sequence:not([data-pinned]) #industries .industry-viewport { flex: none; height: 486px; overflow-x: auto; }
+  html body .robotics-sequence:not([data-pinned]) #industries .h-track { scroll-snap-type: none; }
+}
+
+@media (min-width: 761px) and (max-width: 1100px) {
+  html body #industries .ind-copy { padding: 20px; }
+  html body #industries .ind h3 { font-size: 21px; }
+  html body #industries .ind p { font-size: 15px; }
+}
+
+/* The research artwork includes lettering; preserve its full frame on hover too. */
+html body #industries .ind-research .ind-photo img,
+html body #industries .ind-research:is(:hover, :focus-visible) .ind-photo img {
+  object-fit: contain;
+  object-position: center;
+  transform: none;
+}
+
+/* Let the iPhone showcase use the space beneath the CTA for both the poster and live scene. */
+@media (max-width: 760px) and (orientation: portrait) {
+  .robotics-sequence[data-iphone] #robotics .robot-intro-inner {
+    grid-template-rows: auto minmax(260px, 1fr);
+  }
+  .robotics-sequence[data-iphone] #robotics #robotics-model {
+    grid-row: 2;
+    align-self: stretch;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    container-type: size;
+  }
+}

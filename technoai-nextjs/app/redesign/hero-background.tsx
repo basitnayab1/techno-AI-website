@@ -3,7 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "./reduced-motion";
 
+import { isIPhone } from "./iphone";
+import "./iphone-hero-flow.css";
+
 export default function HeroBackground() {
+  const layer = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const backdrop = layer.current?.parentElement;
+    if (!isIPhone || !backdrop) return;
+    backdrop.dataset.iphone = "";
+    return () => { delete backdrop.dataset.iphone; };
+  }, []);
   const still = useReducedMotion();
   const [started, setStarted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -41,7 +51,7 @@ export default function HeroBackground() {
     };
   }, [started, visible, still]);
 
-  return <div className="hx-video-parallax">
+  return <div ref={layer} className="hx-video-parallax">
     <img className="hx-bg-video" src="/redesign/landing/hero-poster.jpg" width="1920" height="1080" alt="" fetchPriority="high" />
     {!still && started && <video ref={video} className="hx-bg-video" autoPlay muted loop playsInline preload="metadata" poster="/redesign/landing/hero-poster.jpg">
       <source src="/redesign/landing/hero-bg.mp4" type="video/mp4" />

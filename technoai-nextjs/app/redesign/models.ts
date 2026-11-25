@@ -361,7 +361,7 @@ export function addMotionDetail(slug: string, real: THREE.Object3D): [THREE.Obje
  * keep their base on the placeholder's base). If loading fails the placeholder stays and the error
  * is logged, so a missing model is never silent.
  */
-export function modelFor(slug: string, M: Mats): Model {
+export function modelFor(slug: string, M: Mats, prepare?: (group: THREE.Group) => Promise<void>): Model {
   const ph = BUILDERS[slug](M);
   const holder = new THREE.Group();
   holder.add(ph.group);
@@ -369,7 +369,7 @@ export function modelFor(slug: string, M: Mats): Model {
   if (!REAL_MODELS.includes(slug)) return model;
   const url = `/redesign/models/${slug}.glb`;
   preloadModel(slug).then(
-    (gltf) => {
+    async (gltf) => {
       // Each scene owns its transforms and animation helpers; keep the cached source untouched.
       const real = gltf.scene.clone(true);
       real.traverse((o) => {
@@ -404,14 +404,15 @@ export function modelFor(slug: string, M: Mats): Model {
       const wrap = new THREE.Group();
       // "alive" motion (springs, mouse look/push, blink…) wraps the model inside the scaled group
       const gsize = box.getSize(new THREE.Vector3());
-      const alive = slug === "robot" || slug === "drone" ? makeAlive(slug, real, slug === "robot" ? gsize.y : gsize.x) : null;
+      const alive = slug === "robot" ? makeAlive(slug, real, gsize.y) : null;
       wrap.add(alive ? alive.group : real);
       wrap.scale.setScalar(k);
       if (!showcase && REAL_POSE[slug] === "ground") wrap.position.y = phBox.min.y + (realSize.y * k) / 2;
+      const spinners = addMotionDetail(slug, real);
+      if (prepare) await prepare(wrap);
       holder.remove(ph.group);
       holder.add(wrap);
       model.real = true;
-      const spinners = addMotionDetail(slug, real);
       model.base = phBox.min.y; // bottom of the model in its own space (used to stand it on the floor)
       const mixer = gltf.animations.length ? new THREE.AnimationMixer(real) : null;
       gltf.animations.forEach((a) => mixer!.clipAction(a).play());
@@ -424,7 +425,6 @@ export function modelFor(slug: string, M: Mats): Model {
         last = t;
       };
     },
-    (err) => console.error(`[redesign] 3D model ${url} failed to load, showing placeholder`, err),
-  );
+  ).catch(err => console.error(`[redesign] Could not prepare ${url}, keeping its placeholder`, err));
   return model;
 }

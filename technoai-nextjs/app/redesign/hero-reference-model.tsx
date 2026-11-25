@@ -1,5 +1,7 @@
 "use client";
 
+import { isIPhone } from "./iphone";
+
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
 import * as T from "three";
@@ -8,7 +10,7 @@ import { sampleStep,solveLeg,useCompanionMotion, type CompanionPose, type Motion
 import ExpressiveMouth from "./hologram-robot/expressive-mouth";
 import edgeIndex from "./hologram-robot/robot-edges.json";
 
-const MODEL="/redesign/models/hologram-reference/robot.glb";
+const MODEL = isIPhone ? "/redesign/models/hologram-reference/robot-iphone.glb" : "/redesign/models/hologram-reference/robot.glb";
 const vertex=`varying vec3 n;varying vec3 v;varying vec3 p;void main(){p=position;vec4 pos=modelViewMatrix*vec4(position,1.);n=normalize(normalMatrix*normal);v=normalize(-pos.xyz);gl_Position=projectionMatrix*pos;}`;
 // Keep panel surfaces below the bloom threshold. Only fine contour cores and
 // panel creases emit HDR light, preserving detail beneath the soft cyan halo.

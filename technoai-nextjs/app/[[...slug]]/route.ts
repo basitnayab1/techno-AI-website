@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { ROUTE_HEAD } from "../route-arrival";
 import routes from "../../content/routes.json";
 import { themeDocument } from "../theme-document";
 
@@ -53,6 +54,12 @@ export async function GET(
   }
   if (HERO_MODELS[key]) html = addHeroModel(html, HERO_MODELS[key]);
   if (key !== "/" && key !== "/old-home/") html = themeDocument(html, key);
+  else {
+    // These empty Elementor siblings otherwise add 40px after the original footer.
+    const footerEnd = '<style>.elementor-5518 > :is(.elementor-element-86d3145,.elementor-element-0819cb9):empty{display:none}</style>';
+    html = html.replace("</head>", `${footerEnd}${ROUTE_HEAD}</head>`)
+      .replace("</body>", '<script type="module" src="/archive-motion.mjs"></script></body>');
+  }
   return new Response(html, {
     status: file ? 200 : 404,
     headers: { "Content-Type": "text/html; charset=UTF-8" },

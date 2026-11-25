@@ -40,27 +40,21 @@
 .journey[data-active="1"] .jx-dust-floor { opacity: 1; }
 
 /* Keep the brand ink curve across every solution station. */
+/* One backdrop for all desktop slides, behind the model, copy and controls. */
+@media (min-width: 761px) {
+  .jx-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, #000a, #0007 18%, transparent 46%),
+      linear-gradient(90deg, #000d, #000b 34%, #0005 66%, #0004);
+  }
+  .jx-ink-crescent { z-index: 1; }
+}
 .jx-ink-crescent { position: absolute; inset: 0; width: 100%; height: 100%; fill: #0f1a1b; }
 .jx-title-wrap { position: relative; display: table; max-width: 100%; margin-top: 14px; isolation: isolate; }
-.jx-title-wrap::before { content: ""; position: absolute; left: 0; right: -38px; top: -74px; height: 90px; }
 .jx-title-wrap h2 { position: relative; z-index: 2; margin-top: 0; }
-.jx-peek-product {
-  position: absolute; z-index: 1; top: -71px; right: -17px; width: 85px; height: 103px;
-  pointer-events: none; transform: translateY(9px) rotate(7deg) scale(.82);
-  transform-origin: 50% 100%; filter: drop-shadow(0 7px 6px rgba(15,26,27,.19));
-  transition: transform .65s cubic-bezier(.2,1.3,.3,1), filter .65s ease;
-}
-.jx-peek-product :is(img, svg) { display: block; width: 100%; height: 100%; object-fit: contain; }
-.jx-title-wrap[data-peek="drone"] .jx-peek-product { width: 126px; right: -35px; top: -62px; }
-.jx-title-wrap[data-peek="drone"] .jx-peek-product { transform: translateY(-23px) rotate(7deg) scale(.82); filter: drop-shadow(0 0 2px #fff) drop-shadow(0 7px 8px rgba(15,26,27,.42)); }
-/* Keep the small drone visible above its title, independently of the flying 3D scene. */
-.jx-title-wrap[data-peek="industry"] .jx-peek-product { width: 96px; right: -15px; }
-.jx-title-wrap[data-peek="satellite"] .jx-peek-product { width: 95px; right: -18px; }
-.jx-title-wrap[data-peek="security"] .jx-peek-product { width: 100px; right: -22px; }
-.jx-title-wrap[data-peek="financial"] .jx-peek-product { width: 82px; right: -9px; }
-.jx-title-wrap:hover .jx-peek-product { transform: translateY(-42px) rotate(-5deg) scale(1); filter: drop-shadow(0 16px 9px rgba(15,26,27,.24)); }
-.jx-title-wrap:not([data-peek="robot"]):hover .jx-peek-product { transform: translateY(-28px) rotate(-5deg) scale(1); }
-.jx-title-wrap[data-peek="drone"]:hover .jx-peek-product { transform: translateY(-35px) rotate(-5deg) scale(1); filter: drop-shadow(0 0 2px #fff) drop-shadow(0 15px 10px rgba(15,26,27,.42)); }
 .journey .station .jx-title-wrap h2 {
   position: relative; display: table; max-width: 100%; padding: 10px 46px 14px 28px;
   border-radius: 88px 80px 100px 10px; background: #0f1a1b; color: #fff;
@@ -134,12 +128,6 @@
 @media (max-width: 760px) {
   .jx-dust-floor { left: 8%; top: 32%; width: 84%; height: 24%; }
   .jx-ink-crescent { display: none; }
-  .jx-peek-product { top: -61px; right: -7px; width: 67px; height: 81px; }
-  .jx-title-wrap[data-peek="drone"] .jx-peek-product { width: 94px; right: -20px; top: -55px; }
-  .jx-title-wrap[data-peek="industry"] .jx-peek-product,
-  .jx-title-wrap[data-peek="satellite"] .jx-peek-product,
-  .jx-title-wrap[data-peek="security"] .jx-peek-product,
-  .jx-title-wrap[data-peek="financial"] .jx-peek-product { width: 73px; right: -7px; top: -61px; }
   .journey .station .jx-title-wrap h2 { padding: 9px 28px 11px 18px; border-radius: 54px 54px 65px 7px; }
   .journey .station .jx-title-wrap h2::after { width: 25px; height: 25px; }
   .jx-card { width: 210px; padding: 12px 14px; border-radius: 12px; }
@@ -152,7 +140,6 @@
 @media (prefers-reduced-motion: reduce) {
   .jx-dust-floor { display: none; }
   .jx-card { display: none; }
-  .jx-peek-product { transition: none; }
 }
 
 /* keep the copy readable on the scene photos */
@@ -170,12 +157,6 @@
 /* A fixed crop keeps the industrial backdrop steady while the fan animates. */
 .jx-film[data-slug="industry"] .jx-film-media { transform: scale(1.045); transform-origin: 76% center; }
 .jx-film[data-slug="security"] .jx-film-media { transform: none; }
-.jx-film[data-slug="security"]::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, #061214f2 0%, #061214a8 27%, #0612141a 68%, transparent);
-}
 /* The approved satellite film already includes its zoom and pan. */
 .jx-film[data-slug="satellite"] .jx-film-media { transform: none; transition: none; }
 .jx-film[data-slug="satellite"] .jx-film-media :is(img,video) { object-fit: contain; background: #030505; }

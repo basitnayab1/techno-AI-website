@@ -219,6 +219,10 @@ section.cx .dot-field { position: absolute; inset: 0; width: 100%; height: 100%;
 section.cx .cx-inner { z-index: 1; }
 
 /* Spline robot in the Robotics card (spline-card.tsx) */
+.cx-model-robotics { scale: 1.1; transform-origin: right center; }
+@media (max-width: 640px) {
+  .cx-model-robotics { transform-origin: center; }
+}
 .cx-spline { position: absolute; inset: 0; opacity: 0; transition: opacity .6s ease; pointer-events: auto; }
 .cx-spline.is-ready { opacity: 1; }
 

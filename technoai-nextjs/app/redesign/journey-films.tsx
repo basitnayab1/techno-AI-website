@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SOLUTIONS } from "./data";
 import "./solution-zoom.css";
-import { journeyFilmPoster, journeyFilmVideo } from "./journey-film-assets";
+import { journeyFilmPoster, journeyFilmVideo, journeyFilmWebm, journeyWebmType } from "./journey-film-assets";
 
 export function hasJourneyFilm(slug: string) {
   return ["industry", "satellite", "security", "financial"].includes(slug);
@@ -24,21 +24,45 @@ export default function JourneyFilms() {
     const motion = matchMedia("(prefers-reduced-motion: reduce)");
     const phone = matchMedia("(max-width: 760px)");
     const stations = Array.from(section.querySelectorAll<HTMLElement>(".station"));
+    const copy = section.querySelector<HTMLElement>(".stations")!;
+    let shown = Number(section.dataset.active || 0);
+    let wanted = shown;
+    let animation: Animation | undefined;
+    let fadingOut = false;
     let accessKey = "";
     const syncAccess = (index: number) => {
       const key = motion.matches ? "all" : String(index);
       if (key === accessKey) return;
       accessKey = key;
+      const moveFocus = stations.some(station => station !== stations[index] && station.contains(document.activeElement));
       for (const station of stations) {
         const inactive = !motion.matches && Number(station.dataset.i) !== index;
-        if (inactive && station.contains(document.activeElement)) {
-          stations[index]?.querySelector<HTMLElement>("a[href]")?.focus({ preventScroll: true });
-        }
         station.inert = inactive;
         station.setAttribute("aria-hidden", String(inactive));
       }
+      if (moveFocus && !motion.matches) stations[index]?.querySelector<HTMLElement>("a[href]")?.focus({ preventScroll: true });
     };
-    syncAccess(Number(section.dataset.active || 0));
+    syncAccess(shown);
+    function settleCopy(index: number) {
+      animation?.cancel();
+      animation = undefined;
+      fadingOut = false;
+      shown = wanted = index;
+      syncAccess(index);
+    }
+    function selectCopy(index: number) {
+      wanted = index;
+      if (fadingOut || shown === index) return;
+      const opacity = getComputedStyle(copy).opacity;
+      animation?.cancel();
+      fadingOut = true;
+      animation = copy.animate([{ opacity }, { opacity: 0 }], { duration: 250, fill: "both" });
+      animation.onfinish = () => {
+        settleCopy(wanted);
+        animation = copy.animate([{ opacity: 0, translate: "0 12px" }, { opacity: 1, translate: "0 0" }],
+          { duration: 350, easing: "ease-out" });
+      };
+    }
     const layers = Array.from(root.current?.querySelectorAll<HTMLElement>(".jx-film") || []);
     const selectFilm = (current: string) => setFilms(old => old.current === current ? old : {
       current, previous: current ? old.current : "",
@@ -49,8 +73,8 @@ export default function JourneyFilms() {
     let activeIndex = -1;
     const update = () => {
       frame = 0;
-      if (motion.matches) { syncAccess(0); selectFilm(""); return; }
-      if (!visible || document.hidden) { selectFilm(""); return; }
+      if (motion.matches) { settleCopy(0); selectFilm(""); return; }
+      if (!visible || document.hidden) { settleCopy(wanted); selectFilm(""); return; }
       const target = Math.max(0, Math.min(1, (window.scrollY - top) / Math.max(1, height - innerHeight)));
       const now = performance.now();
       const dt = Math.min(64, now - (lastTime || now - 16));
@@ -70,14 +94,16 @@ export default function JourneyFilms() {
       for (const layer of layers) {
         const i = Number(layer.dataset.i);
         const local = Math.max(0, Math.min(1, progress * count - i));
-        layer.style.setProperty("--solution-zoom", (1 + local * .2).toFixed(4));
+        const zoom = SOLUTIONS[i].slug === "security" ? .22 : .2;
+        layer.style.setProperty("--solution-zoom", (1 + local * zoom).toFixed(4));
         layer.style.setProperty("--jx-pan", `${(1 - local * 2).toFixed(3)}%`);
         layer.style.setProperty("--jx-zoom", (1.05 - local * .02).toFixed(4));
         stations[i]?.style.setProperty("--jx-copy-y", `${(6 - local * 12).toFixed(2)}px`);
       }
       // Keep station navigation working even on devices without WebGL.
       if (section.dataset.active !== String(index)) section.dataset.active = String(index);
-      syncAccess(index);
+      syncAccess(shown);
+      selectCopy(index);
       selectFilm(hasJourneyFilm(slug) ? slug : "");
       if (easedProgress !== target) frame = requestAnimationFrame(update);
     };
@@ -99,6 +125,7 @@ export default function JourneyFilms() {
     motion.addEventListener("change", schedule);
     return () => {
       size.disconnect(); observer.disconnect();
+      animation?.cancel();
       cancelAnimationFrame(frame);
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", measure);
@@ -114,7 +141,13 @@ export default function JourneyFilms() {
         {(films.current === slug || films.previous === slug) && <video data-slug={slug} muted playsInline loop autoPlay disablePictureInPicture
           preload="metadata" style={{ opacity: 0, transition: "opacity .25s ease" }}
           onPlaying={event => { event.currentTarget.style.opacity = "1"; }}
-          poster={journeyFilmPoster(slug)} src={journeyFilmVideo(slug)} />}
+          poster={journeyFilmPoster(slug)}>
+          {slug === "satellite" && <source media="(min-width: 1921px)" src={journeyFilmVideo(slug, "4k")} type="video/mp4" />}
+          {slug === "financial" && <source media="(min-width: 761px)" src={journeyFilmVideo(slug, "4k")} type="video/mp4" />}
+          {slug === "security" && <source media="(min-width: 761px)" src={journeyFilmVideo(slug, "2k", "webm")} type={journeyWebmType} />}
+          {journeyFilmWebm(slug) && <source src={journeyFilmWebm(slug)} type={journeyWebmType} />}
+          <source src={journeyFilmVideo(slug)} type="video/mp4" />
+        </video>}
       </div>
     </div>)}
   </div>;

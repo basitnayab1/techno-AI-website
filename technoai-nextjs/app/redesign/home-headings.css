@@ -1,0 +1,107 @@
+/* Approved heading sample: one type scale and copy edge for these home sections. */
+.home-headings {
+  --home-heading-gutter: max(28px, calc((100vw - 1280px) / 2 + 28px));
+  --home-heading-size: clamp(32px, 3.1vw, 54.4px);
+}
+
+.home-headings :is(h1, h2, h3) { text-transform: capitalize; }
+
+/* Share the Solutions title capsule with the robot and hardware headings. */
+.home-headings .heading-badge {
+  position: relative;
+  display: table;
+  padding: 10px 46px 14px 28px;
+  border-radius: 88px 80px 100px 10px;
+  background: #0f1a1b;
+  color: #fff;
+  text-shadow: none;
+}
+.home-headings .heading-badge::after {
+  content: "";
+  position: absolute;
+  right: -8px;
+  top: -1px;
+  width: 40px;
+  height: 37px;
+  border-radius: 0 0 100% 0;
+  background: #9fe7e7;
+  pointer-events: none;
+}
+
+.home-headings .robotics-sequence #robotics .robot-intro-copy h2,
+.home-headings #robotics-hardware #hardware-title,
+.home-headings #industries .ind-head h2,
+.home-headings #technology .station .jx-title-wrap h2 {
+  width: max-content;
+  max-width: none;
+  font-size: var(--home-heading-size);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -.04em;
+  white-space: nowrap;
+}
+
+.home-headings .robotics-sequence #robotics-hardware {
+  --scene-gutter: var(--home-heading-gutter);
+}
+
+.home-headings .robotics-sequence #robotics-hardware .closer-text {
+  width: min(64vw, 850px);
+}
+
+.home-headings .robotics-sequence #robotics .robot-intro-copy {
+  position: relative;
+  z-index: 3;
+}
+
+@media (min-width: 761px) {
+  .home-headings :is(#robotics-title, #hardware-title).heading-badge { margin-left: -28px; }
+  .home-headings #technology .stations { width: min(76%, 920px); }
+  /* The capsule keeps its padding; its text aligns with the copy below it. */
+  .home-headings #technology .station .jx-title-wrap {
+    margin-left: -28px;
+    max-width: calc(100% + 28px);
+  }
+  .home-headings #technology .station .jx-title-wrap h2 { padding-left: 28px; }
+  .home-headings #technology .station p { max-width: 460px; }
+}
+
+@media (max-width: 760px) {
+  .home-headings {
+    --home-heading-gutter: 20px;
+    --home-heading-size: clamp(30px, 8.3vw, 38px);
+  }
+
+  .home-headings .robotics-sequence #robotics .robot-intro-copy h2,
+  .home-headings #robotics-hardware #hardware-title,
+  .home-headings #industries .ind-head h2,
+  .home-headings #technology .station .jx-title-wrap h2,
+  .home-headings .mobile-journey .solution-intro h2 {
+    width: auto;
+    max-width: 100%;
+    font-size: var(--home-heading-size);
+    font-weight: 500;
+    line-height: 1.12;
+    letter-spacing: -.04em;
+    white-space: normal;
+    text-wrap: wrap;
+  }
+
+  .home-headings .robotics-sequence #robotics .robot-intro-inner,
+  .home-headings #industries .ind-head { padding-inline: var(--home-heading-gutter); }
+  .home-headings #technology,
+  .home-headings .mobile-journey { --solution-pad: var(--home-heading-gutter); }
+  .home-headings .robotics-sequence #robotics-hardware .closer-text { width: 100%; }
+
+  .home-headings .robotics-sequence #robotics .robot-intro-copy h2.heading-badge,
+  .home-headings #robotics-hardware #hardware-title.heading-badge {
+    display: block;
+    width: max-content;
+    max-width: calc(100% + 24px);
+    margin-left: -14px;
+    padding: 8px 24px 10px 14px;
+    border-radius: 54px 54px 65px 7px;
+  }
+  .home-headings .robotics-sequence #robotics .robot-intro-copy { min-width: 0; }
+  .home-headings :is(#robotics-title, #hardware-title).heading-badge::after { width: 25px; height: 25px; }
+}

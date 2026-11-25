@@ -3,7 +3,8 @@
 .robot-stage[data-attached="true"] { position: absolute; }
 .cx-spline[data-live-robot="true"] { opacity: 1; transition: none; mask-image: none; -webkit-mask-image: none; }
 .robot-stage iframe { display: block; width: 100%; height: 100%; border: 0; background: transparent; color-scheme: normal; }
-.robot-stage[data-placement="card"] { mask-image: linear-gradient(to bottom,#000 72%,transparent 100%); }
+.robot-stage[data-placement="card"] { pointer-events: none; mask-image: linear-gradient(to bottom,#000 72%,transparent 100%); }
+section.cx .cx-model:has(.cx-spline) .cx-model-poster { transform: scale(1.16); }
 @media (hover: none), (pointer: coarse) { .robot-stage, .robot-stage[data-visible="true"] { pointer-events: none; } }
 
 .robot-stage { background: #0b1213; }
@@ -11,3 +12,7 @@
 @media (prefers-reduced-motion: reduce) {
   .section-robot .cx-spline { opacity: 1; background: url("/redesign/section-robot.png") center / contain no-repeat; pointer-events: none; }
 }
+
+/* iPhone (no moveBefore → the stage is a fixed layer, not attached): hide at once when scrolling
+   starts, fade back in once the robot is in place again (2026-11-25). */
+.robot-stage:not([data-attached="true"])[data-visible="true"] { transition: opacity .25s ease-out; }

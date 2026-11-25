@@ -27,7 +27,7 @@ const nextConfig = {
   outputFileTracingIncludes: {
     "/[[...slug]]": ["./content/**/*"],
     "/p/[...slug]": ["./content/models/**/*", "./content/templated.json"],
-    "/brand.css": ["./node_modules/lenis/dist/lenis.css", "./app/brand-font.css", "./app/interior-kit/chrome.css", "./app/interior-dark.css", "./app/type-spacing.css", "./app/interior-responsive.css", "./app/shared-header.css", "./app/interior-theme.css", "./app/page-transition.css"],
+    "/brand.css": ["./node_modules/lenis/dist/lenis.css", "./app/brand-font.css", "./app/interior-kit/chrome.css", "./app/interior-dark.css", "./app/type-spacing.css", "./app/interior-responsive.css", "./app/shared-header.css", "./app/interior-theme.css", "./app/social-footer.css"],
   },
   // The new design (app/redesign) is the home page. The old WordPress home stays at /old-home/.
   async rewrites() {

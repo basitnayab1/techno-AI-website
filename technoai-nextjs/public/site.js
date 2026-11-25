@@ -18,6 +18,8 @@
       })
     : null;
 
+  if (lenis) { window.lenis = lenis; window.dispatchEvent(new Event('site:scroll-source')); }
+
   // ---- header + menu
   const header = document.querySelector("[data-shared-header], .hx");
   const menuBtn = document.querySelector("[data-site-menu-toggle], .hx-menu");
@@ -48,31 +50,9 @@
     if (p === here) a.setAttribute("aria-current", "page");
   });
 
-  // ---- page hero: title words rise one by one, the rest fades up; parallax while scrolling away
+  // Keep the archived hero's scroll parallax and background drift.
   const hero = document.querySelector(".brand-content .brand-hero");
-  const heroTitle = hero?.querySelector("h1, h2, .H1, .elementor-heading-title");
   if (hero && !reduce) {
-    // split only plain-text titles (text + <br>), so links / spans inside headings are never broken
-    if (heroTitle && Array.from(heroTitle.childNodes).every((n) => n.nodeType === 3 || n.nodeName === "BR")) {
-      const label = heroTitle.textContent.replace(/\s+/g, " ").trim();
-      let d = 0;
-      const lines = heroTitle.innerHTML.split(/<br\s*\/?>/i).map((line) => {
-        const tmp = document.createElement("div");
-        tmp.innerHTML = line;
-        const words = tmp.textContent.trim().split(/\s+/).filter(Boolean);
-        return `<span class="wl" aria-hidden="true">${words
-          .map((w) => `<span><span class="w"><span style="--d:${d++}">${w.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</span></span> </span>`)
-          .join("")}</span>`;
-      });
-      heroTitle.setAttribute("aria-label", label);
-      heroTitle.innerHTML = lines.join("");
-      heroTitle.classList.add("words", "hero-words");
-    }
-    hero.querySelectorAll("p, .elementor-widget-button, .e-button-base, .elementor-button-wrapper").forEach((el, i) => {
-      if (el.closest(".words")) return;
-      el.classList.add("hero-fade");
-      el.style.setProperty("--rd", `${0.45 + Math.min(i, 4) * 0.1}s`);
-    });
     // move the hero photo onto its own layer so it can drift slowly forever (Ken Burns) + parallax
     const bg = getComputedStyle(hero).backgroundImage;
     if (bg && bg !== "none") {
@@ -84,39 +64,9 @@
       hero.classList.add("has-bg-layer");
     }
     hero.classList.add("hero-on");
-    setTimeout(() => hero.classList.add("in"), root.classList.contains("arriving") ? 350 : 60);
   }
 
-  // ---- reveal: each block of every section rises in as it enters the screen
-  const blocks = [];
-  document.querySelectorAll(".brand-content .brand-section:not(.brand-hero)").forEach((sec) => {
-    const inner = sec.querySelector(":scope > .e-con-inner") || sec;
-    const kids = Array.from(inner.children).filter((el) => el.offsetHeight > 0);
-    kids.forEach((el, i) => {
-      el.classList.add("rv");
-      el.style.setProperty("--rd", `${Math.min(i, 5) * 0.08}s`);
-      blocks.push(el);
-    });
-  });
-  const io = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) {
-          e.target.classList.add("in");
-          io.unobserve(e.target);
-        }
-      }
-    },
-    { rootMargin: "0px 0px -8% 0px", threshold: 0.01 },
-  );
-  blocks.forEach((el) => io.observe(el));
-  document.querySelectorAll("[data-reveal]").forEach((el) => io.observe(el)); // shared CTA
-  // larger pictures open like a curtain (skips logos and icons)
-  document.querySelectorAll(".brand-content img").forEach((img) => {
-    if (img.closest(".brand-hero") || img.getBoundingClientRect().width < 260) return;
-    img.classList.add("rv-img");
-    io.observe(img);
-  });
+  document.querySelectorAll("[data-reveal]").forEach(el => el.classList.add("in"));
   requestAnimationFrame(() => root.classList.add("ready"));
 
   // ---- glow that follows the pointer ([data-glow], e.g. the closing CTA)
@@ -127,29 +77,6 @@
       g.style.setProperty("--my", `${e.clientY - r.top}px`);
     });
   });
-
-  // ---- page transition (same as pageTransitions() in app/redesign/motion.tsx)
-  if (root.classList.contains("arriving")) {
-    requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add("arrived")));
-    setTimeout(() => root.classList.remove("arriving", "arrived"), 700);
-  }
-  try { sessionStorage.removeItem("tai-px"); } catch {}
-  document.addEventListener("click", (e) => {
-    const a = e.target.closest?.("a");
-    if (!a || reduce || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    if ((a.target && a.target !== "_self") || a.hasAttribute("download")) return;
-    if (a.closest(".elementor-popup-modal, .woocommerce, form")) return; // leave WP widgets alone
-    const url = new URL(a.href, location.href);
-    if (url.origin !== location.origin || !/^https?:$/.test(url.protocol)) return;
-    if (url.pathname === location.pathname && url.search === location.search) return;
-    if (/\.(pdf|zip|jpe?g|png|webp|mp4)$/i.test(url.pathname) || /^#/.test(a.getAttribute("href") || "")) return;
-    e.preventDefault();
-    root.classList.remove("menu-open");
-    root.classList.add("leaving");
-    try { sessionStorage.setItem("tai-px", "1"); } catch {}
-    setTimeout(() => location.assign(url.href), 480);
-  });
-  addEventListener("pageshow", (e) => e.persisted && root.classList.remove("leaving", "arriving", "arrived"));
 
   // ---- cursor + magnetic buttons (fine pointers only)
   let cursor = null;

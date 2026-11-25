@@ -44,8 +44,8 @@ const solutionIcon = (i: number) => `<svg aria-hidden="true" viewBox="0 0 24 24"
 
 export const OFFICES = [
   ["Headquarter", "Abu Dhabi, United Arab Emirates"],
-  ["Europe Innovation Hub", "Prague - Czech Republic"],
-  ["Asia Innovation Hub", "Lahore - Pakistan"],
+  ["Europe Innovation Hub", "Prague, Czech Republic"],
+  ["Asia Innovation Hub", "Lahore, Pakistan"],
 ] as const;
 
 export const SOCIAL = [
@@ -67,7 +67,6 @@ const num = (i: number) => String(i + 1).padStart(2, "0");
 const ext = (t: string, h: string) => `<a href="${esc(h)}" target="_blank" rel="noopener noreferrer">${esc(t)}</a>`;
 
 export const headerHtml = `<div class="grain" aria-hidden="true"></div>
-<div class="px site-page-transition" aria-hidden="true"><span class="px-mark brand-mark"></span></div>
 <header class="hx">
   <a class="hx-logo" href="/" aria-label="TechnoAi home"></a>
   <nav class="hx-nav" aria-label="Main">${NAV.map(([t, h]) => `<a href="${h}"><span data-t="${esc(t)}">${esc(t)}</span></a>`).join("")}</nav>
@@ -100,9 +99,9 @@ export const ctaHtml = `<section class="cta" data-glow>
   <div class="cta-glow" aria-hidden="true"></div>
   <div class="fo-wrap cta-in">
     <p class="eyebrow"><span aria-hidden="true">//:</span>Let’s build what’s next</p>
-    <h2 class="words cta-t" data-reveal aria-label="Your ambition. Our expertise.">${words(["Your ambition.", "Our expertise."])}</h2>
+    <h2 class="words cta-t" aria-label="Your ambition. Our expertise.">${words(["Your ambition.", "Our expertise."])}</h2>
     <div class="cta-row">
-      <p class="fade" data-reveal>Bring us your challenge. We’ll bring the right technology together.</p>
+      <p class="fade">Bring us your challenge. We’ll bring the right technology together.</p>
       <a class="cta-btn" href="/request-a-quote/" data-magnetic><span>Start a<br />Project</span></a>
     </div>
   </div>

@@ -1,0 +1,28 @@
+:is(.ft-bottom nav, .fo-bottom) a:has(.social-icon):is(:hover, :focus-visible) {
+  color: #146b8c;
+}
+
+html[data-theme="dark"] :is(.ft-bottom nav, .fo-bottom) a:has(.social-icon):is(:hover, :focus-visible) {
+  color: #9fe7e7;
+}
+
+:is(.ft-bottom nav, .fo-bottom) a:is(:hover, :focus-visible) .social-icon[data-brand="instagram"] [stroke] {
+  stroke: url(#social-instagram-gradient);
+}
+
+:is(.ft-bottom nav, .fo-bottom) a:is(:hover, :focus-visible) .social-icon[data-brand="instagram"] circle:not([stroke]) {
+  fill: url(#social-instagram-gradient);
+}
+
+:is(.ft-bottom nav, .fo-bottom) a:is(:hover, :focus-visible) .social-icon[data-brand="facebook"] {
+  color: #1877f2;
+}
+
+:is(.ft-bottom nav, .fo-bottom) a:is(:hover, :focus-visible) .social-icon[data-brand="linkedin"] {
+  color: #0a66c2;
+}
+
+:is(.ft-bottom nav, .fo-bottom) a:is(:hover, :focus-visible) .social-icon[data-brand="tiktok"] {
+  color: #fff;
+  filter: drop-shadow(-.7px -.5px #25f4ee) drop-shadow(.7px .5px #fe2c55);
+}

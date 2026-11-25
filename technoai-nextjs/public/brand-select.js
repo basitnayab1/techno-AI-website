@@ -1,5 +1,40 @@
 /* Accessible custom presentation; original select/value/validation remain intact. */
 (() => {
+
+  function bindQuoteIndustries(form) {
+    const product = form.elements.namedItem('form_fields[field_63d2796]');
+    const industry = form.elements.namedItem('form_fields[field_941e9d2]');
+    if (!(product instanceof HTMLSelectElement) || !(industry instanceof HTMLSelectElement)) return;
+
+    const aerial = ['Public Safety', 'Agriculture', 'Oil and Gas', 'Utilities', 'Research & Development', 'Marine', 'Logistics'];
+    const industries = new Map([
+      ['Drones', aerial],
+      ['Satellite', aerial],
+      ['Robotics', ['Hospitality', 'Medical', 'Logistics', 'Retail']],
+    ]);
+    const options = Array.from(industry.options);
+
+    const sync = () => {
+      const allowed = industries.get(product.value);
+      const previous = industry.value;
+      for (const option of options) {
+        const excluded = allowed !== undefined && !allowed.includes(option.value);
+        option.hidden = excluded;
+        option.disabled = excluded;
+      }
+      if (!options.some(option => !option.disabled && option.value === previous)) {
+        industry.value = options.find(option => !option.disabled)?.value ?? '';
+      }
+      if (industry.value !== previous) industry.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    product.addEventListener('change', sync);
+    form.addEventListener('reset', () => requestAnimationFrame(sync));
+    sync();
+  }
+
+  document.querySelectorAll('.quote-page form').forEach(bindQuoteIndustries);
+
   const controls = [];
   document.querySelectorAll('.brand-content form select:not([multiple])').forEach((select, index) => {
     if (select.dataset.brandSelect) return;

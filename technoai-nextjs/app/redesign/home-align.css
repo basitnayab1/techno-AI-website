@@ -1,0 +1,39 @@
+/* 2026-11-25 owner: one heading line on phones for every home section.
+   - Top: each pinned scene starts its first line (eyebrow or heading pill) at the same height as the
+     Solutions journey (--solution-top: 96px, 86px on short screens), instead of centring.
+   - Left: copy starts 20px from the edge everywhere; boxed headings (pill, Section 02 panel) bleed
+     14px to the left so their text still sits on the 20px line. */
+@media (max-width: 760px) {
+  html body .robotics-sequence { --home-scene-top: 96px; }
+
+  /* Robotics & Automation: was centred vertically (heading moved with screen height) */
+  html body .robotics-sequence[data-pinned] #robotics .robot-intro-inner {
+    align-content: start;
+    padding-top: var(--home-scene-top);
+  }
+  /* Robotics Hardware: was 120px */
+  html body .robotics-sequence[data-pinned] #robotics-hardware .closer-in { padding-top: var(--home-scene-top); }
+  /* Industries: was centred vertically */
+  html body .robotics-sequence[data-pinned] #industries .sticky {
+    justify-content: flex-start;
+    padding-top: var(--home-scene-top);
+  }
+
+  /* Section 02 header panel: text on the 20px line, panel edge at 6px like the heading pills */
+  html body main section.cx .cx-head { margin-left: -8px; padding-left: 14px; }
+  /* Global presence + partners used a 16px gutter */
+  html body #global-presence.wrap,
+  html body .partners .wrap { padding-inline: 20px; }
+}
+@media (max-width: 760px) and (max-height: 710px) {
+  html body .robotics-sequence { --home-scene-top: 86px; }
+}
+
+/* 2026-11-25: Industries cards did not slide on phones. sector-presence.css still drives the track
+   with a scroll-timeline animation from when Industries was its own tall section; inside the pinned
+   robotics sequence that timeline never moves, and a CSS animation beats the transform that
+   robotics-sequence.tsx writes. Inside the pinned sequence the script owns the motion. */
+@media (max-width: 760px) {
+  html.fx body .robotics-sequence[data-pinned] #industries .h-track,
+  html.fx body .robotics-sequence[data-pinned] #industries .h-bar i::after { animation: none; }
+}

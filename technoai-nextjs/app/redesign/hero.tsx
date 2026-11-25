@@ -77,6 +77,10 @@ export default function Hero() {
                 Explore Solutions
               </a>
             </div>
+            <a className="hx-swipe" href="#solutions">
+              <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 16V4m-5 5 5-5 5 5" /></svg>
+              Swipe up to explore
+            </a>
           </div>
           <CoreStage />
         </div>

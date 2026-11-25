@@ -3,10 +3,13 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { isIPhone } from "./iphone";
 
 /** A flowing bundle of optical strands: dark reflective shafts and luminous cut ends. */
 export default function CoreFibres({ mobile, still }: { mobile: boolean; still: boolean }) {
   const strands = useRef<(THREE.Group | null)[]>([]);
+  const tips = useRef<THREE.InstancedMesh>(null);
+  const tipMatrix = useMemo(() => isIPhone ? new THREE.Matrix4() : null, []);
   const pointer = useRef({ x: 0, y: 0, active: false });
   useEffect(() => {
     if (still) return;
@@ -83,17 +86,28 @@ export default function CoreFibres({ mobile, still }: { mobile: boolean; still: 
       // Individually staggered motion makes the bundle breathe instead of moving as rigid wires.
       g.rotation.z = THREE.MathUtils.lerp(g.rotation.z, Math.sin(t * .65 + fibres[i].phase * .12) * .055 - pushX * .14, ease);
       g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, Math.sin(t * .42 + fibres[i].phase * .08) * .08 + pushY * .16, ease);
+      if (tips.current && tipMatrix) {
+        const radius = fibres[i].radius * 1.12;
+        g.updateMatrix();
+        tipMatrix.makeScale(radius, radius, radius).setPosition(fibres[i].end).premultiply(g.matrix);
+        tips.current.setMatrixAt(i, tipMatrix);
+      }
     });
+    if (tips.current) tips.current.instanceMatrix.needsUpdate = true;
   });
   return <group>
+    {isIPhone && <instancedMesh ref={tips} args={[undefined, undefined, fibres.length]} frustumCulled={false}>
+      <sphereGeometry args={[1, 12, 8]} />
+      <meshBasicMaterial color="#9fe7e7" toneMapped={false} />
+    </instancedMesh>}
     {fibres.map((f, i) => <group key={i} ref={el => { strands.current[i] = el; }}>
       <mesh geometry={f.geometry}>
         <meshPhysicalMaterial color={i % 4 ? "#0f1a1b" : "#146b8c"} metalness={.65} roughness={.18} clearcoat={1} clearcoatRoughness={.12} envMapIntensity={1.4} />
       </mesh>
-      <mesh position={f.end}>
+      {!isIPhone && <mesh position={f.end}>
         <sphereGeometry args={[f.radius * 1.12, 12, 8]} />
         <meshBasicMaterial color="#9fe7e7" toneMapped={false} />
-      </mesh>
+      </mesh>}
       <sprite position={f.end} scale={[.26, .26, 1]}>
         <spriteMaterial map={glow} transparent opacity={.75} depthWrite={false} toneMapped={false} />
       </sprite>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="none" fill="none">
+  <defs>
+    <linearGradient id="edge" x1="0" y1="1" x2="1" y2="0" gradientUnits="objectBoundingBox">
+      <stop stop-color="#42e5e8"/><stop offset=".28" stop-color="#25606a"/><stop offset=".62" stop-color="#308693"/><stop offset="1" stop-color="#74fcff"/>
+    </linearGradient>
+  </defs>
+  <path d="M1 33 33 1H777L799 23V424L774 449H684L674 440H186L176 430H25L1 406Z" stroke="url(#edge)" vector-effect="non-scaling-stroke"/>
+  <path d="M733 2H775Q778 2 780 5L795 20Q798 23 798 27V75M2 349V404Q2 407 5 410L21 426Q24 429 28 429H84" stroke="#52f1f6" stroke-width="3" vector-effect="non-scaling-stroke"/>
+  <path d="M727 438l10-10h8l-10 10zm13 0 10-10h8l-10 10zm13 0 10-10h8l-10 10z" fill="#47dae1"/>
+</svg>

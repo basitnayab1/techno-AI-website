@@ -76,7 +76,6 @@ body.brand-site .brand-content :is(.e-con,.e-con-inner,.elementor-widget,.elemen
   body.inner-site .pg-form-fields { grid-template-columns: minmax(0,1fr); gap: 20px; }
   body.inner-site :is(.pg-meta,.pg-tags,.pg-actions) { gap: 12px; }
   body.inner-site .pg .pg-actions > .btn { width: 100%; }
-  body.inner-site .cta { padding-block: 56px; }
   body.inner-site .cta-row { flex-direction: column; align-items: flex-start; gap: 28px; }
   body.inner-site .cta-row p { width: 100%; }
   body.brand-site.brand-site .brand-content :is(h1,.H1,.entry-title) { font-size: clamp(1.85rem,8vw,2.7rem) !important; }
@@ -97,3 +96,10 @@ body.brand-site .brand-content :is(.e-con,.e-con-inner,.elementor-widget,.elemen
   html body.inner-site .pg-hero-media { transform: none; }
   html body.inner-site .pg-hero-hint { display: none; }
 }
+
+/* 2026-11-25 owner: no scroll effect on the inner-page hero (no pin, no zoom, no text fade).
+   render.tsx no longer sets data-progress on .pg-hero, so --p stays 0; this stops the pin. */
+html:root body .pg-hero { height: auto; }
+html:root body .pg-hero-pin { position: relative; top: auto; height: auto; min-height: max(560px, 100svh); }
+html:root body .pg-hero-media { transform: none; }
+html:root body .pg-hero-body, html:root body .pg-hero-crumbs { opacity: 1; transform: none; }

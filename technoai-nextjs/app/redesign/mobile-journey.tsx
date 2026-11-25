@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { SOLUTIONS } from "./data";
-import JourneyPeek from "./journey-peeks";
-import { journeyFilmPoster, journeyFilmVideo } from "./journey-film-assets";
+import SolutionProgress from "./solution-progress";
+import { mobileSolutionSteps } from "./mobile-solution-steps";
+import "./mobile-solutions.css";
+import { journeyFilmPoster, journeyFilmVideo, journeyFilmWebm, journeyWebmType } from "./journey-film-assets";
 
 function Film({ slug }: { slug: string }) {
   const ref = useRef<HTMLVideoElement>(null);
@@ -20,7 +22,7 @@ function Film({ slug }: { slug: string }) {
       setNear(true);
       prepare.disconnect();
     }, { rootMargin: "400px 0px" });
-    prepare.observe(video);
+    prepare.observe(video.closest(".mobile-journey") ?? video);
     const observer = new IntersectionObserver(([entry]) => {
       const on = entry.isIntersecting && phone.matches && !still.matches;
       setVisible(on);
@@ -35,7 +37,7 @@ function Film({ slug }: { slug: string }) {
     phone.addEventListener("change", sync);
     still.addEventListener("change", sync);
     return () => { prepare.disconnect(); observer.disconnect(); phone.removeEventListener("change", sync); still.removeEventListener("change", sync); };
-  }, []);
+  }, [slug]);
   useEffect(() => {
     const video = ref.current;
     if (!video) return;
@@ -52,25 +54,36 @@ function Film({ slug }: { slug: string }) {
     onCanPlay={() => {
       if (visible && !document.hidden) ref.current?.play().catch(() => {});
     }}
-    poster={near ? journeyFilmPoster(slug, true) : undefined}
-    src={started ? journeyFilmVideo(slug, true) : undefined} />;
+    poster={near ? journeyFilmPoster(slug) : undefined}>
+    {started && <FilmSources slug={slug} />}
+  </video>;
 }
 
-/** Full-height mobile scenes use the same background-and-copy composition as the robot. */
+function FilmSources({ slug }: { slug: string }) {
+  const webm = journeyFilmWebm(slug);
+  return <>
+    {webm && <source src={webm} type={journeyWebmType} />}
+    <source src={journeyFilmVideo(slug)} type="video/mp4" />
+  </>;
+}
+
 export default function MobileJourney() {
-  return <section className="mobile-journey" aria-label="More technology solutions">
-    {SOLUTIONS.slice(2).map((s, i) => <article className="mj-panel" data-solution={s.slug} key={s.slug}>
-      <div className="mj-head"><span className="mj-brand"><i className="mj-chip" aria-hidden="true">//:</i>TechnoAi Solutions</span><span>0{i + 3} / 06</span></div>
-      <div className="mj-media"><Film slug={s.slug} /></div>
-      <div className="mj-copy">
-        <span className="n mj-number">0{i + 3}</span>
-        <div className="jx-title-wrap" data-peek={s.slug}>
-          <span className="jx-peek-product" aria-hidden="true"><JourneyPeek slug={s.slug} /></span>
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => ref.current ? mobileSolutionSteps(ref.current) : undefined, []);
+  const films = SOLUTIONS.slice(2);
+  return <section ref={ref} className="mobile-journey" aria-label="More technology solutions"
+    style={{ "--film-intervals": films.length - 1 } as React.CSSProperties}>
+    <div className="mj-stage">
+      {films.map((s, i) => <article className="mj-panel" data-solution={s.slug} key={s.slug}>
+        <div className="mj-head"><span className="mj-brand"><i className="mj-chip" aria-hidden="true">//:</i>TechnoAi Solutions</span><span>0{i + 3} / {String(SOLUTIONS.length).padStart(2, "0")}</span></div>
+        <div className="solution-intro">
           <h2>{s.title}</h2>
+          <p>{s.text}</p>
         </div>
-        <p>{s.text}</p>
-        <a className="btn btn-white" href={s.href} aria-label={`Explore ${s.title}`}>Explore Solution <span aria-hidden="true">→</span></a>
-      </div>
-    </article>)}
+        <div className="solution-visual"><Film slug={s.slug} /></div>
+        <SolutionProgress index={i + 2} />
+        <a className="solution-link" href={s.href} aria-label={`Explore ${s.title}`}>Explore Solution <span aria-hidden="true">→</span></a>
+      </article>)}
+    </div>
   </section>;
 }

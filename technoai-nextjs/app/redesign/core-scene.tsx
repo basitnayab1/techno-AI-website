@@ -1,10 +1,15 @@
 "use client";
 
+import { isIPhone } from "./iphone";
+
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { runIPhoneCore } from "./iphone-core-frames";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { IS_IOS, runWhenQuiet } from "./heavy-queue";
 
+const IPhoneLighting = lazy(() => import("./studio-lighting"));
 const HeroRobot = lazy(() => import("./hero-robot"));
 
 // "Intelligence Core" — the 3D object of the home hero, built with React Three Fiber.
@@ -468,13 +473,13 @@ function IntelligenceCore({ mobile, still, onAnchors, onCompiled }: { mobile: bo
 /* ---------------------------------- canvas + labels ---------------------------------- */
 
 /** Any error while creating the WebGL scene → CSS fallback (core-stage.tsx). */
-class SceneBoundary extends Component<{ onFail: () => void; children: ReactNode }, { failed: boolean }> {
+export class SceneBoundary extends Component<{ onFail?: () => void; children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() {
     return { failed: true };
   }
   componentDidCatch() {
-    this.props.onFail();
+    this.props.onFail?.();
   }
   render() {
     return this.state.failed ? null : this.props.children;
@@ -486,24 +491,48 @@ class SceneBoundary extends Component<{ onFail: () => void; children: ReactNode 
  * Compiles every shader of the scene on the GPU driver's background threads (KHR_parallel_shader_compile)
  * before the first frame. Without this the first render blocked the page for ~1.5 s.
  */
-export function Warmup({ onReady }: { onReady: () => void }) {
+export function Warmup({ onReady, draw = false }: { onReady: () => void; draw?: boolean }) {
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
   useEffect(() => {
     let off = false;
-    const done = () => !off && onReady();
-    const t = window.setTimeout(() => gl.compileAsync(scene, camera).then(done, done), 0); // after the scene's own effects
+    let frame = 0;
+    let nearby: IntersectionObserver | undefined;
+    const done = () => { if (!off) onReady(); };
+    const t = window.setTimeout(() => gl.compileAsync(scene, camera).then(() => {
+      if (off) return;
+      if (!draw) { done(); return; }
+      // The first draw also uploads geometry and the studio map. Keep the
+      // poster visible and the following card queued until that draw is done.
+      // Compilation can finish several screens later on a fast scroll. Wait for
+      // this card to approach again instead of drawing into an unrelated slide.
+      nearby = new IntersectionObserver(([entry]) => {
+        cancelAnimationFrame(frame);
+        if (!entry.isIntersecting) return;
+        frame = requestAnimationFrame(() => {
+          const rect = gl.domElement.getBoundingClientRect();
+          if (rect.bottom < -800 || rect.top > innerHeight + 800) return;
+          nearby?.disconnect();
+          gl.render(scene, camera);
+          done();
+        });
+      }, { rootMargin: "800px 0px" });
+      nearby.observe(gl.domElement);
+    }, done), 0);
     return () => {
       off = true;
       clearTimeout(t);
+      cancelAnimationFrame(frame);
+      nearby?.disconnect();
     };
-  }, [gl, scene, camera, onReady]);
+  }, [gl, scene, camera, onReady, draw]);
   return null;
 }
 
 function CoreFrames({ visible, ready, still }: { visible: boolean; ready: boolean; still: boolean }) {
   const invalidate = useThree(state => state.invalidate);
+  const setDpr = useThree(state => state.setDpr);
   const setFrameloop = useThree(state => state.setFrameloop);
   const clock = useThree(state => state.clock);
   const elapsed = useRef(0);
@@ -515,12 +544,16 @@ function CoreFrames({ visible, ready, still }: { visible: boolean; ready: boolea
     setFrameloop("demand");
     clock.elapsedTime = elapsed.current;
     invalidate();
+    if (isIPhone && !still) {
+      const stop = runIPhoneCore(invalidate, setDpr);
+      return () => { elapsed.current = clock.elapsedTime; stop(); };
+    }
     const timer = still ? undefined : window.setInterval(invalidate, 1000 / 30);
     return () => {
       elapsed.current = clock.elapsedTime;
       clearInterval(timer);
     };
-  }, [visible, ready, still, clock, invalidate, setFrameloop]);
+  }, [visible, ready, still, clock, invalidate, setFrameloop, setDpr]);
   return null;
 }
 
@@ -576,6 +609,12 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
   const [visible, setVisible] = useState(false);
   const [compiled, setCompiled] = useState(false);
   const ready = useCallback(() => setCompiled(true), []);
+  // iPhone: the hero robot model (GLB + its shaders) loads after the core, when the user is not scrolling.
+  const [robotGo, setRobotGo] = useState(!IS_IOS);
+  useEffect(() => {
+    if (!compiled || robotGo) return;
+    return runWhenQuiet(() => { setRobotGo(true); return new Promise((r) => setTimeout(r, 2500)); });
+  }, [compiled, robotGo]);
 
   // pause rendering while the hero is off screen
   useEffect(() => {
@@ -645,7 +684,7 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
       <SceneBoundary onFail={onFail}>
         <Canvas
           dpr={1}
-          gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+          gl={{ antialias: !IS_IOS, alpha: true, powerPreference: "high-performance" }}
           camera={{ fov: 30, position: [0, 0.25, 8.7], near: 0.1, far: 100 }}
           frameloop="never"
           onCreated={({ gl }) => {
@@ -655,7 +694,7 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
           }}
           aria-hidden="true"
         >
-          <StudioEnvironment />
+          {isIPhone ? <IPhoneLighting /> : <StudioEnvironment />}
           <ResponsiveCamera />
           <hemisphereLight args={["#ffffff", "#dbe6ea", 1.4]} />
           <directionalLight position={[-3, 5, 6]} intensity={2.2} />
@@ -663,7 +702,7 @@ export default function CoreScene({ onFail, onReady }: { onFail: () => void; onR
           {compiled && <FirstCoreFrame onReady={onReady} />}
           <CoreFrames visible={visible} ready={compiled} still={env.still} />
           <CoreRender />
-          {compiled && <Suspense fallback={null}><HeroRobot active={visible} still={env.still} /></Suspense>}
+          {compiled && robotGo && <Suspense fallback={null}><HeroRobot active={visible} still={env.still} /></Suspense>}
         </Canvas>
       </SceneBoundary>
       <svg ref={svgRef} className="hx-lines" aria-hidden="true">

@@ -1,5 +1,6 @@
 "use client";
 
+import { isIPhone } from "../../redesign/iphone";
 import { useEffect, useRef } from "react";
 
 /**
@@ -50,7 +51,7 @@ export function GLScene({ kind, className, rootSelector }: { kind: SceneKind; cl
 
   useEffect(() => {
     const canvas = ref.current;
-    if (!canvas) return;
+    if (!canvas || isIPhone) return;
     const nav = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number };
     if (nav.connection?.saveData || (nav.deviceMemory !== undefined && nav.deviceMemory < 2) || !webglOk()) return;
 

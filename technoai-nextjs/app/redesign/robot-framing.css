@@ -1,14 +1,57 @@
-/* Keep the complete source model visible, including its lower legs. */
+/* Keep the showcase silhouette clear to the edge of its viewport. */
 html body .robot-stage[data-placement="section"] { mask-image: none; -webkit-mask-image: none; }
+html body .robot-stage[data-placement="section"][data-framing="showcase"] { mask-image: none; }
+
+#robotics .section-robot {
+  overflow: clip;
+}
+#robotics .section-robot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Captured from the same 16:10 camera as the live canvas. */
+  background: url("/redesign/spline/robot-showcase.webp") center / contain no-repeat;
+}
+.robotics-sequence[data-iphone] #robotics .section-robot::before {
+  background-image: url("/redesign/spline/robot-showcase-iphone.webp");
+}
+#robotics[data-live-showcase] .section-robot::before { opacity: 0; }
+#robotics .section-robot .cx-spline {
+  background-image: none;
+}
+@media (min-width: 901px) {
+  #robotics .section-robot {
+    container-type: size;
+  }
+  /* Match the desktop head-to-knee framing in the live Spline viewport. */
+  #robotics .section-robot::before {
+    background-image: url("/redesign/spline/robot-showcase-hd.webp");
+    background-size: auto 148cqh;
+    background-position: center -6cqh;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  #robotics .section-robot::before { transition: opacity .2s ease-out; }
+  .robot-stage[data-visible="true"][data-framing="showcase"] { animation: robotShowcaseReady .2s ease-out; }
+}
+@keyframes robotShowcaseReady { from { opacity: 0; } to { opacity: 1; } }
 
 @media (min-width: 901px) and (min-height: 641px) and (prefers-reduced-motion: no-preference) {
-  html body .closer.closer-robot { height: 700svh; }
+  /* A short native scroll track also supports keyboard and scrollbar navigation. */
+  #robotics-hardware.closer-robot { height: calc(100svh - var(--scene-top) + 300px); }
 }
 
-@media (max-width: 900px), (max-height: 640px) {
-  @media (prefers-reduced-motion: no-preference) {
-    html body .closer-robot, html body .closer-robot > .sticky { overflow: visible; }
-    .robotics-robot-scroll { height: calc(300svh + clamp(320px, 50svh, 520px)); }
-    html body .closer-robot .section-robot { position: sticky; top: 88px; }
-  }
+.robot-intro { position: relative; isolation: isolate; overflow: clip; scroll-margin-top: 96px; background: radial-gradient(ellipse at 75% 50%, #143c47, #061014 73%); color: #f5fafa; }
+.robot-intro > .dot-field { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: .65; }
+.robot-intro-inner { position: relative; display: grid; grid-template-columns: 2fr 3fr; align-items: center; gap: 4vw; min-height: calc(100svh - 96px); padding-block: 24px; }
+.robot-intro-copy h2 { font-size: clamp(2.3rem, 3.8vw, 4.6rem); line-height: 1.04; letter-spacing: -.04em; max-width: 12ch; }
+.robot-intro-copy p { margin-block: 1rem 1.5rem; color: #d1e1e2; }
+.robot-intro-copy .btn { color: inherit; border-color: #427e85; }
+.robot-intro .section-robot { height: clamp(340px, 76svh, 850px); }
+@media (max-width: 760px) {
+  .robot-intro-inner { grid-template-columns: 1fr; align-content: center; gap: 16px; min-height: calc(100svh - 80px); }
+  .robot-intro .section-robot { height: clamp(260px, 48svh, 460px); container-type: size; }
+  #robotics .section-robot::before { background-size: auto min(105cqh, 178cqw); }
+  #robotics .section-robot .cx-spline { inset: 50% auto auto 50%; width: min(168cqh, 285cqw); height: min(105cqh, 178cqw); transform: translate(-50%, -50%); }
 }

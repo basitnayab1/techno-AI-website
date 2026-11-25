@@ -1,25 +1,33 @@
+import { Reveal, StackSection } from "../section-motion";
 import { socialIconHtml } from "../social-icons";
 import { FOOTER, INDUSTRIES, NAV, OFFICES, PARTNERS, SOCIAL, SOLUTIONS, UP } from "./data";
 import { Loader, Motion } from "./fx";
 import Hero from "./hero";
 import HeroNav from "./hero-nav";
 import Capabilities from "./capabilities";
-import DotField from "./dot-field";
 import GlobalPresence from "./global-presence";
 import "./sector-presence.css";
 import FibreBackground from "./fibre-background";
+import DotField from "./dot-field";
 import InkSample from "./ink-sample"; // SAMPLE ONLY: ?ink=1
-import JourneyPeek from "./journey-peeks";
 import "./journey-scenes.css";
 import "./responsive.css";
 import { JourneyScene } from "./deferred-scenes";
+import IPhoneJourneyPoster from "./iphone-journey-poster";
 import "./section-robot.css";
+import "./mobile-robotics.css";
 import JourneyFilms from "./journey-films";
 import MobileJourney from "./mobile-journey";
+import SolutionProgress from "./solution-progress";
 import "./cursor.css";
 import SplineCard from "./spline-card";
+import PerfOverlay from "./perf-overlay";
+import RoboticsSequence from "./robotics-sequence";
+import RoboticsProductImage from "./robotics-product-image";
 import SplineStage from "./spline-stage";
 import "./imported-buttons.css";
+import "./home-headings.css";
+import "./home-align.css";
 
 // New TechnoAi home page ("Mission Control"). Text and links come from the current technoai.ae
 // home page. Brand: Noto Sans, ink #0f1a1b + blue #146b8c (TechnoAi Brand Identity PDF).
@@ -34,22 +42,20 @@ const ICONS: Record<string, React.ReactNode> = {
   security: <><path d="M12 3l7.5 2.8v5.4c0 4.4-3 8-7.5 9.8-4.5-1.8-7.5-5.4-7.5-9.8V5.8z" /><path d="M9 12l2.2 2.2L15.5 10" /></>,
 };
 
-// Supporting imagery for the industries served below.
 const INDUSTRY_MEDIA = [
   { src: "/redesign/industries/government.webp", alt: "Abu Dhabi skyline and UAE flag" },
   { src: "/redesign/industries/security.webp", alt: "Surveillance and security monitoring" },
   { src: "/redesign/industries/agriculture.webp", alt: "Agricultural drone flying over crop rows" },
   { src: "/redesign/industries/energy.webp", alt: "Enterprise drone inspecting bridge infrastructure" },
   { src: "/redesign/industries/logistics.webp", alt: "Logistics and mobility operations" },
-  { src: "/redesign/industries/research.webp", alt: "Research and technology development" },
+  { src: `${UP}/2026/04/Research-and-Development-scaled.webp`, alt: "Research and technology development" },
 ];
 
 const ROBOTICS_PRODUCTS = [
   { name: "NVIDIA Jetson Thor", image: "jetson-feature.webp", alt: "NVIDIA Jetson Thor edge AI hardware" },
-  { name: "Seeed Studio XIAO", image: "xiao-feature.webp", alt: "Seeed Studio XIAO development boards" },
-  { name: "Raspberry Pi", image: "pi-feature.webp", alt: "Raspberry Pi single-board computers and compute modules" },
-];
-const ROBOTICS_STEPS = ["Robot showcase", ...ROBOTICS_PRODUCTS.map(({ name }) => name)];
+  { name: "XIAO", image: "xiao-feature.webp", alt: "Three XIAO development boards" },
+  { name: "Raspberry Pi", image: "pi-feature.webp", alt: "Raspberry Pi single board computers and compute modules" },
+] as const;
 
 const num = (i: number) => String(i + 1).padStart(2, "0");
 
@@ -88,6 +94,7 @@ export default function Home() {
   return (
     <>
       <Loader preload={[`${UP}/2026/07/Logo.svg`]} />
+      <PerfOverlay />
       <Motion />
       <SplineStage />
       <HeroNav />
@@ -95,14 +102,14 @@ export default function Home() {
 
       <a className="skip-link" href="#main">Skip to content</a>
 
-      <main id="main">
+      <main id="main" className="home-headings">
         {/* 1 ── Hero: glass navbar + 3D Intelligence Core (hero.tsx) */}
         <InkSample />
         <Hero />
         <FibreBackground />
 
         {/* 2 ── Find your starting point: three capability cards with live 3D models (capabilities.tsx) */}
-        <Capabilities />
+        <Reveal><Capabilities /></Reveal>
 
         {/* Solutions journey: one 3D station per solution */}
         <section className="journey" id="technology" data-active="0">
@@ -126,13 +133,14 @@ export default function Home() {
               </div>
               <div className="stations">
                 {SOLUTIONS.map((s, i) => (
-                  <article className="station" data-i={i} key={s.slug}>
+                  <article className="station" data-i={i} data-solution={s.slug} key={s.slug}>
                     <span className="n">{num(i)}</span>
-                    <div className="jx-title-wrap" data-peek={s.slug}>
-                      <span className="jx-peek-product" aria-hidden="true"><JourneyPeek slug={s.slug} /></span>
-                      <h2>{s.title}</h2>
+                    <div className="jx-title-wrap">
+                      <h2 className="heading-badge">{s.title}</h2>
                     </div>
                     <p>{s.text}</p>
+                    <IPhoneJourneyPoster slug={s.slug} />
+                    <SolutionProgress index={i} />
                     <a className="btn btn-line" href={s.href} aria-label={`Explore ${s.title}`} data-stringy={i === 0 ? "" : undefined}>Explore Solution <Arrow /></a>
                   </article>
                 ))}
@@ -159,76 +167,91 @@ export default function Home() {
 
         <MobileJourney />
 
-        <section id="robotics" className="closer closer-robot" data-progress data-steps={ROBOTICS_STEPS.length} data-step="0" aria-labelledby="robotics-title">
-          <div className="sticky">
-            <DotField />
-            <div className="wrap closer-in">
-              <div className="closer-text">
-                <Eyebrow>Intelligence in motion</Eyebrow>
-                <h2 id="robotics-title">Robotics &amp; Automation</h2>
-                <p>Intelligent robots for service, cleaning, delivery, and industrial operations—built to support your teams and simplify everyday work.</p>
-                <a className="btn btn-line" href="/robotics/">Explore Robotics Solutions <Arrow /></a>
-                <ol className="uses">
-                  {ROBOTICS_STEPS.map((name, i) => (
-                    <li key={name} data-i={i}>
-                      <span className="n" aria-hidden="true">{num(i)}</span>
-                      {name}
-                    </li>
-                  ))}
-                </ol>
+        <RoboticsSequence
+          robot={
+            <section id="robotics" className="robot-intro closer-robot" aria-labelledby="robotics-title">
+              <DotField />
+              <div className="wrap robot-intro-inner">
+                <div className="robot-intro-copy">
+                  <h2 id="robotics-title" className="heading-badge">Robotics &amp; Automation</h2>
+                  <p>Robots for service, cleaning and delivery.</p>
+                  <a className="btn btn-line" href="/robotics/">Explore Robotics Solutions <Arrow /></a>
+                </div>
+                <div className="section-robot" id="robotics-model"><SplineCard /></div>
               </div>
-              <div className="robotics-showcase">
-                <div className="robotics-robot-scroll">
-                <div className="section-robot">
-                  <SplineCard />
-                </div>
-                </div>
-                <div className="robotics-products">
-                  {ROBOTICS_PRODUCTS.map(({ name, image, alt }, i) => (
-                    <figure key={name} data-i={i + 1}>
-                      <img src={`/redesign/hardware/${image}`} alt={alt} width={1440} height={810} loading="lazy" decoding="async" />
-                      <figcaption>{name}</figcaption>
-                    </figure>
-                  ))}
+            </section>
+          }
+          hardware={
+            <section id="robotics-hardware" className="closer closer-robot" data-step="0" aria-labelledby="hardware-title">
+              <div className="sticky">
+                <div className="wrap closer-in">
+                  <div className="closer-text">
+                    <h2 id="hardware-title" className="heading-badge">Robotics hardware</h2>
+                    <ol className="uses">
+                      {ROBOTICS_PRODUCTS.map((product, i) => (
+                        <li key={product.name} data-i={i}>
+                          <a href={`#robotics-product-${i + 1}`}
+                            style={{ "--tab-photo": `url("/redesign/hardware/${product.image.replace("-feature.webp", "")}-thumb.webp")` } as React.CSSProperties}>
+                            <span className="n" aria-hidden="true">{num(i)}</span>
+                            <span className="product-name">{product.name}</span>
+                          </a>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                  <div className="robotics-showcase">
+                    <div className="robotics-products">
+                      {ROBOTICS_PRODUCTS.map((product, i) => (
+                        <figure key={product.name} id={`robotics-product-${i + 1}`} data-panel-visible={i === 0 ? "" : undefined} data-i={i}>
+                          <div className="robotics-product-media">
+                            <RoboticsProductImage image={product.image} alt={product.alt} />
+                          </div>
+                          <figcaption>{product.name}</figcaption>
+                        </figure>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
+            </section>
+          }
+          industries={
+            <section id="industries" className="industries">
+              <div className="sticky">
+                <div className="wrap ind-head">
+                  <Eyebrow>Industries We Serve</Eyebrow>
+                  <h2>Technology that works in your world.</h2>
+                  <p className="sub">
+                    Purpose-built systems for the environments you operate in.
+                  </p>
+                </div>
+                <div className="industry-viewport">
+                  <div className="h-track">
+                    {INDUSTRIES.map(([title, text, href], i) => (
+                      <a className={`ind${href === "/research-and-development/" ? " ind-research" : ""}`} href={href} key={href}>
+                        <div className="ind-photo"><img src={INDUSTRY_MEDIA[i].src} alt={INDUSTRY_MEDIA[i].alt} width="720" height="680" loading="lazy" decoding="async" /></div>
+                        <div className="ind-copy"><h3>{title}</h3>
+                        <p>{text}</p>
+                        <span className="more">Explore Industry</span></div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+                <div className="wrap h-bar" aria-hidden="true"><i /></div>
+              </div>
+            </section>
+          }
+        />
 
-        {/* 6 ── Industries: horizontal scroll */}
-        <section id="industries" className="industries" data-progress data-hscroll>
-          <div className="sticky">
-            <div className="wrap ind-head">
-              <Eyebrow>Industries We Serve</Eyebrow>
-              <h2>Technology that works in your world.</h2>
-              <p className="sub">
-                Purpose-built systems for the environments you operate in.
-              </p>
-            </div>
-            <div className="h-track">
-              {INDUSTRIES.map(([title, text, href], i) => (
-                <a className="ind" href={href} key={href}>
-                  <div className="ind-photo"><img src={INDUSTRY_MEDIA[i].src} alt={INDUSTRY_MEDIA[i].alt} width="720" height="680" loading="lazy" decoding="async" /></div>
-                  <div className="ind-copy"><h3>{title}</h3>
-                  <p>{text}</p>
-                  <span className="more">Explore Industry</span></div>
-                </a>
-              ))}
-            </div>
-            <div className="wrap h-bar" aria-hidden="true"><i /></div>
-          </div>
-        </section>
-
-        <GlobalPresence />
+        <StackSection><GlobalPresence /></StackSection>
 
         {/* 8 ── Partners */}
-        <section className="sec partners">
+        <StackSection><section className="sec partners">
           <div className="wrap center-head" data-reveal>
             <Eyebrow>Trusted by Organizations</Eyebrow>
             <h2>Technology Partners &amp; Clients</h2>
             <p className="sub">
-              TechnoAi works with leading organizations across defense, security, maritime,
+              TechnoAi works with leading organizations across security and surveillance, maritime,
               infrastructure, research, and advanced technology sectors.
             </p>
           </div>
@@ -243,17 +266,17 @@ export default function Home() {
             <a className="btn btn-blue" href="/partners/">All Partners <Arrow /></a>
             <a className="btn btn-line" href="/partners/">Become a Partner</a>
           </div>
-        </section>
+        </section></StackSection>
 
         {/* 9 ── Call to action */}
-        <section className="wrap">
-          <div className="cta" data-reveal>
+        <Reveal><section className="wrap">
+          <div className="cta">
             <p>
-              Build your next AI or robotics project with us. Tell us what you need to automate, connect, or compute — we’ll help you choose the right systems.
+              Build your next AI or robotics project with us. Tell us what you need to automate, connect, or compute. We’ll help you choose the right systems.
             </p>
             <a className="btn btn-white" href="/request-a-quote/">Start a Project <Arrow /></a>
           </div>
-        </section>
+        </section></Reveal>
       </main>
 
       <footer className="ft">
@@ -262,6 +285,7 @@ export default function Home() {
             <a className="ft-logo" href="/" aria-label="TechnoAI home"><img src={`${UP}/2025/01/Technoai-Logo-transaparent-1.png`} width="512" height="240" alt="TechnoAI" loading="lazy" /></a>
             <ul className="ft-offices">
               {OFFICES.map(office => <li key={office.city}><strong>{office.name}</strong><span>{office.place}</span></li>)}
+              <li className="ft-contact"><strong>Contact</strong><span><a href="mailto:info@technoai.ae">info@technoai.ae</a></span></li>
             </ul>
           </div>
           {FOOTER.map(([heading, links]) => <nav className="ft-links" key={heading} aria-label={heading}>

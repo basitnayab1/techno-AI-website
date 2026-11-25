@@ -1,10 +1,7 @@
 import { ctaHtml, footerHtml } from "./chrome";
 import { sharedHeaderHtml as headerHtml } from "./shared-header-html";
+import { ROUTE_HEAD } from "./route-arrival";
 import { THEME_BOOT_SCRIPT } from "./theme-preference";
-
-// Same as ARRIVE_SCRIPT in app/redesign/layout.tsx: JS-on flag + keep the page-transition curtain up.
-const ARRIVE_SCRIPT =
-  "<script>var d=document.documentElement;d.classList.add('js');try{if(sessionStorage.getItem('tai-px')==='1')d.classList.add('arriving')}catch(e){}</script>";
 
 const VOID = new Set(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"]);
 
@@ -92,8 +89,8 @@ export function themeDocument(html: string, route = "") {
     .replace(/<body\b([^>]*)>/i, (tag, attrs: string) => /\bclass=/.test(attrs)
       ? tag.replace(/\bclass=(['"])(.*?)\1/i, (_all: string, quote: string, value: string) => `class=${quote}${value} brand-site${quote}`)
       : `<body${attrs} class="brand-site">`)
-    .replace(/<\/head>/i, `<link rel="stylesheet" href="/brand.css?v=dual-theme-1" /><script>${THEME_BOOT_SCRIPT}</script>${ARRIVE_SCRIPT}</head>`)
-    .replace(/<\/body>/i, '<script src="/vendor/lenis.min.js?v=1.3.27" defer></script><script src="/site.js?v=playback-2" defer></script><script src="/brand-select.js?v=dark-1" defer></script></body>');
+    .replace(/<\/head>/i, `<link rel="stylesheet" href="/brand.css?v=dual-theme-1" /><script>${THEME_BOOT_SCRIPT}</script><script>document.documentElement.classList.add('js')</script>${ROUTE_HEAD}</head>`)
+    .replace(/<\/body>/i, '<script src="/vendor/lenis.min.js?v=1.3.27" defer></script><script src="/site.js?v=scroll-motion" defer></script><script src="/brand-select.js?v=quote-industries-1" defer></script><script type="module" src="/archive-motion.mjs"></script></body>');
 }
 
 function normalizePaint(markup: string) {

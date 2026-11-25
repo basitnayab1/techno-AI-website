@@ -4,7 +4,7 @@ import HardwareVideo from "./hardware-video";
 const platforms = [
   { title: "NVIDIA Jetson", detail: "Edge AI and accelerated computing", href: "/seeed-studio-2/" },
   { title: "Seeed Studio", detail: "XIAO boards for embedded development", href: "/seeed-studio-xiao/" },
-  { title: "Raspberry Pi", detail: "Single-board computers for prototyping", href: "/raspberry-pi/" },
+  { title: "Raspberry Pi", detail: "Single board computers for prototyping", href: "/raspberry-pi/" },
 ];
 
 export default function AiHardware() {

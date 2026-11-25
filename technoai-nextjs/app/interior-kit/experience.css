@@ -21,7 +21,7 @@ html.has-cursor .dom[data-tilt]:hover {
 }
 html.has-cursor .dom[data-tilt]:hover .dom-b { transform: translateZ(28px); }
 .dom-b { transition: transform .8s var(--e); }
-html.has-cursor.fx .pg-card[data-tilt].in:hover {
+html.has-cursor.fx .pg-card[data-tilt]:hover {
   transform: perspective(1100px) rotateX(calc(var(--ty, 0) * -3deg)) rotateY(calc(var(--tx, 0) * 4deg)) translateY(-4px);
   transition: opacity 1.2s var(--e), transform .5s var(--e);
 }
@@ -87,7 +87,9 @@ html.has-cursor.fx .pg-card[data-tilt].in:hover {
 
 /* ---------- Breadcrumbs (top of the page header, under the site header) ---------- */
 .pg-hero-crumbs { position: absolute; left: 0; right: 0; top: calc(var(--head, 84px) + 1rem); z-index: 2; opacity: calc(1 - var(--p, 0) * 3); }
-html:not(.fx) .pg-hero-crumbs { top: calc(var(--head, 84px) + .5rem); }
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion="full"]) .pg-hero-crumbs { top: calc(var(--head, 84px) + .5rem); }
+}
 @media (max-width: 900px) { .pg-hero-crumbs { top: calc(var(--head, 68px) + .25rem); } }
 .crumbs ol { display: flex; flex-wrap: wrap; gap: .25rem .6rem; list-style: none; margin: 0; padding: 0; font-size: var(--text-small, .875rem); color: var(--t3); }
 .crumbs li { display: flex; align-items: center; gap: .6rem; min-width: 0; }

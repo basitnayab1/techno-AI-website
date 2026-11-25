@@ -4,7 +4,8 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import CoreFibres from "./core-fibres";
-import { Warmup } from "./core-scene";
+import { SceneBoundary, Warmup } from "./core-scene";
+import { isIPhone } from "./iphone";
 
 // Decorative fibres share the GPU with the hero/drone. Leave the foreground and scroll at full speed.
 function FibreFrames({ active }: { active: boolean }) {
@@ -78,7 +79,7 @@ export default function FibreScene({ visible }: { visible: boolean }) {
   const ready=useCallback(()=>setCompiled(true),[]);
   const [mobile] = useState(() => window.innerWidth < 760);
   const [still] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
-  return <Canvas dpr={1} camera={{ position: [0, 0, 10], fov: 38 }} frameloop={compiled ? "demand" : "never"} gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}>
+  const canvas = <Canvas dpr={isIPhone ? .85 : 1} camera={{ position: [0, 0, 10], fov: 38 }} frameloop={compiled ? "demand" : "never"} gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}>
     <Warmup onReady={ready} />
     {compiled && <FibreFrames active={visible && !still} />}
     <hemisphereLight args={["#9fe7e7", "#0f1a1b", 1.5]} />
@@ -86,4 +87,5 @@ export default function FibreScene({ visible }: { visible: boolean }) {
     <directionalLight position={[3, 0, 2]} color="#146b8c" intensity={4} />
     <ScrollBundle mobile={mobile} still={still} />
   </Canvas>;
+  return isIPhone ? <SceneBoundary>{canvas}</SceneBoundary> : canvas;
 }

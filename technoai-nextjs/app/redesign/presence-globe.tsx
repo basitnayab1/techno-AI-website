@@ -24,6 +24,7 @@ export default function PresenceGlobe({ active = 0, onSelect }: { active?: numbe
     let renderer: THREE.WebGLRenderer;
     try { renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: "low-power" }); }
     catch { canvas.parentElement?.setAttribute("data-unavailable", "true"); return; }
+    renderer.debug.checkShaderErrors = false;
     renderer.setPixelRatio(Math.min(devicePixelRatio || 1, innerWidth < 760 ? 1 : 1.5));
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(30, 1, .1, 30);
@@ -45,8 +46,9 @@ export default function PresenceGlobe({ active = 0, onSelect }: { active?: numbe
     }));
     globe.add(atmosphere);
     let disposed = false;
+    let ready = false;
     let texture: THREE.Texture | undefined;
-    new THREE.TextureLoader().loadAsync("/redesign/globe/earth.webp").then(loaded => {
+    new THREE.TextureLoader().loadAsync("/redesign/globe/earth.webp").then(async loaded => {
       if (disposed) { loaded.dispose(); return; }
       texture = loaded;
       texture.colorSpace = THREE.SRGBColorSpace;
@@ -57,7 +59,12 @@ export default function PresenceGlobe({ active = 0, onSelect }: { active?: numbe
       surface.material.emissiveMap = texture;
       surface.material.emissiveIntensity = .6;
       surface.material.needsUpdate = true;
-      redraw.current();
+      await renderer.compileAsync(scene, camera);
+      if (disposed) return;
+      ready = true;
+      frame(0, 0, true);
+      canvas.parentElement?.setAttribute("data-ready", "");
+      syncPlayback();
     }).catch(error => { if (!disposed) console.warn("[TechnoAI globe] Map texture could not load", error); });
 
     const markers = OFFICES.map(office => {
@@ -120,14 +127,14 @@ export default function PresenceGlobe({ active = 0, onSelect }: { active?: numbe
       arcs.forEach((arc, i) => arc.runner.position.copy(arc.curve.getPoint((time * .14 + i * .45) % 1)));
       renderer.render(scene, camera);
     };
-    redraw.current = () => { if (!disposed && (still || !visible)) frame(clock.getElapsedTime(), .016, true); };
+    redraw.current = () => { if (!disposed && ready && visible && still) frame(clock.getElapsedTime(), .016, true); };
     const resize = () => {
       width = canvas.clientWidth || 1; height = canvas.clientHeight || 1;
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.position.z = camera.aspect < 1 ? 9.1 / camera.aspect : 9.1;
       camera.updateProjectionMatrix(); camera.updateMatrixWorld();
-      frame(clock.getElapsedTime(), .016, true);
+      if (ready && visible) frame(clock.getElapsedTime(), .016, true);
     };
     const ro = new ResizeObserver(resize); ro.observe(canvas); resize();
     const tick = (now: number) => {
@@ -137,8 +144,14 @@ export default function PresenceGlobe({ active = 0, onSelect }: { active?: numbe
       const dt = Math.min(.05, (now - last) / 1000); last = now;
       frame(clock.getElapsedTime(), dt);
     };
-    const start = () => { if (visible && !document.hidden && !still && !raf) raf = requestAnimationFrame(tick); };
-    const io = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; start(); }); io.observe(canvas);
+    function syncPlayback() {
+      if (!visible || document.hidden || !ready) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      } else if (still) redraw.current();
+      else if (!raf) raf = requestAnimationFrame(tick);
+    }
+    const io = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; syncPlayback(); }); io.observe(canvas);
     const move = (event: PointerEvent) => {
       if (event.pointerType !== "mouse") return;
       const rect = canvas.getBoundingClientRect();
@@ -147,11 +160,11 @@ export default function PresenceGlobe({ active = 0, onSelect }: { active?: numbe
     };
     const leave = () => { pointer.x = pointer.y = 0; };
     canvas.addEventListener("pointermove", move); canvas.addEventListener("pointerleave", leave);
-    document.addEventListener("visibilitychange", start);
+    document.addEventListener("visibilitychange", syncPlayback);
     return () => {
       disposed = true; cancelAnimationFrame(raf); ro.disconnect(); io.disconnect();
       canvas.removeEventListener("pointermove", move); canvas.removeEventListener("pointerleave", leave);
-      document.removeEventListener("visibilitychange", start); redraw.current = () => {};
+      document.removeEventListener("visibilitychange", syncPlayback); redraw.current = () => {};
       texture?.dispose();
       scene.traverse(object => { const mesh = object as THREE.Mesh; mesh.geometry?.dispose(); if (mesh.material) (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach(m => m.dispose()); });
       renderer.dispose();

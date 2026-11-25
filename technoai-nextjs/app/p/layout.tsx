@@ -10,5 +10,10 @@ import "../interior-theme.css";
 export { metadata, viewport } from "../interior-kit/shell";
 
 export default function PagesLayout({ children }: { children: React.ReactNode }) {
-  return <RedesignLayout>{children}</RedesignLayout>;
+  return (
+    <RedesignLayout>
+      <link rel="preload" href="/fonts/noto-sans-tc-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+      {children}
+    </RedesignLayout>
+  );
 }

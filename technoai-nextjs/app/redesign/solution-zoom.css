@@ -1,11 +1,36 @@
-/* Scroll adds up to 20% to each scene's existing crop; copy stays stationary. */
+/* The wrapper animates once. Only its current article participates in paint or focus. */
+@media (prefers-reduced-motion: no-preference) {
+  #technology .stations .station[aria-hidden] { transition: none; transform: none; }
+  #technology .stations .station[aria-hidden="true"] { visibility: hidden; opacity: 0; pointer-events: none; }
+  #technology .stations .station[aria-hidden="false"] { visibility: visible; opacity: 1; pointer-events: auto; }
+}
+
+/* The satellite has its own filmed camera move. Keep its viewport fixed. */
 @media (min-width: 761px) and (prefers-reduced-motion: no-preference) {
-  .journey .jx-film-media { scale: var(--solution-zoom, 1); }
+  .journey .jx-film:not([data-slug="satellite"]) .jx-film-media { scale: var(--solution-zoom, 1); }
 }
 
 @keyframes solutionScrollZoom {
   from { scale: 1; }
-  to { scale: 1.2; }
+  to { scale: var(--solution-max-zoom, 1.2); }
+}
+
+.mobile-journey .mj-panel[data-solution="security"] {
+  --solution-max-zoom: 1.22;
+}
+@media (max-width: 760px) {
+  .mobile-journey .mj-panel[data-solution="industry"] .solution-visual > video { object-position: 58% center; }
+  .mobile-journey .mj-panel[data-solution="security"] .solution-visual > video { object-position: center; }
+}
+@media (min-width: 761px) and (prefers-reduced-motion: reduce) {
+  .journey .station[data-solution="security"]::before {
+    content: "";
+    display: block;
+    width: min(100%, 680px);
+    aspect-ratio: 16 / 9;
+    background: url("/redesign/journey/films/security-shield-6225508.webp") center / cover;
+    margin-bottom: 1rem;
+  }
 }
 
 @media (max-width: 760px) and (prefers-reduced-motion: no-preference) {
@@ -14,7 +39,7 @@
       view-timeline-name: --solution-panel;
       view-timeline-axis: block;
     }
-    .mobile-journey .mj-media {
+    .mobile-journey .mj-panel:not([data-solution="satellite"]) .mj-media {
       animation: solutionScrollZoom linear both;
       animation-timeline: --solution-panel;
       animation-range: entry 0% exit 100%;

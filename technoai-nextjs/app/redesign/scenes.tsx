@@ -46,29 +46,6 @@ function createStage(canvas: HTMLCanvasElement, fov = 35, z = 8) {
 }
 
 /** Runs frame() every animation frame while `watch` is on screen. */
-/** Like useEffect, but runs `init` only when the element is about a screen away (keeps page load light). */
-function useNearEffect(ref: React.RefObject<HTMLElement | null>, init: () => void | (() => void)) {
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    let cleanup: void | (() => void);
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (!e.isIntersecting) return;
-        io.disconnect();
-        cleanup = init();
-      },
-      { rootMargin: "120% 0px" },
-    );
-    io.observe(el);
-    return () => {
-      io.disconnect();
-      cleanup?.();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-}
-
 function runWhileVisible(watch: Element, frame: (t: number, dt: number) => void) {
   const clock = new THREE.Clock();
   let raf = 0;
@@ -363,11 +340,6 @@ function buildRobotFx() {
 
   const p0 = route.getPointAt(ROBOT_U);
   const tmp = new THREE.Vector3();
-  const offsetAt = (progress: number) => {
-    const eased = progress * progress * (3 - 2 * progress);
-    route.getPointAt(ROBOT_U - 0.065 + eased * 0.13, tmp);
-    return { x: tmp.x - p0.x, z: tmp.z - p0.z };
-  };
   let lastT = 0;
   const update = (t: number, a: number, cx: number, robotPos: THREE.Vector3, progress: number) => {
     fadeFx(fx, Math.min(1, a));
@@ -410,13 +382,13 @@ function buildRobotFx() {
     dustGeo.attributes.position.needsUpdate = true;
     dustGeo.attributes.color.needsUpdate = true;
   };
-  return { group: fx.group, update, offsetAt };
+  return { group: fx.group, update };
 }
 
 export function JourneyScene() {
   const ref = useRef<HTMLCanvasElement>(null);
 
-  useNearEffect(ref, () => {
+  useEffect(() => {
     const canvas = ref.current;
     const section = canvas?.closest<HTMLElement>(".journey");
     if (!canvas || !section) return;
@@ -430,7 +402,28 @@ export function JourneyScene() {
     const robotI = SOLUTIONS.findIndex((x) => x.slug === "robot");
     const droneI = SOLUTIONS.findIndex((x) => x.slug === "drone");
     const M = materials();
-    const models = SOLUTIONS.slice(0, Math.max(robotI, droneI) + 1).map((s) => modelFor(s.slug, M));
+    let disposed = false;
+    let compiled = false;
+    // GLTF materials arrive after the placeholder scene. Warm them against the real
+    // stage lights, and spread texture uploads over frames before swapping models.
+    const prepare = async (group: THREE.Group) => {
+      if (disposed) return;
+      const textures = new Set<THREE.Texture>();
+      group.traverse(node => {
+        if (!(node instanceof THREE.Mesh)) return;
+        const materials = Array.isArray(node.material) ? node.material : [node.material];
+        for (const material of materials) {
+          for (const value of Object.values(material)) if (value instanceof THREE.Texture) textures.add(value);
+        }
+      });
+      await renderer.compileAsync(group, camera, scene);
+      for (const texture of textures) {
+        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+        if (disposed) return;
+        renderer.initTexture(texture);
+      }
+    };
+    const models = SOLUTIONS.slice(0, Math.max(robotI, droneI) + 1).map(s => modelFor(s.slug, M, prepare));
     const holders = models.map((m) => {
       const h = new THREE.Group();
       h.add(m.group);
@@ -439,19 +432,20 @@ export function JourneyScene() {
       return h;
     });
 
-    // Fit the mobile robot between its progress strip and copy, including short phones.
-    const copy = section.querySelector<HTMLElement>(".stations");
+    // The mobile scene sits below the introduction and above the cleaning status strip.
+    const intro = section.querySelector<HTMLElement>('.station[data-i="1"] > p');
     const clean = section.querySelector<HTMLElement>(".jx-clean");
     const phoneLayout = matchMedia("(max-width: 760px)");
     let robotArea = { top: 212, bottom: 500, height: 844, width: 390 };
     const measureRobotArea = () => {
       const height = canvas.clientHeight || innerHeight;
-      const top = (clean ? clean.offsetTop + clean.offsetHeight : 196) + 14;
-      const bottom = height - (copy?.offsetHeight || 230) - 64;
+      const canvasTop = canvas.getBoundingClientRect().top;
+      const top = intro ? intro.getBoundingClientRect().bottom - canvasTop + 16 : 220;
+      const bottom = clean ? clean.getBoundingClientRect().top - canvasTop - 10 : height - 80;
       robotArea = { top, bottom: Math.max(top + 60, bottom), height, width: canvas.clientWidth };
     };
     const robotLayout = new ResizeObserver(measureRobotArea);
-    [canvas, copy, clean].forEach(el => { if (el) robotLayout.observe(el); });
+    [canvas, intro, clean].forEach(el => { if (el) robotLayout.observe(el); });
     measureRobotArea();
     let robotBounds: { height: number; min: number; width: number; depth: number } | null = null;
     const robotRay = new THREE.Raycaster();
@@ -495,11 +489,11 @@ export function JourneyScene() {
     let lastRoute = "";
     let ringFade = 1;
     // compile the stage's shaders in the background now (scene starts ~2 screens early), not on the first visible frame
-    renderer.compileAsync(scene, camera).catch(() => {});
+    renderer.compileAsync(scene, camera).finally(() => { compiled = true; }).catch(() => {});
 
     const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
     const onMove = (e: PointerEvent) => {
-      if (!Number.isFinite(e.clientX) || !Number.isFinite(e.clientY)) return;
+      if (e.pointerType !== "mouse" || reduced() || !Number.isFinite(e.clientX) || !Number.isFinite(e.clientY)) return;
       mouse.tx = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.ty = (e.clientY / window.innerHeight) * 2 - 1;
     };
@@ -527,6 +521,7 @@ export function JourneyScene() {
         canvas.hidden = true;
         return;
       }
+      if (!compiled) return;
       canvas.hidden = false;
       contact.visible = idx === robotI && !!models[robotI].real;
 
@@ -571,7 +566,7 @@ export function JourneyScene() {
         models[i].update(t);
         const pose = models[i].real ? REAL_POSE[SOLUTIONS[i].slug] : undefined;
         const floorY = pose === "ground" && wide ? -1.75 - (models[i].base ?? 0) * h.scale.x : null; // stand on the rings
-        h.position.set(wide ? 1.7 : 0, floorY ?? (wide ? 0 : pose === "ground" ? 0.8 : 1.25) + (pose === "ground" ? 0 : Math.sin(t * 1.1) * (pose ? 0.05 : 0.08)), 0);
+        h.position.set(wide ? 1.7 : 0, floorY ?? (wide ? 0 : pose === "ground" ? 0.8 : 1.25), 0);
         if (!wide && phoneLayout.matches && i === robotI && robotBounds) {
           camera.updateMatrixWorld();
           // Anchor the wheels to the floor, rather than centring the body in the free space.
@@ -583,24 +578,18 @@ export function JourneyScene() {
         if (showcase && models[i].real) {
           h.position.set(wide ? 1.8 : 0, wide ? 0 : .85, 0);
         }
-        if (models[i].real && wide && i === robotI) {
-          // drive slowly along the cleaning route (face stays to the camera)
-          const off = robotFx.offsetAt(local);
-          h.position.x += off.x;
-          h.position.z += off.z;
-        }
         if (i === droneI) {
-          // 3D inspection flight motion across the rooftop
-          const arcX = Math.sin(local * Math.PI * 2) * 0.42;
-          const arcY = Math.sin(local * Math.PI) * 0.18 - Math.sin(local * Math.PI * 2) * 0.06;
-          const arcZ = Math.cos(local * Math.PI * 2) * 0.28 - 0.28;
-          h.position.x += arcX;
-          h.position.y += arcY;
-          h.position.z += arcZ;
-          // Bank smoothly into flight turns
-          h.rotation.y = -0.55 + Math.sin(local * Math.PI * 2) * 0.32 + mouse.x * 0.2;
-          h.rotation.x = 0.10 + Math.cos(local * Math.PI * 2) * 0.08 + mouse.y * 0.06;
-          h.rotation.z = -Math.cos(local * Math.PI * 2) * 0.16;
+          if (!wide && phoneLayout.matches) {
+            robotRay.setFromCamera(robotNdc.set(0, 1 - (robotArea.top + robotArea.bottom) / robotArea.height), camera);
+            if (robotRay.ray.intersectPlane(robotPlane, robotPoint)) h.position.y = robotPoint.y;
+          }
+          h.position.x += mouse.x * 0.55;
+          h.position.y -= mouse.y * 0.32;
+          h.rotation.set(0.1 + mouse.y * 0.1, -0.55 + mouse.x * 0.32, -mouse.x * 0.12);
+        } else if (i === robotI) {
+          h.position.x += mouse.x * 0.42;
+          h.position.z += mouse.y * 0.85;
+          h.rotation.set(wide ? 0.04 : 0, -0.55 + mouse.x * 0.35, 0);
         } else if (pose) {
           // real products: small turn only, so the robot face / drone camera stay in view
           h.rotation.y = -0.55 + local * 0.7 + mouse.x * 0.25 + (1 - s) * 0.8;
@@ -657,11 +646,12 @@ export function JourneyScene() {
     return () => {
       stop();
       window.removeEventListener("pointermove", onMove);
+      disposed = true;
       robotLayout.disconnect();
       contactMaterial.dispose();
       stage.dispose();
     };
-  });
+  }, []);
 
   return <canvas ref={ref} className="journey-gl" aria-hidden="true" />;
 }

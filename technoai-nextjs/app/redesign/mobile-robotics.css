@@ -1,0 +1,88 @@
+@media (max-width: 760px) {
+  #robotics-hardware .closer-in {
+    display: grid;
+    grid-template: "heading" auto "product" minmax(220px, 1fr) / minmax(0, 1fr);
+    align-items: start;
+    padding-block: clamp(20px, 4svh, 40px);
+  }
+  #robotics-hardware .closer-text { display: contents; }
+  #robotics-hardware .closer-text h2 {
+    grid-area: heading;
+    z-index: 3;
+    margin: 0;
+    font-size: clamp(30px, 9.5vw, 47px);
+  }
+  #robotics-hardware .robotics-showcase::before { display: none; }
+  #robotics-hardware .robotics-product-media img { object-position: 62% center; }
+  #robotics-hardware .robotics-product-media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #041115e0, #04111530 35%, transparent 68%, #041115ed);
+  }
+  #robotics-hardware .robotics-products figcaption {
+    display: block;
+    position: absolute;
+    bottom: max(20px, env(safe-area-inset-bottom));
+    inset-inline: var(--scene-gutter);
+    padding-left: 12px;
+    border-left: 2px solid #76d7db;
+    font-weight: 600;
+  }
+  #robotics-hardware .uses {
+    grid-area: product;
+    align-self: center;
+    justify-self: start;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: clamp(46px, 14vw, 56px);
+    gap: 6px;
+    margin: 0;
+    border: 0;
+  }
+  #robotics-hardware .uses li { border: 0; }
+  #robotics-hardware .uses a {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: clamp(44px, 5.8svh, 50px);
+    padding: 0;
+    border: 1px solid #35535a;
+    border-radius: 7px;
+    background: #071216 var(--tab-photo) center / cover no-repeat;
+  }
+  #robotics-hardware .uses a[aria-selected="true"],
+  #robotics-hardware[data-step="0"] .uses li[data-i="0"] a:not([aria-selected]) {
+    background: #10292e var(--tab-photo) center / cover no-repeat;
+    border-color: #79e2e6;
+    box-shadow: inset 2px 0 #79e2e6;
+  }
+  #robotics-hardware .uses .n, #robotics-hardware .robotics-showcase::after { display: none; }
+  #robotics-hardware .product-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 760px) and (min-height: 600px) and (prefers-reduced-motion: no-preference) {
+  html.fx #robotics-hardware > .sticky {
+    position: sticky;
+    top: var(--scene-top);
+  }
+  html.fx #robotics-hardware::after {
+    content: "";
+    display: block;
+    height: 100svh;
+  }
+}
+
+/* 2026-11-25 owner: on phones the hardware tabs line up with the heading text. The tab keeps its
+   14px inner padding (selected background + left line), so the list moves 14px left, like the
+   heading pill (.heading-badge uses the same -14px). */
+@media (max-width: 760px) {
+  html .robotics-sequence #robotics-hardware .uses { margin-left: -14px; }
+}

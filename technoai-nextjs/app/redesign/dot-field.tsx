@@ -1,5 +1,7 @@
 "use client";
 
+import { isIPhone } from "./iphone";
+
 import { useEffect, useRef } from "react";
 
 /**
@@ -16,6 +18,14 @@ export default function DotField({ color = "20,107,140", spacing = 26, size = 2.
     const canvas = ref.current;
     const host = canvas?.parentElement;
     if (!canvas || !host) return;
+    if (isIPhone && !matchMedia("(any-pointer: fine)").matches) {
+      // The resting grid repeats one identical dot. Paint the same grid with
+      // a CSS tile instead of allocating two section-sized Retina bitmaps.
+      canvas.width = canvas.height = 1;
+      canvas.style.background = `radial-gradient(circle, rgba(${color},.22) ${size / 2 - .25}px, transparent ${size / 2 + .25}px) center / ${spacing}px ${spacing}px`;
+      canvas.style.backgroundPosition = "0 0";
+      return;
+    }
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches; // touch screens never send mouse pointer events
